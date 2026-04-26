@@ -3,10 +3,9 @@ import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Menu, Moon, Sun, Settings, LogOut, ChevronRight } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useTheme } from "@/components/theme-provider";
 import { useAuth } from "@/contexts/auth-context";
-import type { AksesLevel } from "@/lib/data";
+import { T } from "@/lib/tokens";
 import {
   Popover,
   PopoverContent,
@@ -14,41 +13,31 @@ import {
 } from "@/components/ui/popover";
 
 const pathLabels: Record<string, string> = {
-  "/": "Dashboard",
-  "/transaksi/pemasukan": "Pemasukan",
+  "/":                      "Beranda",
+  "/transaksi":             "Transaksi",
+  "/transaksi/pemasukan":   "Pemasukan",
   "/transaksi/pengeluaran": "Pengeluaran",
-  "/transaksi/rekap-laporan": "Rekap Laporan",
-  "/pelanggan": "Pelanggan",
-  "/pengguna": "Pengguna",
-  "/log-aktivitas": "Log Aktivitas",
-  "/pengaturan": "Pengaturan Akun",
-};
-
-const roleColors: Record<AksesLevel, string> = {
-  "Super Admin": "text-purple-500",
-  "Admin": "text-blue-500",
-  "Viewer": "text-gray-400",
+  "/anggaran":              "Anggaran",
+  "/rekening":              "Rekening",
+  "/laporan":               "Laporan",
+  "/pengaturan":            "Pengaturan",
 };
 
 function getInitials(name: string) {
-  return name
-    .split(" ")
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase();
+  return name.split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase();
 }
 
 function Breadcrumb() {
   const pathname = usePathname();
 
   if (pathname === "/") {
-    return <span className="text-sm font-semibold text-foreground">Dashboard</span>;
+    return (
+      <span style={{ fontSize: 14, fontWeight: 600, color: T.text }}>Beranda</span>
+    );
   }
 
   const segments = pathname.split("/").filter(Boolean);
-  const crumbs: { label: string; href: string }[] = [{ label: "Dashboard", href: "/" }];
-
+  const crumbs: { label: string; href: string }[] = [{ label: "Beranda", href: "/" }];
   let accumulated = "";
   for (const seg of segments) {
     accumulated += `/${seg}`;
@@ -57,14 +46,14 @@ function Breadcrumb() {
   }
 
   return (
-    <nav className="flex items-center gap-1 text-sm">
+    <nav style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13 }}>
       {crumbs.map((crumb, i) => (
-        <span key={crumb.href} className="flex items-center gap-1">
-          {i > 0 && <ChevronRight size={14} className="text-gray-400" />}
+        <span key={crumb.href} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {i > 0 && <ChevronRight size={13} color={T.textSubtle} />}
           {i === crumbs.length - 1 ? (
-            <span className="font-semibold text-foreground">{crumb.label}</span>
+            <span style={{ fontWeight: 600, color: T.text }}>{crumb.label}</span>
           ) : (
-            <Link href={crumb.href} className="text-gray-500 hover:text-foreground transition-colors">
+            <Link href={crumb.href} style={{ color: T.textMuted, textDecoration: 'none' }}>
               {crumb.label}
             </Link>
           )}
@@ -90,82 +79,132 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
     router.replace("/login");
   };
 
+  const initials = user ? getInitials(user.nama) : "";
+
   return (
-    <header className="sticky top-0 z-20 h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 flex items-center px-4 gap-3">
-      {/* Hamburger — mobile only */}
+    <header style={{
+      position: 'sticky',
+      top: 0,
+      zIndex: 20,
+      height: 60,
+      background: T.surface,
+      borderBottom: `1px solid ${T.border}`,
+      display: 'flex',
+      alignItems: 'center',
+      padding: '0 24px',
+      gap: 12,
+      fontFamily: T.fontSans,
+    }}>
+      {/* Hamburger — mobile */}
       <button
-        className="md:hidden text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+        className="md:hidden"
         onClick={onMenuToggle}
-        aria-label="Toggle menu"
+        style={{
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          color: T.textMuted,
+          display: 'flex',
+          padding: 4,
+        }}
       >
         <Menu size={22} />
       </button>
 
       {/* Breadcrumb */}
-      <div className="flex-1 min-w-0">
+      <div style={{ flex: 1, minWidth: 0 }}>
         <Breadcrumb />
       </div>
 
-      {/* Right side */}
-      <div className="flex items-center gap-2">
-        {/* Dark mode toggle */}
-        <button
-          onClick={toggle}
-          className="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:text-gray-300 dark:hover:bg-gray-700 transition-colors"
-          aria-label="Toggle dark mode"
-        >
-          {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
-        </button>
+      {/* Dark mode toggle */}
+      <button
+        onClick={toggle}
+        style={{
+          width: 34,
+          height: 34,
+          borderRadius: 8,
+          border: `1px solid ${T.border}`,
+          background: T.surfaceAlt,
+          cursor: 'pointer',
+          color: T.textMuted,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
+      </button>
 
-        {/* User dropdown */}
-        {user && (
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger
-              render={
-                <button className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors" />
-              }
+      {/* User dropdown */}
+      {user && (
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger
+            render={
+              <button style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                padding: '5px 10px',
+                borderRadius: 9,
+                border: `1px solid ${T.border}`,
+                background: T.surfaceAlt,
+                cursor: 'pointer',
+                fontFamily: T.fontSans,
+              }} />
+            }
+          >
+            <div style={{
+              width: 28,
+              height: 28,
+              borderRadius: 999,
+              background: T.primary,
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: 12,
+              fontWeight: 700,
+              flexShrink: 0,
+            }}>
+              {initials}
+            </div>
+            <div className="hidden sm:block" style={{ textAlign: 'left' }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: T.text, lineHeight: 1.2 }}>
+                {user.nama}
+              </div>
+              <div style={{ fontSize: 11, color: T.textSubtle, marginTop: 1 }}>
+                {user.aksesLevel}
+              </div>
+            </div>
+          </PopoverTrigger>
+
+          <PopoverContent align="end" className="w-52 p-1">
+            <div style={{ padding: '10px 14px', borderBottom: `1px solid ${T.divider}`, marginBottom: 4 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{user.nama}</div>
+              {user.jabatan && (
+                <div style={{ fontSize: 11.5, color: T.textSubtle, marginTop: 1 }}>{user.jabatan}</div>
+              )}
+            </div>
+            <Link
+              href="/pengaturan"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-gray-50 transition-colors"
+              style={{ color: T.text, textDecoration: 'none' }}
             >
-              <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold shrink-0">
-                {getInitials(user.nama)}
-              </div>
-              <div className="hidden sm:block text-left">
-                <p className="text-sm font-medium text-foreground leading-tight">{user.nama}</p>
-                <p className={cn("text-xs leading-tight", roleColors[user.aksesLevel])}>
-                  {user.aksesLevel}
-                </p>
-              </div>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-56 p-1">
-              {/* Header info */}
-              <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700 mb-1">
-                <p className="text-sm font-semibold text-foreground">{user.nama}</p>
-                {user.jabatan && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{user.jabatan}</p>
-                )}
-                <p className={cn("text-xs font-medium mt-0.5", roleColors[user.aksesLevel])}>
-                  {user.aksesLevel}
-                </p>
-              </div>
-              {/* Actions */}
-              <Link
-                href="/pengaturan"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              >
-                <Settings size={15} />
-                Pengaturan
-              </Link>
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 rounded-md hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-              >
-                <LogOut size={15} />
-                Logout
-              </button>
-            </PopoverContent>
-          </Popover>
-        )}
-      </div>
+              <Settings size={14} color={T.textMuted} />
+              Pengaturan
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md hover:bg-red-50 transition-colors"
+              style={{ color: '#C0392B', background: 'none', border: 'none', cursor: 'pointer', fontFamily: T.fontSans, textAlign: 'left' }}
+            >
+              <LogOut size={14} />
+              Keluar
+            </button>
+          </PopoverContent>
+        </Popover>
+      )}
     </header>
   );
 }

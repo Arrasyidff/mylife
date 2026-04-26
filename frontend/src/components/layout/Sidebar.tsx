@@ -2,215 +2,177 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
 import { can } from "@/lib/permissions";
 import { useRequiredAuth } from "@/contexts/auth-context";
-import {
-  LayoutDashboard,
-  ArrowDownCircle,
-  ArrowUpCircle,
-  FileBarChart,
-  Users,
-  UserCog,
-  ClipboardList,
-  ChevronDown,
-  X,
-} from "lucide-react";
+import { T } from "@/lib/tokens";
+import { Icon } from "@/components/ui/icon";
+import { UserBadge } from "@/components/dashboard/user-badge";
+import { X } from "lucide-react";
 
-type NavLink = {
-  type: "link";
+type NavItem = {
+  id: string;
   label: string;
   href: string;
-  icon: React.ReactNode;
+  icon: (s?: number) => React.ReactNode;
+  adminOnly?: boolean;
 };
-
-type NavGroup = {
-  type: "group";
-  label: string;
-  icon: React.ReactNode;
-  children: { label: string; href: string }[];
-};
-
-type NavItem = NavLink | NavGroup;
 
 type SidebarProps = {
   isOpen: boolean;
   onClose: () => void;
 };
 
+const baseNavItems: NavItem[] = [
+  { id: 'home',     label: 'Beranda',    href: '/',         icon: Icon.home    },
+  { id: 'tx',       label: 'Transaksi',  href: '/transaksi', icon: Icon.list   },
+  { id: 'budget',   label: 'Anggaran',   href: '/anggaran', icon: Icon.budget  },
+  { id: 'rekening', label: 'Rekening',   href: '/rekening', icon: Icon.rekening },
+  { id: 'reports',  label: 'Laporan',    href: '/laporan',  icon: Icon.reports },
+];
+
+const adminNavItems: NavItem[] = [
+  { id: 'settings', label: 'Pengaturan', href: '/pengaturan', icon: Icon.settings, adminOnly: true },
+];
+
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { user } = useRequiredAuth();
-  const level = user.aksesLevel;
 
-  const allNavItems: NavItem[] = [
-    {
-      type: "link",
-      label: "Beranda",
-      href: "/",
-      icon: <LayoutDashboard size={18} />,
-    },
-    {
-      type: "group",
-      label: "Transaksi",
-      icon: <FileBarChart size={18} />,
-      children: [
-        { label: "Semua Transaksi", href: "/transaksi" },
-        { label: "Pemasukan",       href: "/transaksi/pemasukan" },
-        { label: "Pengeluaran",     href: "/transaksi/pengeluaran" },
-      ],
-    },
-    {
-      type: "link",
-      label: "Anggaran",
-      href: "/anggaran",
-      icon: <ClipboardList size={18} />,
-    },
-    {
-      type: "link",
-      label: "Rekening",
-      href: "/rekening",
-      icon: <ArrowDownCircle size={18} />,
-    },
-    {
-      type: "link",
-      label: "Laporan",
-      href: "/laporan",
-      icon: <ArrowUpCircle size={18} />,
-    },
-    ...(can(level, "pengguna", "lihat")
-      ? [{
-          type: "link" as const,
-          label: "Pengaturan",
-          href: "/pengaturan",
-          icon: <UserCog size={18} />,
-        }]
-      : []),
+  const navItems = [
+    ...baseNavItems,
+    ...adminNavItems.filter(item => !item.adminOnly || can(user.aksesLevel, 'pengguna', 'lihat')),
   ];
 
-  const isGroupActive = (item: NavGroup) =>
-    item.children.some((c) => pathname === c.href || pathname.startsWith(c.href + "/"));
-
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = {};
-    for (const item of allNavItems) {
-      if (item.type === "group" && isGroupActive(item)) {
-        initial[item.label] = true;
-      }
-    }
-    return initial;
-  });
-
-  useEffect(() => {
-    setOpenGroups((prev) => {
-      const updated = { ...prev };
-      for (const item of allNavItems) {
-        if (item.type === "group" && isGroupActive(item)) {
-          updated[item.label] = true;
-        }
-      }
-      return updated;
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
-
-  const toggleGroup = (label: string) => {
-    setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
-  };
-
   const isActive = (href: string) =>
-    href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
+    href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/');
+
+  // Close on route change (mobile)
+  useEffect(() => { onClose(); }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <aside
-      className={cn(
-        "fixed top-0 left-0 z-40 h-full w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-transform duration-300",
-        isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-      )}
-    >
-      {/* Brand */}
-      <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-gray-700">
-        <div>
-          <p className="font-bold text-primary leading-tight">MyLife Finance</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Keuangan Keluarga</p>
-        </div>
-        <button
-          className="md:hidden text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 md:hidden"
           onClick={onClose}
-          aria-label="Tutup sidebar"
-        >
-          <X size={20} />
-        </button>
-      </div>
+        />
+      )}
 
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-        {allNavItems.map((item) => {
-          if (item.type === "link") {
+      <aside
+        style={{
+          width: 232,
+          flexShrink: 0,
+          background: T.surface,
+          borderRight: `1px solid ${T.border}`,
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '20px 14px',
+          fontFamily: T.fontSans,
+          height: '100%',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          bottom: 0,
+          zIndex: 40,
+          transform: isOpen ? 'translateX(0)' : undefined,
+          transition: 'transform 0.3s',
+        }}
+        className={!isOpen ? 'max-md:-translate-x-full' : ''}
+      >
+        {/* Brand */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 8px 22px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 30,
+              height: 30,
+              borderRadius: 9,
+              background: `linear-gradient(135deg, ${T.primary}, ${T.primaryDark})`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontWeight: 700,
+              fontSize: 15,
+              flexShrink: 0,
+            }}>
+              F
+            </div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: T.text, letterSpacing: -0.2 }}>
+                Money Tracker
+              </div>
+              <div style={{ fontSize: 11, color: T.textSubtle }}>Keuangan Keluarga</div>
+            </div>
+          </div>
+          {/* Close button mobile */}
+          <button
+            className="md:hidden"
+            onClick={onClose}
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: T.textMuted,
+              padding: 4,
+              display: 'flex',
+            }}
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* Nav */}
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: 2, flex: 1 }}>
+          {navItems.map(item => {
             const active = isActive(item.href);
             return (
               <Link
-                key={item.href}
+                key={item.id}
                 href={item.href}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                  active
-                    ? "bg-primary text-white"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                )}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 11,
+                  padding: '9px 10px',
+                  borderRadius: 9,
+                  fontSize: 13.5,
+                  fontWeight: active ? 600 : 500,
+                  color: active ? T.primaryDark : T.textMuted,
+                  background: active ? T.primaryLight : 'transparent',
+                  textDecoration: 'none',
+                  transition: 'background 0.15s, color 0.15s',
+                }}
               >
-                {item.icon}
+                <span style={{ color: active ? T.primary : T.textSubtle, display: 'inline-flex' }}>
+                  {item.icon(18)}
+                </span>
                 {item.label}
               </Link>
             );
-          }
+          })}
+        </nav>
 
-          const groupOpen = openGroups[item.label] ?? false;
-          const groupActive = isGroupActive(item);
-
-          return (
-            <div key={item.label}>
-              <button
-                onClick={() => toggleGroup(item.label)}
-                className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                  groupActive && !groupOpen
-                    ? "bg-primary/10 text-primary dark:bg-primary/20"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                )}
-              >
-                {item.icon}
-                <span className="flex-1 text-left">{item.label}</span>
-                <ChevronDown
-                  size={16}
-                  className={cn("transition-transform", groupOpen && "rotate-180")}
-                />
-              </button>
-              {groupOpen && (
-                <div className="ml-4 mt-0.5 space-y-0.5 border-l-2 border-gray-200 dark:border-gray-600 pl-3">
-                  {item.children.map((child) => {
-                    const childActive = isActive(child.href);
-                    return (
-                      <Link
-                        key={child.href}
-                        href={child.href}
-                        className={cn(
-                          "flex items-center py-1.5 px-2 rounded-md text-sm transition-colors",
-                          childActive
-                            ? "bg-primary text-white font-medium"
-                            : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-                        )}
-                      >
-                        {child.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
+        {/* Couple footer */}
+        <div style={{ borderTop: `1px solid ${T.divider}`, paddingTop: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 6px' }}>
+            <div style={{ display: 'flex', flexShrink: 0 }}>
+              <UserBadge user="H" size={26} />
+              <span style={{ marginLeft: -8 }}>
+                <UserBadge user="W" size={26} />
+              </span>
             </div>
-          );
-        })}
-      </nav>
-    </aside>
+            <div style={{ minWidth: 0 }}>
+              <div style={{ fontSize: 12.5, fontWeight: 600, color: T.text, lineHeight: 1.2, whiteSpace: 'nowrap' }}>
+                Husband &amp; Wife
+              </div>
+              <div style={{ fontSize: 11, color: T.textSubtle, marginTop: 2 }}>
+                Sinkron · 2 menit lalu
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </>
   );
 }

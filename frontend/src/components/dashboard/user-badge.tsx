@@ -1,14 +1,16 @@
+import { T } from '@/lib/tokens';
+
 interface UserBadgeProps {
   user: 'W' | 'H';
   size?: number;
 }
 
 const userConfig = {
-  W: { label: 'W', bg: '#FCE4EC', color: '#C62828', title: 'Istri' },
-  H: { label: 'H', bg: '#E3F2FD', color: '#1565C0', title: 'Suami' },
+  H: { bg: T.primary,  ring: '#E8F5EF', title: 'Suami' },
+  W: { bg: '#A82672',  ring: '#FBE9F2', title: 'Istri'  },
 };
 
-export function UserBadge({ user, size = 20 }: UserBadgeProps) {
+export function UserBadge({ user, size = 22 }: UserBadgeProps) {
   const cfg = userConfig[user];
   return (
     <span
@@ -19,15 +21,18 @@ export function UserBadge({ user, size = 20 }: UserBadgeProps) {
         justifyContent: 'center',
         width: size,
         height: size,
-        borderRadius: size / 2,
+        borderRadius: 999,
         background: cfg.bg,
-        color: cfg.color,
-        fontSize: size * 0.55,
-        fontWeight: 700,
+        color: 'white',
+        fontSize: size * 0.48,
+        fontWeight: 600,
+        letterSpacing: 0.2,
+        boxShadow: `0 0 0 2px ${cfg.ring}`,
+        fontFamily: T.fontSans,
         flexShrink: 0,
       }}
     >
-      {cfg.label}
+      {user}
     </span>
   );
 }

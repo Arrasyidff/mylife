@@ -1,42 +1,33 @@
-interface CatConfig {
-  emoji: string;
-  bg: string;
-}
+import type { ReactNode } from 'react';
+import { T } from '@/lib/tokens';
+import { CatIcon } from '@/components/ui/icon';
 
-const catConfig: Record<string, CatConfig> = {
-  food:      { emoji: '🍽️', bg: '#FFF3E0' },
-  transport: { emoji: '🚗', bg: '#E3F2FD' },
-  shopping:  { emoji: '🛍️', bg: '#F3E5F5' },
-  bills:     { emoji: '💡', bg: '#FFFDE7' },
-  health:    { emoji: '❤️', bg: '#FCE4EC' },
-  fun:       { emoji: '🎮', bg: '#E8F5E9' },
-  salary:    { emoji: '💰', bg: '#E8F5E9' },
-  transfer:  { emoji: '🔄', bg: '#E3F2FD' },
-  home:      { emoji: '🏠', bg: '#FFF8E1' },
-};
-
-const fallback: CatConfig = { emoji: '📌', bg: '#F5F5F5' };
+type CatKey = keyof typeof T.cat;
 
 interface CatBubbleProps {
   cat: string;
   size?: number;
+  glyph?: ReactNode;
 }
 
-export function CatBubble({ cat, size = 36 }: CatBubbleProps) {
-  const cfg = catConfig[cat] ?? fallback;
+export function CatBubble({ cat, size = 36, glyph }: CatBubbleProps) {
+  const palette = T.cat[cat as CatKey] ?? T.cat.default;
+  const IconFn  = CatIcon[cat as keyof typeof CatIcon] ?? CatIcon.shopping;
+  const iconSize = Math.round(size * 0.55);
+
   return (
     <div style={{
       width: size,
       height: size,
-      borderRadius: size * 0.3,
-      background: cfg.bg,
+      borderRadius: Math.round(size * 0.32),
+      background: palette.bg,
+      color: palette.fg,
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      fontSize: size * 0.48,
       flexShrink: 0,
     }}>
-      {cfg.emoji}
+      {glyph ?? IconFn(iconSize)}
     </div>
   );
 }
