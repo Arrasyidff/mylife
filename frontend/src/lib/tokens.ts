@@ -1,14 +1,18 @@
 export const T = {
   primary: '#1D9E75',
   primaryDark: '#15735A',
+  primaryLight: '#E6F6F0',
+  primarySoft: '#F0FAF6',
   bg: '#F4F7F5',
   surface: '#FFFFFF',
+  surfaceAlt: '#F6F9F7',
   border: '#E0EAE6',
   text: '#1A2420',
   textMuted: '#7D9590',
   textSubtle: '#A4B8B2',
   divider: '#EEF2F0',
   danger: '#C0392B',
+  warning: '#D4860B',
   radius: {
     sm: '6px',
     md: '8px',
