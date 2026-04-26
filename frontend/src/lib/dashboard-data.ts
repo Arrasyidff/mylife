@@ -40,6 +40,8 @@ export const budgets: Budget[] = [
   { id: 'bills',     name: 'Tagihan',      used: 2_950_000, total: 3_500_000, cat: 'bills'     },
   { id: 'health',    name: 'Kesehatan',    used:   320_000, total: 1_000_000, cat: 'health'    },
   { id: 'fun',       name: 'Hiburan',      used:   615_000, total:   800_000, cat: 'fun'       },
+  { id: 'home',      name: 'Rumah',        used: 1_245_000, total: 2_000_000, cat: 'home'      },
+  { id: 'edu',       name: 'Pendidikan',   used:         0, total:   500_000, cat: 'edu'       },
 ];
 
 export const transactions: Transaction[] = [
