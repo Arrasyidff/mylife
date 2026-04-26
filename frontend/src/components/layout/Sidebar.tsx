@@ -46,7 +46,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const allNavItems: NavItem[] = [
     {
       type: "link",
-      label: "Dashboard",
+      label: "Beranda",
       href: "/",
       icon: <LayoutDashboard size={18} />,
     },
@@ -55,31 +55,35 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       label: "Transaksi",
       icon: <FileBarChart size={18} />,
       children: [
-        { label: "Pemasukan", href: "/transaksi/pemasukan" },
-        { label: "Pengeluaran", href: "/transaksi/pengeluaran" },
-        { label: "Rekap Laporan", href: "/transaksi/rekap-laporan" },
+        { label: "Semua Transaksi", href: "/transaksi" },
+        { label: "Pemasukan",       href: "/transaksi/pemasukan" },
+        { label: "Pengeluaran",     href: "/transaksi/pengeluaran" },
       ],
     },
     {
       type: "link",
-      label: "Pelanggan",
-      href: "/pelanggan",
-      icon: <Users size={18} />,
+      label: "Anggaran",
+      href: "/anggaran",
+      icon: <ClipboardList size={18} />,
+    },
+    {
+      type: "link",
+      label: "Rekening",
+      href: "/rekening",
+      icon: <ArrowDownCircle size={18} />,
+    },
+    {
+      type: "link",
+      label: "Laporan",
+      href: "/laporan",
+      icon: <ArrowUpCircle size={18} />,
     },
     ...(can(level, "pengguna", "lihat")
       ? [{
           type: "link" as const,
-          label: "Pengguna",
-          href: "/pengguna",
+          label: "Pengaturan",
+          href: "/pengaturan",
           icon: <UserCog size={18} />,
-        }]
-      : []),
-    ...(can(level, "logAktivitas", "lihat")
-      ? [{
-          type: "link" as const,
-          label: "Log Aktivitas",
-          href: "/log-aktivitas",
-          icon: <ClipboardList size={18} />,
         }]
       : []),
   ];
@@ -127,8 +131,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Brand */}
       <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-gray-700">
         <div>
-          <p className="font-bold text-primary leading-tight">Nama Aplikasi</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Sistem Manajemen</p>
+          <p className="font-bold text-primary leading-tight">MyLife Finance</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Keuangan Keluarga</p>
         </div>
         <button
           className="md:hidden text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
