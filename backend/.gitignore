@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+generated/
+src/generated/
+
+# Environment
+.env
+.env.local
+
+# Logs
+logs/
+*.log
+
+# Jest
+coverage/
+
+# OS
+.DS_Store

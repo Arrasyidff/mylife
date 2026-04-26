@@ -1,0 +1,21 @@
+import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
+import { CommonModule } from './common/common.module';
+import { AuthModule } from './auth/auth.module';
+import { AuthMiddleware } from './middleware/auth.middleware';
+import { HealthController } from './health/health.controller';
+
+@Module({
+  imports: [CommonModule, AuthModule],
+  controllers: [HealthController],
+})
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(AuthMiddleware)
+      .exclude(
+        { path: 'api/auth/login', method: RequestMethod.POST },
+        { path: 'api/health', method: RequestMethod.GET },
+      )
+      .forRoutes('*');
+  }
+}
