@@ -1,5 +1,10 @@
 "use client";
 import { useState } from 'react';
+import {
+  BarChart, Bar, PieChart, Pie, Cell,
+  XAxis, YAxis, Tooltip, ReferenceLine,
+  ResponsiveContainer,
+} from 'recharts';
 import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
 import { Icon } from '@/components/ui/icon';
@@ -42,45 +47,86 @@ const months: MonthRow[] = [
 ];
 
 const PERIODS = ['Mingguan', 'Bulanan', 'Tahunan'];
+const AVG_DAILY = 376; // thousands
 
-// ── Donut math ─────────────────────────────────────────────────
-function buildDonut(items: CatRow[]) {
-  const total = items.reduce((s, c) => s + c.value, 0);
-  const r = 60, cx = 75, cy = 75;
-  let acc = 0;
-  return items.map(c => {
-    const frac  = c.value / total;
-    const start = acc * 2 * Math.PI - Math.PI / 2;
-    acc += frac;
-    const end   = acc * 2 * Math.PI - Math.PI / 2;
-    const large = frac > 0.5 ? 1 : 0;
-    const x1 = (cx + r * Math.cos(start)).toFixed(2);
-    const y1 = (cy + r * Math.sin(start)).toFixed(2);
-    const x2 = (cx + r * Math.cos(end)).toFixed(2);
-    const y2 = (cy + r * Math.sin(end)).toFixed(2);
-    return {
-      ...c,
-      frac,
-      path: `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} Z`,
-    };
-  });
+// ── Chart data ─────────────────────────────────────────────────
+const dailyChartData = daily.map((d, i) => {
+  const isW = i % 3 === 0;
+  return {
+    day: i + 1,
+    suami: d > 0 ? Math.round(d * (isW ? 0.4 : 0.65)) : 0,
+    istri: d > 0 ? Math.round(d * (isW ? 0.6 : 0.35)) : 0,
+  };
+});
+
+// ── Custom tooltips ────────────────────────────────────────────
+function DailyTooltip({ active, payload, label }: {
+  active?: boolean;
+  payload?: { name: string; value: number; color: string }[];
+  label?: number;
+}) {
+  if (!active || !payload?.length) return null;
+  const total = payload.reduce((s, p) => s + p.value, 0);
+  return (
+    <div style={{
+      background: T.surface,
+      border: `1px solid ${T.border}`,
+      borderRadius: 8,
+      padding: '8px 12px',
+      fontSize: 12,
+      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+    }}>
+      <div style={{ fontWeight: 600, color: T.text, marginBottom: 4 }}>Hari {label}</div>
+      {[...payload].reverse().map((p, i) => (
+        <div key={i} style={{ color: p.color, marginBottom: 2 }}>
+          {p.name}: {formatRp(p.value * 1_000)}
+        </div>
+      ))}
+      <div style={{ fontWeight: 600, color: T.text, marginTop: 4, borderTop: `1px solid ${T.border}`, paddingTop: 4 }}>
+        Total: {formatRp(total * 1_000)}
+      </div>
+    </div>
+  );
+}
+
+
+function HWTooltip({ active, payload, label }: {
+  active?: boolean;
+  payload?: { name: string; value: number; color: string }[];
+  label?: string;
+}) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={{
+      background: T.surface,
+      border: `1px solid ${T.border}`,
+      borderRadius: 8,
+      padding: '8px 12px',
+      fontSize: 12,
+      boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+    }}>
+      <div style={{ fontWeight: 600, color: T.text, marginBottom: 4 }}>{label}</div>
+      {payload.map((p, i) => (
+        <div key={i} style={{ color: p.color, marginBottom: 2 }}>
+          {p.name}: {formatRp(p.value)}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 // ── Page ───────────────────────────────────────────────────────
 export default function LaporanPage() {
   const [period, setPeriod] = useState(1);
 
-  const maxDaily  = Math.max(...daily);
-  const totalCat  = catBreakdown.reduce((s, c) => s + c.value, 0);
-  const hwMax     = Math.max(...hwData.flatMap(r => [r.h, r.w]));
-  const donutData = buildDonut(catBreakdown);
-  const avgBottom = (376 / maxDaily) * 100; // avg spending 376k vs max 605k
+  const totalCat = catBreakdown.reduce((s, c) => s + c.value, 0);
+  const maxDaily = Math.max(...daily);
 
   const topStats = [
-    { label: 'KATEGORI TERATAS',     value: 'Tagihan',         sub: formatRp(2_950_000),    tone: T.text        },
-    { label: 'PENGELUARAN TERBESAR', value: formatRp(1_245_000), sub: 'IKEA · 22 Apr',      tone: T.danger      },
-    { label: 'RATA-RATA HARIAN',     value: formatRp(376_500), sub: '−12% vs Maret',         tone: T.text        },
-    { label: 'HARI TANPA SPENDING',  value: '3 hari',          sub: 'streak terpanjang: 2',  tone: T.primaryDark },
+    { label: 'KATEGORI TERATAS',     value: 'Tagihan',           sub: formatRp(2_950_000),    tone: T.text        },
+    { label: 'PENGELUARAN TERBESAR', value: formatRp(1_245_000), sub: 'IKEA · 22 Apr',        tone: T.danger      },
+    { label: 'RATA-RATA HARIAN',     value: formatRp(376_500),   sub: '−12% vs Maret',        tone: T.text        },
+    { label: 'HARI TANPA SPENDING',  value: '3 hari',            sub: 'streak terpanjang: 2', tone: T.primaryDark },
   ];
 
   return (
@@ -171,82 +217,28 @@ export default function LaporanPage() {
           </div>
         </div>
 
-        <div style={{ position: 'relative', height: 200, display: 'flex', alignItems: 'flex-end', gap: 6, paddingBottom: 20 }}>
-          {/* Average dashed line */}
-          <div style={{
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            bottom: `calc(${avgBottom}% + 20px)`,
-            borderTop: `1px dashed ${T.warning}`,
-            pointerEvents: 'none',
-            zIndex: 1,
-          }}>
-            <span style={{
-              position: 'absolute',
-              right: 0,
-              top: -15,
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={dailyChartData} barCategoryGap="20%" barGap={0} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+            <XAxis
+              dataKey="day"
+              tickLine={false}
+              axisLine={false}
+              tick={{ fontSize: 10, fill: T.textSubtle }}
+              tickFormatter={(v) => [1, 5, 10, 15, 20, 25].includes(v as number) ? String(v) : ''}
+            />
+            <YAxis hide domain={[0, maxDaily]} />
+            <Tooltip content={<DailyTooltip />} cursor={{ fill: T.surfaceAlt }} />
+            <ReferenceLine y={AVG_DAILY} stroke={T.warning} strokeDasharray="4 3" strokeWidth={1.5} label={{
+              value: 'Rp 376k',
+              position: 'right',
               fontSize: 10,
-              color: T.warning,
+              fill: T.warning,
               fontWeight: 600,
-              background: T.surface,
-              padding: '0 4px',
-            }}>
-              Rp 376k
-            </span>
-          </div>
-
-          {daily.map((d, i) => {
-            const h = maxDaily > 0 ? (d / maxDaily) * 100 : 0;
-            const isW     = i % 3 === 0;
-            const wH      = isW ? h * 0.6 : h * 0.35;
-            const hH      = isW ? h * 0.4 : h * 0.65;
-            const isToday = i === daily.length - 1;
-
-            return (
-              <div key={i} style={{
-                flex: 1,
-                height: 'calc(100% - 20px)',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'flex-end',
-                alignItems: 'center',
-                gap: 1,
-                position: 'relative',
-              }}>
-                {d > 0 ? (
-                  <>
-                    <div style={{
-                      width: '100%',
-                      height: `${hH}%`,
-                      background: isToday ? T.primaryDark : T.primary,
-                      borderRadius: '3px 3px 0 0',
-                      opacity: isToday ? 1 : 0.85,
-                    }} />
-                    <div style={{
-                      width: '100%',
-                      height: `${wH}%`,
-                      background: isToday ? '#7c2052' : '#A82672',
-                      opacity: 0.85,
-                    }} />
-                  </>
-                ) : (
-                  <div style={{ width: '100%', height: 2, background: T.border }} />
-                )}
-                {(i === 0 || (i + 1) % 5 === 0) && (
-                  <div style={{
-                    position: 'absolute',
-                    bottom: -18,
-                    fontSize: 10,
-                    color: T.textSubtle,
-                  }}>
-                    {i + 1}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
+            }} />
+            <Bar dataKey="istri" name="Istri" stackId="a" fill="#A82672" opacity={0.85} />
+            <Bar dataKey="suami" name="Suami" stackId="a" fill={T.primary} opacity={0.85} radius={[3, 3, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
       </Surface>
 
       {/* Donut + H/W comparison */}
@@ -260,12 +252,25 @@ export default function LaporanPage() {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
             <div style={{ position: 'relative', width: 150, height: 150, flexShrink: 0 }}>
-              <svg width="150" height="150" viewBox="0 0 150 150">
-                {donutData.map((s, i) => (
-                  <path key={i} d={s.path} fill={s.color} opacity="0.92" />
-                ))}
-                <circle cx="75" cy="75" r="38" fill={T.surface} />
-              </svg>
+              <PieChart width={150} height={150}>
+                <Pie
+                  data={catBreakdown}
+                  cx={75}
+                  cy={75}
+                  innerRadius={42}
+                  outerRadius={64}
+                  dataKey="value"
+                  strokeWidth={0}
+                  startAngle={90}
+                  endAngle={-270}
+                  paddingAngle={3}
+                  cornerRadius={4}
+                >
+                  {catBreakdown.map((c, i) => (
+                    <Cell key={i} fill={c.color} opacity={0.92} />
+                  ))}
+                </Pie>
+              </PieChart>
               <div style={{
                 position: 'absolute',
                 inset: 0,
@@ -328,37 +333,22 @@ export default function LaporanPage() {
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {hwData.map((row, i) => (
-              <div key={i} style={{ display: 'grid', gridTemplateColumns: '90px 1fr 1fr', gap: 10, alignItems: 'center' }}>
-                <div style={{ fontSize: 12, color: T.textMuted, fontWeight: 500 }}>{row.cat}</div>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 8 }}>
-                  <span style={{ fontSize: 11, color: T.textSubtle, fontVariantNumeric: 'tabular-nums' }}>
-                    {formatRp(row.h)}
-                  </span>
-                  <div style={{
-                    width: `${(row.h / hwMax) * 100}%`,
-                    height: 14,
-                    background: T.primary,
-                    borderRadius: '3px 0 0 3px',
-                    minWidth: 2,
-                  }} />
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{
-                    width: `${(row.w / hwMax) * 100}%`,
-                    height: 14,
-                    background: '#A82672',
-                    borderRadius: '0 3px 3px 0',
-                    minWidth: 2,
-                  }} />
-                  <span style={{ fontSize: 11, color: T.textSubtle, fontVariantNumeric: 'tabular-nums' }}>
-                    {formatRp(row.w)}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={hwData} layout="vertical" barCategoryGap="30%" margin={{ top: 0, right: 12, bottom: 0, left: 0 }}>
+              <XAxis type="number" hide />
+              <YAxis
+                type="category"
+                dataKey="cat"
+                width={78}
+                tickLine={false}
+                axisLine={false}
+                tick={{ fontSize: 12, fill: T.textMuted, fontWeight: 500 }}
+              />
+              <Tooltip content={<HWTooltip />} cursor={{ fill: T.surfaceAlt }} />
+              <Bar dataKey="h" name="Suami" fill={T.primary} opacity={0.85} radius={[0, 3, 3, 0]} />
+              <Bar dataKey="w" name="Istri" fill="#A82672" opacity={0.85} radius={[0, 3, 3, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </Surface>
       </div>
 
