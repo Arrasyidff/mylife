@@ -264,7 +264,6 @@ export default function LaporanPage() {
           })}
         </div>
         <Btn kind="ghost" size="sm" icon={Icon.calendar(14)}>{btnLabel}</Btn>
-        <Btn kind="ghost" size="sm" icon={Icon.download(14)}>Ekspor PDF</Btn>
       </div>
 
       {/* Top stats */}

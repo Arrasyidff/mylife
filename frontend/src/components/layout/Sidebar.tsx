@@ -101,13 +101,13 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
               flexShrink: 0,
               boxShadow: `0 3px 10px ${T.primary}50`,
             }}>
-              F
+              M
             </div>
             <div>
               <div style={{ fontSize: 13.5, fontWeight: 700, color: T.text, letterSpacing: -0.3, lineHeight: 1.2 }}>
-                Money Tracker
+                The M-Line
               </div>
-              <div style={{ fontSize: 10.5, color: T.textSubtle, marginTop: 1 }}>Keuangan Keluarga</div>
+              <div style={{ fontSize: 10.5, color: T.textSubtle, marginTop: 1 }}>Miracle Generation</div>
             </div>
           </div>
           {/* Close button mobile */}
