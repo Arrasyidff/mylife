@@ -30,7 +30,7 @@ const baseNavItems: NavItem[] = [
 ];
 
 const adminNavItems: NavItem[] = [
-  { id: 'settings', label: 'Pengaturan', href: '/pengaturan', icon: Icon.settings, adminOnly: true },
+  // { id: 'settings', label: 'Pengaturan', href: '/pengaturan', icon: Icon.settings, adminOnly: true },
 ];
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
@@ -112,15 +112,14 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
           {/* Close button mobile */}
           <button
-            className="md:hidden"
             onClick={onClose}
+            className="flex md:hidden"
             style={{
               background: 'none',
               border: 'none',
               cursor: 'pointer',
               color: T.textMuted,
               padding: 4,
-              display: 'flex',
               borderRadius: 6,
             }}
           >
