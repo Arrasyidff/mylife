@@ -10,12 +10,16 @@ export type Account = {
   type: AccountType;
 };
 
+export type BudgetPeriod = 'weekly' | 'monthly' | 'yearly';
+
 export type Budget = {
   id: string;
   name: string;
   used: number;
   total: number;
   cat: string;
+  period?: BudgetPeriod;
+  carryOver?: boolean;
 };
 
 export type Transaction = {

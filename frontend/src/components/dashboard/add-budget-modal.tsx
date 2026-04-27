@@ -4,6 +4,7 @@ import { X, Check, CalendarDays } from 'lucide-react';
 import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
 import { CatBubble } from './cat-bubble';
+import type { Budget, BudgetPeriod } from '@/lib/dashboard-data';
 
 const CATS = [
   { id: 'food',      name: 'Makanan'    },
@@ -33,11 +34,12 @@ const AMOUNT_WORDS: Record<number, string> = {
   5_000_000: 'lima juta rupiah',
 };
 
-const TOTAL_EXISTING = 11_600_000;
 const MONTHLY_INCOME = 14_750_000;
 
 interface AddBudgetModalProps {
   onClose: () => void;
+  onAdd: (budget: Budget) => void;
+  totalExisting: number;
 }
 
 function Field({
@@ -97,15 +99,30 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (val: boolean) => voi
   );
 }
 
-export function AddBudgetModal({ onClose }: AddBudgetModalProps) {
+export function AddBudgetModal({ onClose, onAdd, totalExisting }: AddBudgetModalProps) {
   const [selectedCat, setSelectedCat] = useState('fun');
   const [selectedPeriod, setSelectedPeriod] = useState('monthly');
   const [amount, setAmount] = useState(1_500_000);
   const [notifs, setNotifs] = useState({ pct75: true, pct100: true, weekly: false });
   const [carryOver, setCarryOver] = useState(false);
 
-  const totalAfter = TOTAL_EXISTING + amount;
+  const totalAfter = totalExisting + amount;
   const remaining = MONTHLY_INCOME - totalAfter;
+
+  function handleSave() {
+    const catLabel = CATS.find(c => c.id === selectedCat)?.name ?? selectedCat;
+    const budget: Budget = {
+      id: `budget-${Date.now()}`,
+      name: catLabel,
+      used: 0,
+      total: amount,
+      cat: selectedCat,
+      period: selectedPeriod as BudgetPeriod,
+      carryOver,
+    };
+    onAdd(budget);
+    onClose();
+  }
 
   return (
     <>
@@ -412,7 +429,7 @@ export function AddBudgetModal({ onClose }: AddBudgetModalProps) {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
               <span style={{ fontSize: 11.5, color: T.textMuted }}>Total anggaran bulanan</span>
               <span style={{ fontSize: 13, fontVariantNumeric: 'tabular-nums', color: T.textMuted }}>
-                <span style={{ textDecoration: 'line-through' }}>{formatRp(TOTAL_EXISTING)}</span>
+                <span style={{ textDecoration: 'line-through' }}>{formatRp(totalExisting)}</span>
                 <span style={{ margin: '0 6px' }}>→</span>
                 <strong style={{ color: T.primaryDark, fontWeight: 700 }}>{formatRp(totalAfter)}</strong>
               </span>
@@ -457,6 +474,7 @@ export function AddBudgetModal({ onClose }: AddBudgetModalProps) {
             Batal
           </button>
           <button
+            onClick={handleSave}
             style={{
               flex: 2,
               padding: 11,
