@@ -12,6 +12,9 @@ import { EditTransactionModal } from '@/components/dashboard/edit-transaction-mo
 import { transactions as SEED, accounts, type Transaction } from '@/lib/dashboard-data';
 import { formatRp, formatTxDate, txDateGroupKey, formatGroupLabel } from '@/lib/format';
 
+const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const MONTHS_FULL  = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
 // ── Filter chip ────────────────────────────────────────────────────────────────
 
 function FilterChip({
@@ -280,25 +283,43 @@ function EmptyState({ hasFilters, onReset }: { hasFilters: boolean; onReset: () 
 
 type TypeFilter = 'all' | 'expense' | 'income' | 'transfer';
 type UserFilter = 'all' | 'H' | 'W';
+type MonthFilter = { year: number; month: number } | null;
 type Toast = { msg: string; ok: boolean };
 
 export default function TransactionsPage() {
-  const [txList,     setTxList]     = useState<Transaction[]>(SEED);
-  const [showAdd,    setShowAdd]    = useState(false);
-  const [editTx,     setEditTx]     = useState<Transaction | null>(null);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [search,     setSearch]     = useState('');
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all');
-  const [userFilter, setUserFilter] = useState<UserFilter>('all');
-  const [toast,      setToast]      = useState<Toast | null>(null);
+  const _now = new Date();
 
-  const nextId = useRef(Math.max(...SEED.map(t => t.id)) + 1);
+  const [txList,          setTxList]          = useState<Transaction[]>(SEED);
+  const [showAdd,         setShowAdd]         = useState(false);
+  const [editTx,          setEditTx]          = useState<Transaction | null>(null);
+  const [expandedId,      setExpandedId]      = useState<number | null>(null);
+  const [search,          setSearch]          = useState('');
+  const [typeFilter,      setTypeFilter]      = useState<TypeFilter>('all');
+  const [userFilter,      setUserFilter]      = useState<UserFilter>('all');
+  const [monthFilter,     setMonthFilter]     = useState<MonthFilter>({ year: _now.getFullYear(), month: _now.getMonth() + 1 });
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
+  const [pickerYear,      setPickerYear]      = useState(_now.getFullYear());
+  const [toast,           setToast]           = useState<Toast | null>(null);
+
+  const nextId         = useRef(Math.max(...SEED.map(t => t.id)) + 1);
+  const monthPickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(null), 2800);
     return () => clearTimeout(t);
   }, [toast]);
+
+  useEffect(() => {
+    if (!showMonthPicker) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (monthPickerRef.current && !monthPickerRef.current.contains(e.target as Node)) {
+        setShowMonthPicker(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMonthPicker]);
 
   function showToast(msg: string, ok = true) {
     setToast({ msg, ok });
@@ -337,6 +358,10 @@ export default function TransactionsPage() {
 
   const filtered = useMemo(() => {
     return txList.filter(t => {
+      if (monthFilter) {
+        const [yStr = '0', mStr = '0'] = t.date.split('-');
+        if (Number(yStr) !== monthFilter.year || Number(mStr) !== monthFilter.month) return false;
+      }
       if (typeFilter !== 'all' && t.type !== typeFilter) return false;
       if (userFilter !== 'all' && t.user !== userFilter) return false;
       if (search.trim()) {
@@ -348,7 +373,46 @@ export default function TransactionsPage() {
       }
       return true;
     });
-  }, [txList, typeFilter, userFilter, search]);
+  }, [txList, monthFilter, typeFilter, userFilter, search]);
+
+  const monthLabel = monthFilter
+    ? `${MONTHS_FULL[monthFilter.month - 1]} ${monthFilter.year}`
+    : 'Semua Waktu';
+
+  function handleExport() {
+    const header = ['Tanggal', 'Waktu', 'Merchant', 'Kategori', 'Rekening', 'Tipe', 'Jumlah (Rp)', 'Catatan', 'Pencatat'];
+    const rows = filtered.map(t => {
+      const [date = '', time = ''] = t.date.split('T');
+      return [
+        date,
+        time.substring(0, 5),
+        t.merch,
+        t.cat,
+        accounts.find(a => a.id === t.acct)?.name ?? t.acct,
+        t.type === 'income' ? 'Pemasukan' : t.type === 'expense' ? 'Pengeluaran' : 'Transfer',
+        t.amount,
+        t.note ?? '',
+        t.user === 'H' ? 'Suami' : 'Istri',
+      ];
+    });
+
+    const csv = [header, ...rows]
+      .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = monthFilter
+      ? `transaksi-${monthFilter.year}-${String(monthFilter.month).padStart(2, '0')}.csv`
+      : 'transaksi-semua.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast(`${filtered.length} transaksi berhasil diekspor`);
+  }
 
   const groups = useMemo(() => {
     const map = new Map<string, Transaction[]>();
@@ -407,11 +471,11 @@ export default function TransactionsPage() {
             Transaksi
           </h1>
           <div style={{ fontSize: 12.5, color: T.textSubtle, marginTop: 3 }}>
-            {filtered.length} dari {txList.length} transaksi · April 2026
+            {filtered.length} dari {txList.length} transaksi · {monthLabel}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-          <Btn kind="ghost" size="sm" icon={Icon.download(14)}>Ekspor</Btn>
+          <Btn kind="ghost" size="sm" icon={Icon.download(14)} onClick={handleExport} disabled={filtered.length === 0}>Ekspor</Btn>
           <Btn kind="primary" size="sm" icon={Icon.plus(14)} onClick={() => setShowAdd(true)}>
             Tambah
           </Btn>
@@ -456,7 +520,83 @@ export default function TransactionsPage() {
               </button>
             )}
           </div>
-          <Btn kind="ghost" size="sm" icon={Icon.calendar(14)}>April 2026</Btn>
+          {/* Month picker */}
+          <div ref={monthPickerRef} style={{ position: 'relative' }}>
+            <Btn
+              kind={monthFilter ? 'soft' : 'ghost'}
+              size="sm"
+              icon={Icon.calendar(14)}
+              onClick={() => { setShowMonthPicker(v => !v); setPickerYear(monthFilter?.year ?? _now.getFullYear()); }}
+            >
+              {monthLabel}
+              <span style={{ marginLeft: 2 }}>{Icon.chev(12, showMonthPicker ? 'up' : 'down')}</span>
+            </Btn>
+
+            {showMonthPicker && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 120,
+                background: T.surface, border: `1px solid ${T.border}`,
+                borderRadius: T.radius.lg,
+                boxShadow: '0 8px 24px rgba(20,30,25,0.13)',
+                padding: 14, width: 240,
+              }}>
+                {/* Year navigation */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                  <button
+                    onClick={() => setPickerYear(y => y - 1)}
+                    style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: T.textSubtle, padding: 4, display: 'flex' }}
+                  >
+                    {Icon.chev(16, 'left')}
+                  </button>
+                  <span style={{ fontWeight: 700, fontSize: 14, color: T.text, fontFamily: T.fontSans }}>{pickerYear}</span>
+                  <button
+                    onClick={() => setPickerYear(y => y + 1)}
+                    style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: T.textSubtle, padding: 4, display: 'flex' }}
+                  >
+                    {Icon.chev(16, 'right')}
+                  </button>
+                </div>
+
+                {/* All-time option */}
+                <button
+                  onClick={() => { setMonthFilter(null); setShowMonthPicker(false); }}
+                  style={{
+                    width: '100%', padding: '7px 10px', marginBottom: 8,
+                    borderRadius: 7, border: `1px solid ${!monthFilter ? T.primary : T.border}`,
+                    background: !monthFilter ? T.primaryLight : T.surfaceAlt,
+                    color: !monthFilter ? T.primaryDark : T.textSubtle,
+                    fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+                    fontFamily: T.fontSans, textAlign: 'center',
+                  }}
+                >
+                  Semua Waktu
+                </button>
+
+                {/* Month grid */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 5 }}>
+                  {MONTHS_SHORT.map((m, i) => {
+                    const isSelected = monthFilter?.year === pickerYear && monthFilter?.month === (i + 1);
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => { setMonthFilter({ year: pickerYear, month: i + 1 }); setShowMonthPicker(false); }}
+                        style={{
+                          padding: '7px 4px', borderRadius: 7,
+                          border: `1px solid ${isSelected ? T.primary : T.border}`,
+                          background: isSelected ? T.primary : T.surface,
+                          color: isSelected ? '#fff' : T.text,
+                          fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                          fontFamily: T.fontSans,
+                        }}
+                      >
+                        {m}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Chips: type */}
