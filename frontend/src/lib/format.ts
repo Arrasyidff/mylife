@@ -65,7 +65,15 @@ export function toDatetimeLocal(iso: string): string {
   return iso.substring(0, 16);
 }
 
-/** Current datetime as datetime-local value */
+/** Current datetime as datetime-local value, in the configured timezone */
 export function nowDatetimeLocal(): string {
-  return toDatetimeLocal(new Date().toISOString().replace('Z', '').substring(0, 19));
+  const tz = process.env.NEXT_PUBLIC_TIMEZONE ?? 'Asia/Jakarta';
+  const now = new Date();
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: tz,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hour12: false,
+  }).formatToParts(now);
+  const get = (t: string) => parts.find(p => p.type === t)?.value ?? '00';
+  return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}`;
 }
