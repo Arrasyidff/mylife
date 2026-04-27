@@ -29,6 +29,20 @@ export default function DashboardPage() {
 
   const totalAssets = accounts.reduce((s, a) => s + a.balance, 0);
 
+  // Rekening: selalu tampilkan Tunai + 3 rekening dengan transaksi terbaru
+  const lastTxByAcct: Record<string, string> = {};
+  txList.forEach(tx => {
+    if (!lastTxByAcct[tx.acct] || tx.date > lastTxByAcct[tx.acct]) {
+      lastTxByAcct[tx.acct] = tx.date;
+    }
+  });
+  const tunaiAccounts = accounts.filter(a => a.type === 'tunai');
+  const recentAccounts = accounts
+    .filter(a => a.type !== 'tunai')
+    .sort((a, b) => (lastTxByAcct[b.id] ?? '').localeCompare(lastTxByAcct[a.id] ?? ''))
+    .slice(0, 3);
+  const displayedAccounts = [...recentAccounts, ...tunaiAccounts];
+
   const currentMonthPrefix = `${TODAY.getFullYear()}-${String(TODAY.getMonth() + 1).padStart(2, '0')}`;
   const monthTxList = txList.filter(tx => tx.date.startsWith(currentMonthPrefix));
   const monthIncome  = monthTxList.filter(tx => tx.type === 'income').reduce((s, tx) => s + tx.amount, 0);
@@ -151,7 +165,18 @@ export default function DashboardPage() {
         </Link>
       </div>
       <div style={{ display: 'flex', gap: 14, marginBottom: 24 }}>
-        {accounts.map(a => <AccountCard key={a.id} acct={a} />)}
+        {displayedAccounts.map(a => {
+          const lastDate = lastTxByAcct[a.id];
+          const lastTx = lastDate ? txList.find(tx => tx.acct === a.id && tx.date === lastDate) : undefined;
+          return (
+            <AccountCard
+              key={a.id}
+              acct={a}
+              lastTx={lastTx}
+              lastUpdated={lastDate}
+            />
+          );
+        })}
       </div>
 
       {/* Two-column: anggaran + transaksi */}

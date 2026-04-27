@@ -1,12 +1,31 @@
-import type { Account } from '@/lib/dashboard-data';
+import type { Account, Transaction } from '@/lib/dashboard-data';
 import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
 
 interface AccountCardProps {
   acct: Account;
+  lastTx?: Transaction;
+  lastUpdated?: string;
 }
 
-export function AccountCard({ acct }: AccountCardProps) {
+function relativeTime(isoDate: string): string {
+  const now = new Date(2026, 3, 27); // mock today
+  const d = new Date(isoDate);
+  const diffMs = now.getTime() - d.getTime();
+  const diffMin = Math.floor(diffMs / 60_000);
+  if (diffMin < 60) return `${diffMin} menit lalu`;
+  const diffH = Math.floor(diffMin / 60);
+  if (diffH < 24) return `${diffH} jam lalu`;
+  const diffD = Math.floor(diffH / 24);
+  if (diffD === 1) return 'Kemarin';
+  return `${diffD} hari lalu`;
+}
+
+export function AccountCard({ acct, lastTx, lastUpdated }: AccountCardProps) {
+  const isPositive = lastTx && lastTx.amount > 0;
+  const deltaColor = isPositive ? T.primary : T.danger;
+  const deltaSign  = isPositive ? '+' : '';
+
   return (
     <div style={{
       background: T.surface,
@@ -62,6 +81,23 @@ export function AccountCard({ acct }: AccountCardProps) {
           {formatRp(acct.balance)}
         </div>
       </div>
+      {lastTx && lastUpdated && (
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderTop: `1px solid ${T.border}`,
+          paddingTop: 8,
+          marginTop: -2,
+        }}>
+          <span style={{ fontSize: 11, color: T.textSubtle }}>
+            {relativeTime(lastUpdated)}
+          </span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: deltaColor, fontVariantNumeric: 'tabular-nums' }}>
+            {deltaSign}{formatRp(lastTx.amount)}
+          </span>
+        </div>
+      )}
     </div>
   );
 }
