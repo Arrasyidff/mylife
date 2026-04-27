@@ -325,11 +325,15 @@ export default function TransactionsPage() {
     setToast({ msg, ok });
   }
 
-  function handleAdd(data: Omit<Transaction, 'id'>) {
-    const tx: Transaction = { ...data, id: nextId.current++ };
-    setTxList(prev => [...prev, tx].sort((a, b) => b.date.localeCompare(a.date)));
+  function handleAdd(data: Omit<Transaction, 'id'>[]) {
+    const txs = data.map(d => ({ ...d, id: nextId.current++ }));
+    setTxList(prev => [...prev, ...txs].sort((a, b) => b.date.localeCompare(a.date)));
     setShowAdd(false);
-    showToast(`Transaksi "${data.merch}" berhasil ditambahkan`);
+    showToast(
+      txs.length > 1
+        ? `Transfer + biaya admin berhasil dicatat`
+        : `Transaksi "${data[0]?.merch}" berhasil ditambahkan`
+    );
   }
 
   function handleEdit(data: Transaction) {

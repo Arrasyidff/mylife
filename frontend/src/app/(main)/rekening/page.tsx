@@ -276,7 +276,7 @@ export default function RekeningPage() {
     showToast(`Rekening "${updated.name}" berhasil diperbarui`);
   }
 
-  function handleTransfer() {
+  function handleTransfer(_txs: Omit<Transaction, 'id'>[]) {
     setShowTransferModal(false);
     showToast('Transfer berhasil dicatat');
   }

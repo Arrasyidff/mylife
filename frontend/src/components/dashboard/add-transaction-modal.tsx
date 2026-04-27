@@ -34,9 +34,11 @@ const INCOME_CATS = [
   { id: 'edu',      name: 'Lainnya'   },
 ];
 
+const ADMIN_FEE_DEFAULT = 2_500;
+
 interface AddTransactionModalProps {
   onClose: () => void;
-  onSave: (tx: Omit<Transaction, 'id'>) => void;
+  onSave: (txs: Omit<Transaction, 'id'>[]) => void;
   initialType?: TxTypeId;
 }
 
@@ -87,10 +89,19 @@ export function AddTransactionModal({ onClose, onSave, initialType }: AddTransac
   const [dateVal,      setDateVal]      = useState(nowDatetimeLocal);
   const [selectedUser, setSelectedUser] = useState<'H' | 'W'>('W');
   const [note,         setNote]         = useState('');
+  const [adminFeeRaw,  setAdminFeeRaw]  = useState(String(ADMIN_FEE_DEFAULT));
   const [errors,       setErrors]       = useState<{ amount?: string; merch?: string; toAcct?: string }>({});
 
   const amountNum = Number(amountRaw.replace(/\./g, '') || '0');
   const amountDisplay = amountNum > 0 ? amountNum.toLocaleString('id-ID') : '';
+
+  const fromAcct = accounts.find(a => a.id === selectedAcct);
+  const toAcct   = accounts.find(a => a.id === toAcctId);
+  const isInterBankTransfer =
+    txType === 'transfer' &&
+    fromAcct?.type === 'tabungan' &&
+    toAcct?.type   === 'tabungan' &&
+    selectedAcct !== toAcctId;
 
   const selectedCat = txType === 'transfer' ? 'transfer'
     : txType === 'income' ? incomeCat
@@ -121,21 +132,38 @@ export function AddTransactionModal({ onClose, onSave, initialType }: AddTransac
     if (txType === 'transfer' && selectedAcct === toAcctId) errs.toAcct = 'Rekening tujuan harus berbeda';
     if (Object.keys(errs).length) { setErrors(errs); return; }
 
+    const toName    = accounts.find(a => a.id === toAcctId)?.name ?? 'Rekening';
     const autoMerch = txType === 'transfer' && !merch.trim()
-      ? `Transfer ke ${accounts.find(a => a.id === toAcctId)?.name ?? 'Rekening'}`
+      ? `Transfer ke ${toName}`
       : merch.trim();
 
     const sign = txType === 'income' ? 1 : -1;
-    onSave({
-      user:  selectedUser,
-      cat:   selectedCat,
-      merch: autoMerch,
-      acct:  selectedAcct,
+    const mainTx: Omit<Transaction, 'id'> = {
+      user:   selectedUser,
+      cat:    selectedCat,
+      merch:  autoMerch,
+      acct:   selectedAcct,
       amount: sign * amountNum,
-      date:  fromDatetimeLocal(dateVal),
-      type:  txType,
-      note:  note.trim() || undefined,
-    });
+      date:   fromDatetimeLocal(dateVal),
+      type:   txType,
+      note:   note.trim() || undefined,
+    };
+
+    if (isInterBankTransfer) {
+      const adminFee = Number(adminFeeRaw) || 0;
+      const feeTx: Omit<Transaction, 'id'> = {
+        user:   selectedUser,
+        cat:    'bills',
+        merch:  `Biaya Admin Transfer ke ${toName}`,
+        acct:   selectedAcct,
+        amount: -adminFee,
+        date:   fromDatetimeLocal(dateVal),
+        type:   'expense',
+      };
+      onSave(adminFee > 0 ? [mainTx, feeTx] : [mainTx]);
+    } else {
+      onSave([mainTx]);
+    }
   }
 
   return (
@@ -414,6 +442,51 @@ export function AddTransactionModal({ onClose, onSave, initialType }: AddTransac
                 })}
               </div>
             </Field>
+          )}
+
+          {/* Inter-bank admin fee notice */}
+          {isInterBankTransfer && (
+            <div style={{
+              padding: '12px 14px',
+              background: '#EEF4FF', border: '1px solid #BFCFEF',
+              borderRadius: 10, marginBottom: 16,
+            }}>
+              <div style={{ display: 'flex', gap: 11, marginBottom: 10 }}>
+                <span style={{ color: '#1846A8', flexShrink: 0, marginTop: 1 }}>{Icon.warn(16)}</span>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: '#1B3A8C' }}>
+                  Biaya Admin Beda Bank
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 12, color: '#1B3A8C', flex: 1 }}>
+                  Biaya transfer (dicatat terpisah):
+                </span>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: 4,
+                  background: '#fff', border: '1px solid #BFCFEF',
+                  borderRadius: 7, padding: '5px 10px',
+                }}>
+                  <span style={{ fontSize: 12, color: '#1B3A8C', fontWeight: 600 }}>Rp</span>
+                  <input
+                    value={adminFeeRaw === '0' ? '' : Number(adminFeeRaw).toLocaleString('id-ID')}
+                    onChange={e => setAdminFeeRaw(e.target.value.replace(/\D/g, '') || '0')}
+                    inputMode="numeric"
+                    placeholder={ADMIN_FEE_DEFAULT.toLocaleString('id-ID')}
+                    style={{
+                      border: 'none', outline: 'none', background: 'transparent',
+                      fontSize: 13, fontWeight: 700, color: '#1B3A8C',
+                      width: 80, textAlign: 'right', fontFamily: T.fontSans,
+                      fontVariantNumeric: 'tabular-nums',
+                    }}
+                  />
+                </div>
+              </div>
+              {Number(adminFeeRaw) === 0 && (
+                <div style={{ fontSize: 11, color: '#1B3A8C', marginTop: 6, opacity: 0.7 }}>
+                  Biaya 0 — hanya transfer yang akan dicatat.
+                </div>
+              )}
+            </div>
           )}
 
           {/* Date + User */}

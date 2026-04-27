@@ -50,11 +50,16 @@ export default function DashboardPage() {
     return () => clearTimeout(t);
   }, [toast]);
 
-  function handleAdd(data: Omit<Transaction, 'id'>) {
-    const tx: Transaction = { ...data, id: Date.now() };
-    setTxList(prev => [...prev, tx].sort((a, b) => b.date.localeCompare(a.date)));
+  function handleAdd(data: Omit<Transaction, 'id'>[]) {
+    const txs = data.map((d, i) => ({ ...d, id: Date.now() + i }));
+    setTxList(prev => [...prev, ...txs].sort((a, b) => b.date.localeCompare(a.date)));
     setShowAdd(false);
-    setToast({ msg: `Transaksi "${data.merch}" berhasil ditambahkan`, ok: true });
+    setToast({
+      msg: txs.length > 1
+        ? `Transfer + biaya admin berhasil dicatat`
+        : `Transaksi "${data[0]?.merch}" berhasil ditambahkan`,
+      ok: true,
+    });
   }
 
   return (
