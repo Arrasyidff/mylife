@@ -9,7 +9,7 @@ import { formatRp, formatTxDate } from '@/lib/format';
 import { AddAccountModal } from '@/components/dashboard/add-account-modal';
 import { EditAccountModal } from '@/components/dashboard/edit-account-modal';
 import { AddTransactionModal } from '@/components/dashboard/add-transaction-modal';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { CheckCircle, XCircle, Eye, EyeOff } from 'lucide-react';
 
 const GROUP_CONFIG = [
   { label: 'TABUNGAN',     types: ['tabungan']    as const, color: T.info,    tint: T.infoLight    },
@@ -32,10 +32,14 @@ function getAccountStats(acctId: string) {
 
 function AccountDetailCard({
   acct,
+  isHidden,
   onEdit,
+  onToggleHide,
 }: {
   acct: Account;
+  isHidden: boolean;
   onEdit: () => void;
+  onToggleHide: () => void;
 }) {
   const recentTxs = getAccountTxs(acct.id);
   const { income, expense, net } = getAccountStats(acct.id);
@@ -44,20 +48,22 @@ function AccountDetailCard({
   return (
     <div style={{
       background: T.surface,
-      border: `1px solid ${T.border}`,
+      border: `1px solid ${isHidden ? T.border : T.border}`,
       borderRadius: T.radius.lg,
       overflow: 'hidden',
+      opacity: isHidden ? 0.55 : 1,
+      transition: 'opacity 0.2s',
     }}>
       {/* Colored header */}
       <div style={{
-        background: acct.color + '12',
-        borderBottom: `1px solid ${acct.color}28`,
+        background: isHidden ? T.surfaceAlt : acct.color + '12',
+        borderBottom: `1px solid ${isHidden ? T.divider : acct.color + '28'}`,
         padding: '18px 20px',
         display: 'flex', alignItems: 'flex-start', gap: 14,
       }}>
         <div style={{
           width: 46, height: 46, borderRadius: 13,
-          background: acct.color, color: 'white',
+          background: isHidden ? T.textMuted + '30' : acct.color, color: 'white',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 12, fontWeight: 700, letterSpacing: 0.4,
           flexShrink: 0,
@@ -65,22 +71,52 @@ function AccountDetailCard({
           {acct.glyph}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: T.text }}>{acct.name}</div>
+          <div style={{ fontSize: 16, fontWeight: 700, color: T.text, display: 'flex', alignItems: 'center', gap: 8 }}>
+            {acct.name}
+            {isHidden && (
+              <span style={{
+                fontSize: 10, fontWeight: 600, color: T.textMuted,
+                background: T.surfaceAlt, border: `1px solid ${T.border}`,
+                borderRadius: 4, padding: '1px 6px', letterSpacing: 0.3,
+              }}>
+                TIDAK DIHITUNG
+              </span>
+            )}
+          </div>
           <div style={{ fontSize: 12, color: T.textSubtle, marginTop: 2 }}>{acct.subtitle}</div>
         </div>
-        <button
-          onClick={onEdit}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5,
-            padding: '5px 10px', borderRadius: 7,
-            border: `1px solid ${T.border}`,
-            background: T.surface, color: T.textMuted,
-            cursor: 'pointer', fontSize: 12, fontWeight: 600,
-            fontFamily: T.fontSans,
-          }}
-        >
-          {Icon.edit(13)} Edit
-        </button>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <button
+            onClick={onToggleHide}
+            title={isHidden ? 'Masukkan ke total aset' : 'Keluarkan dari total aset'}
+            style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              width: 30, height: 30, borderRadius: 7,
+              border: `1px solid ${isHidden ? T.borderStrong : T.border}`,
+              background: isHidden ? T.surfaceAlt : T.surface,
+              color: isHidden ? T.textMuted : T.textMuted,
+              cursor: 'pointer',
+            }}
+          >
+            {isHidden
+              ? <EyeOff size={14} />
+              : <Eye size={14} />
+            }
+          </button>
+          <button
+            onClick={onEdit}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              padding: '5px 10px', borderRadius: 7,
+              border: `1px solid ${T.border}`,
+              background: T.surface, color: T.textMuted,
+              cursor: 'pointer', fontSize: 12, fontWeight: 600,
+              fontFamily: T.fontSans,
+            }}
+          >
+            {Icon.edit(13)} Edit
+          </button>
+        </div>
       </div>
 
       {/* Balance + monthly stats */}
@@ -251,14 +287,25 @@ export default function RekeningPage() {
     showToast(`Rekening "${name}" telah dihapus`, false);
   }
 
-  const totalBalance = accounts.reduce((s, a) => s + a.balance, 0);
-  const monthlyNet = transactions.reduce((s, t) => t.type !== 'transfer' ? s + t.amount : s, 0);
+  function handleToggleHide(id: string) {
+    setAccounts(prev => prev.map(a => a.id === id ? { ...a, hidden: !a.hidden } : a));
+  }
+
+  const visibleAccounts = accounts.filter(a => !a.hidden);
+  const totalBalance = visibleAccounts.reduce((s, a) => s + a.balance, 0);
+  const hiddenCount = accounts.length - visibleAccounts.length;
+  const monthlyNet = transactions
+    .filter(t => t.type !== 'transfer' && visibleAccounts.some(a => a.id === t.acct))
+    .reduce((s, t) => s + t.amount, 0);
 
   const visibleGroups = GROUP_CONFIG.filter(g =>
     accounts.some(a => (g.types as readonly string[]).includes(a.type))
   );
+  const visibleGroupsWithBalance = GROUP_CONFIG.filter(g =>
+    visibleAccounts.some(a => (g.types as readonly string[]).includes(a.type))
+  );
 
-  const summaryGridCols = `1.6fr ${visibleGroups.map(() => '1fr').join(' ')}`;
+  const summaryGridCols = `1.6fr ${visibleGroupsWithBalance.map(() => '1fr').join(' ')}`;
 
   return (
     <div style={{ fontFamily: T.fontSans }}>
@@ -295,6 +342,11 @@ export default function RekeningPage() {
           </h1>
           <div style={{ fontSize: 12.5, color: T.textSubtle, marginTop: 3 }}>
             {accounts.length} rekening aktif · April 2026
+            {hiddenCount > 0 && (
+              <span style={{ color: T.textMuted, marginLeft: 6 }}>
+                · {hiddenCount} tidak dihitung
+              </span>
+            )}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
@@ -321,8 +373,18 @@ export default function RekeningPage() {
           <div style={{
             fontSize: 11.5, fontWeight: 600, color: T.textMuted,
             letterSpacing: 0.3, marginBottom: 8,
+            display: 'flex', alignItems: 'center', gap: 6,
           }}>
-            TOTAL SALDO
+            TOTAL ASET
+            {hiddenCount > 0 && (
+              <span style={{
+                fontSize: 10, fontWeight: 600, color: T.textMuted,
+                background: T.surfaceAlt, border: `1px solid ${T.border}`,
+                borderRadius: 4, padding: '1px 5px',
+              }}>
+                {hiddenCount} DISEMBUNYIKAN
+              </span>
+            )}
           </div>
           <div style={{
             fontSize: 32, fontWeight: 700, color: T.text,
@@ -340,11 +402,11 @@ export default function RekeningPage() {
         </div>
 
         {/* Per-group breakdown */}
-        {visibleGroups.map((g, i) => {
-          const bal = accounts
+        {visibleGroupsWithBalance.map((g, i) => {
+          const bal = visibleAccounts
             .filter(a => (g.types as readonly string[]).includes(a.type))
             .reduce((s, a) => s + a.balance, 0);
-          const count = accounts.filter(a => (g.types as readonly string[]).includes(a.type)).length;
+          const count = visibleAccounts.filter(a => (g.types as readonly string[]).includes(a.type)).length;
           return (
             <div key={i} style={{
               background: g.tint,
@@ -374,7 +436,9 @@ export default function RekeningPage() {
           <AccountDetailCard
             key={a.id}
             acct={a}
+            isHidden={!!a.hidden}
             onEdit={() => setEditingAccount(a)}
+            onToggleHide={() => handleToggleHide(a.id)}
           />
         ))}
         <AddAccountCard onClick={() => setShowAddModal(true)} />

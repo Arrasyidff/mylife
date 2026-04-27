@@ -8,6 +8,7 @@ export type Account = {
   color: string;
   glyph: string;
   type: AccountType;
+  hidden?: boolean;
 };
 
 export type BudgetPeriod = 'weekly' | 'monthly' | 'yearly';
