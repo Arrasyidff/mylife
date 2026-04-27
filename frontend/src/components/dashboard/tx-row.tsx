@@ -1,7 +1,7 @@
 import type { Transaction } from '@/lib/dashboard-data';
 import { accounts } from '@/lib/dashboard-data';
 import { T } from '@/lib/tokens';
-import { formatRp } from '@/lib/format';
+import { formatRp, formatTxDate } from '@/lib/format';
 import { CatBubble } from './cat-bubble';
 import { UserBadge } from './user-badge';
 
@@ -39,7 +39,7 @@ export function TxRow({ t, showAcct = true }: TxRowProps) {
               <span style={{ margin: '0 6px' }}>·</span>
             </>
           )}
-          {t.date}
+          {formatTxDate(t.date)}
         </div>
       </div>
       <div style={{

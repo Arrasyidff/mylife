@@ -1,6 +1,6 @@
 "use client";
 import { T } from '@/lib/tokens';
-import { formatRp } from '@/lib/format';
+import { formatRp, formatTxDate } from '@/lib/format';
 import { Icon } from '@/components/ui/icon';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { CatBubble } from '@/components/dashboard/cat-bubble';
@@ -330,7 +330,7 @@ export default function MobilePage() {
             {transactions.slice(0, 4).map((t, i) => {
               const acct  = accounts.find(a => a.id === t.acct);
               const isIn  = t.amount > 0;
-              const dateShort = t.date.split(',')[1]?.trim() ?? t.date;
+              const dateShort = formatTxDate(t.date).split(',')[1]?.trim() ?? formatTxDate(t.date);
               return (
                 <div key={t.id} style={{
                   display: 'flex',

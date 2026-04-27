@@ -6,12 +6,12 @@ import { CatBubble } from '@/components/dashboard/cat-bubble';
 import { UserBadge } from '@/components/dashboard/user-badge';
 import { Btn } from '@/components/ui/btn';
 import { accounts, budgets, type Transaction } from '@/lib/dashboard-data';
-import { formatRp, nowDatetimeLocal, fromDatetimeLocal } from '@/lib/format';
+import { formatRp, toDatetimeLocal, fromDatetimeLocal } from '@/lib/format';
 
 const TX_TYPES = [
-  { id: 'expense',  label: 'Pengeluaran', color: T.danger,  },
-  { id: 'income',   label: 'Pemasukan',   color: T.primary, },
-  { id: 'transfer', label: 'Transfer',    color: '#1846A8', },
+  { id: 'expense',  label: 'Pengeluaran', color: T.danger   },
+  { id: 'income',   label: 'Pemasukan',   color: T.primary  },
+  { id: 'transfer', label: 'Transfer',    color: '#1846A8'  },
 ] as const;
 
 type TxTypeId = typeof TX_TYPES[number]['id'];
@@ -28,64 +28,57 @@ const EXPENSE_CATS = [
 ];
 
 const INCOME_CATS = [
-  { id: 'salary',   name: 'Gaji'      },
-  { id: 'fun',      name: 'Bonus'     },
-  { id: 'home',     name: 'Sewa'      },
-  { id: 'edu',      name: 'Lainnya'   },
+  { id: 'salary', name: 'Gaji'    },
+  { id: 'fun',    name: 'Bonus'   },
+  { id: 'home',   name: 'Sewa'    },
+  { id: 'edu',    name: 'Lainnya' },
 ];
 
-interface AddTransactionModalProps {
+interface EditTransactionModalProps {
+  tx: Transaction;
   onClose: () => void;
-  onSave: (tx: Omit<Transaction, 'id'>) => void;
+  onSave: (tx: Transaction) => void;
+  onDelete: (id: number) => void;
 }
 
-function Field({ label, children, hint }: {
-  label: string;
-  children: React.ReactNode;
-  hint?: string;
-}) {
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 16 }}>
       <div style={{ fontSize: 11, fontWeight: 700, color: T.textMuted, marginBottom: 7, letterSpacing: 0.5 }}>
         {label.toUpperCase()}
       </div>
       {children}
-      {hint && <div style={{ fontSize: 11.5, color: T.textSubtle, marginTop: 5 }}>{hint}</div>}
     </div>
   );
 }
 
-function InputRow({ children, suffix, style }: {
-  children: React.ReactNode;
-  suffix?: React.ReactNode;
-  style?: React.CSSProperties;
-}) {
+function InputRow({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
     <div style={{
       display: 'flex', alignItems: 'center',
-      background: T.surfaceAlt,
-      border: `1px solid ${T.border}`,
+      background: T.surfaceAlt, border: `1px solid ${T.border}`,
       borderRadius: 9, padding: '10px 12px',
-      fontSize: 13.5, color: T.text,
-      ...style,
+      fontSize: 13.5, color: T.text, ...style,
     }}>
-      <div style={{ flex: 1, minWidth: 0 }}>{children}</div>
-      {suffix}
+      {children}
     </div>
   );
 }
 
-export function AddTransactionModal({ onClose, onSave }: AddTransactionModalProps) {
-  const [txType,       setTxType]       = useState<TxTypeId>('expense');
-  const [amountRaw,    setAmountRaw]    = useState('');
-  const [merch,        setMerch]        = useState('');
-  const [expenseCat,   setExpenseCat]   = useState('food');
-  const [incomeCat,    setIncomeCat]    = useState('salary');
-  const [selectedAcct, setSelectedAcct] = useState(accounts[0].id);
-  const [dateVal,      setDateVal]      = useState(nowDatetimeLocal);
-  const [selectedUser, setSelectedUser] = useState<'H' | 'W'>('W');
-  const [note,         setNote]         = useState('');
-  const [errors,       setErrors]       = useState<{ amount?: string; merch?: string }>({});
+export function EditTransactionModal({ tx, onClose, onSave, onDelete }: EditTransactionModalProps) {
+  const initType = tx.type;
+  const initAmt  = Math.abs(tx.amount);
+
+  const [txType,       setTxType]       = useState<TxTypeId>(initType);
+  const [amountRaw,    setAmountRaw]    = useState(String(initAmt));
+  const [merch,        setMerch]        = useState(tx.merch);
+  const [expenseCat,   setExpenseCat]   = useState(initType === 'expense' ? tx.cat : 'food');
+  const [incomeCat,    setIncomeCat]    = useState(initType === 'income'  ? tx.cat : 'salary');
+  const [selectedAcct, setSelectedAcct] = useState(tx.acct);
+  const [dateVal,      setDateVal]      = useState(toDatetimeLocal(tx.date));
+  const [selectedUser, setSelectedUser] = useState<'H' | 'W'>(tx.user);
+  const [note,         setNote]         = useState(tx.note ?? '');
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const amountNum = Number(amountRaw.replace(/\./g, '') || '0');
   const amountDisplay = amountNum > 0 ? amountNum.toLocaleString('id-ID') : '';
@@ -100,8 +93,6 @@ export function AddTransactionModal({ onClose, onSave }: AddTransactionModalProp
   const budgetPct = budget ? Math.round((budget.used / budget.total) * 100) : 0;
   const showBudgetWarning = txType === 'expense' && !!budget && budgetPct >= 75;
 
-  const acct = accounts.find(a => a.id === selectedAcct) ?? accounts[0];
-
   const amountColor =
     txType === 'income'   ? T.primaryDark :
     txType === 'transfer' ? '#1846A8'     : T.danger;
@@ -109,25 +100,21 @@ export function AddTransactionModal({ onClose, onSave }: AddTransactionModalProp
   function handleAmountKey(e: React.ChangeEvent<HTMLInputElement>) {
     const digits = e.target.value.replace(/\D/g, '');
     setAmountRaw(digits);
-    if (errors.amount) setErrors(p => ({ ...p, amount: undefined }));
   }
 
   function handleSave() {
-    const errs: typeof errors = {};
-    if (!amountNum) errs.amount = 'Masukkan jumlah transaksi';
-    if (!merch.trim()) errs.merch = 'Masukkan nama merchant';
-    if (Object.keys(errs).length) { setErrors(errs); return; }
-
+    if (!amountNum || !merch.trim()) return;
     const sign = txType === 'income' ? 1 : -1;
     onSave({
-      user:  selectedUser,
-      cat:   selectedCat,
-      merch: merch.trim(),
-      acct:  selectedAcct,
+      id:     tx.id,
+      user:   selectedUser,
+      cat:    selectedCat,
+      merch:  merch.trim(),
+      acct:   selectedAcct,
       amount: sign * amountNum,
-      date:  fromDatetimeLocal(dateVal),
-      type:  txType,
-      note:  note.trim() || undefined,
+      date:   fromDatetimeLocal(dateVal),
+      type:   txType,
+      note:   note.trim() || undefined,
     });
   }
 
@@ -161,12 +148,12 @@ export function AddTransactionModal({ onClose, onSave }: AddTransactionModalProp
           flexShrink: 0,
         }}>
           <div>
-            <div style={{ fontSize: 11, color: T.primary, fontWeight: 700, letterSpacing: 0.5, marginBottom: 3 }}>TRANSAKSI BARU</div>
+            <div style={{ fontSize: 11, color: T.primary, fontWeight: 700, letterSpacing: 0.5, marginBottom: 3 }}>UBAH TRANSAKSI</div>
             <h2 style={{ margin: 0, fontSize: 19, fontWeight: 700, letterSpacing: -0.4, color: T.text }}>
-              Tambah Transaksi
+              {tx.merch}
             </h2>
             <div style={{ fontSize: 12.5, color: T.textMuted, marginTop: 4 }}>
-              Catat pengeluaran, pemasukan, atau transfer
+              Klik baris untuk mengubah detail transaksi
             </div>
           </div>
           <button
@@ -203,7 +190,6 @@ export function AddTransactionModal({ onClose, onSave }: AddTransactionModalProp
                     fontWeight: 700, fontSize: 13,
                     fontFamily: T.fontSans,
                     boxShadow: active ? '0 1px 4px rgba(20,30,25,0.08)' : 'none',
-                    transition: 'all 0.15s',
                   }}
                 >
                   {tt.label}
@@ -220,7 +206,6 @@ export function AddTransactionModal({ onClose, onSave }: AddTransactionModalProp
             <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: 6 }}>
               <span style={{ fontSize: 18, color: T.textSubtle, fontWeight: 600 }}>Rp</span>
               <input
-                autoFocus
                 value={amountDisplay}
                 onChange={handleAmountKey}
                 placeholder="0"
@@ -238,18 +223,15 @@ export function AddTransactionModal({ onClose, onSave }: AddTransactionModalProp
                 }}
               />
             </div>
-            {errors.amount && (
-              <div style={{ fontSize: 11.5, color: T.danger, marginTop: 6 }}>{errors.amount}</div>
-            )}
           </div>
 
           {/* Merchant */}
           <Field label="Merchant / Keterangan">
-            <InputRow style={{ borderColor: errors.merch ? T.danger : T.border }}>
+            <InputRow>
               <input
                 value={merch}
-                onChange={e => { setMerch(e.target.value); if (errors.merch) setErrors(p => ({ ...p, merch: undefined })); }}
-                placeholder="Misal: Kopi Kenangan, Gaji Bulanan…"
+                onChange={e => setMerch(e.target.value)}
+                placeholder="Nama merchant atau keterangan"
                 style={{
                   width: '100%', border: 'none', outline: 'none',
                   background: 'transparent', fontSize: 13.5, color: T.text,
@@ -257,12 +239,9 @@ export function AddTransactionModal({ onClose, onSave }: AddTransactionModalProp
                 }}
               />
             </InputRow>
-            {errors.merch && (
-              <div style={{ fontSize: 11.5, color: T.danger, marginTop: 4 }}>{errors.merch}</div>
-            )}
           </Field>
 
-          {/* Category (not shown for transfer) */}
+          {/* Category */}
           {txType !== 'transfer' && (
             <Field label="Kategori">
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
@@ -278,7 +257,7 @@ export function AddTransactionModal({ onClose, onSave }: AddTransactionModalProp
                         background: active ? T.primaryLight : T.surfaceAlt,
                         border: `1px solid ${active ? T.primary : T.border}`,
                         borderRadius: 10, cursor: 'pointer',
-                        fontFamily: T.fontSans, transition: 'all 0.12s',
+                        fontFamily: T.fontSans,
                       }}
                     >
                       <CatBubble cat={c.id} size={32} />
@@ -304,9 +283,8 @@ export function AddTransactionModal({ onClose, onSave }: AddTransactionModalProp
                 <div style={{ fontSize: 12.5, fontWeight: 700, color: '#8C5A0E', marginBottom: 2 }}>
                   Anggaran {budget.name} sudah {budgetPct}% terpakai
                 </div>
-                <div style={{ fontSize: 11.5, color: '#8C5A0E', lineHeight: 1.4 }}>
-                  {formatRp(budget.used)} dari {formatRp(budget.total)}.{' '}
-                  {budgetPct >= 100 ? 'Transaksi ini akan menambah selisih.' : 'Mendekati batas anggaran.'}
+                <div style={{ fontSize: 11.5, color: '#8C5A0E' }}>
+                  {formatRp(budget.used)} dari {formatRp(budget.total)}.
                 </div>
               </div>
             </div>
@@ -351,11 +329,9 @@ export function AddTransactionModal({ onClose, onSave }: AddTransactionModalProp
                 onChange={e => setDateVal(e.target.value)}
                 style={{
                   width: '100%', padding: '10px 12px',
-                  background: T.surfaceAlt,
-                  border: `1px solid ${T.border}`,
+                  background: T.surfaceAlt, border: `1px solid ${T.border}`,
                   borderRadius: 9, fontSize: 13, color: T.text,
-                  fontFamily: T.fontSans, outline: 'none',
-                  boxSizing: 'border-box',
+                  fontFamily: T.fontSans, outline: 'none', boxSizing: 'border-box',
                 }}
               />
             </Field>
@@ -393,7 +369,7 @@ export function AddTransactionModal({ onClose, onSave }: AddTransactionModalProp
               <input
                 value={note}
                 onChange={e => setNote(e.target.value)}
-                placeholder="Misal: belanja mingguan, bonus Q1…"
+                placeholder="Tambahkan catatan…"
                 style={{
                   width: '100%', border: 'none', outline: 'none',
                   background: 'transparent', fontSize: 13.5, color: T.text,
@@ -408,21 +384,62 @@ export function AddTransactionModal({ onClose, onSave }: AddTransactionModalProp
         <div style={{
           padding: '14px 24px',
           borderTop: `1px solid ${T.divider}`,
-          display: 'flex', gap: 10,
           background: T.surfaceAlt,
           flexShrink: 0,
         }}>
-          <Btn kind="ghost" onClick={onClose} style={{ flex: 1, justifyContent: 'center', padding: '10px' }}>
-            Batal
-          </Btn>
-          <Btn
-            kind="primary"
-            icon={Icon.check(14)}
-            onClick={handleSave}
-            style={{ flex: 2, justifyContent: 'center', padding: '10px' }}
-          >
-            Simpan {txType === 'income' ? 'Pemasukan' : txType === 'transfer' ? 'Transfer' : 'Pengeluaran'}
-          </Btn>
+          {confirmDelete ? (
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                style={{
+                  flex: 1, padding: '10px', borderRadius: 10,
+                  border: `1px solid ${T.border}`, background: T.surface,
+                  cursor: 'pointer', fontSize: 13, fontWeight: 600, color: T.textMuted,
+                  fontFamily: T.fontSans,
+                }}
+              >
+                Batal
+              </button>
+              <button
+                onClick={() => onDelete(tx.id)}
+                style={{
+                  flex: 2, padding: '10px', borderRadius: 10,
+                  border: 'none', background: T.danger,
+                  cursor: 'pointer', fontSize: 13, fontWeight: 700, color: '#fff',
+                  fontFamily: T.fontSans,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+                }}
+              >
+                {Icon.close(14)} Yakin Hapus?
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button
+                onClick={() => setConfirmDelete(true)}
+                style={{
+                  padding: '10px 14px', borderRadius: 10,
+                  border: `1px solid ${T.border}`, background: T.surface,
+                  cursor: 'pointer', fontSize: 13, fontWeight: 600, color: T.danger,
+                  fontFamily: T.fontSans,
+                  display: 'flex', alignItems: 'center', gap: 6,
+                }}
+              >
+                {Icon.close(13)} Hapus
+              </button>
+              <Btn kind="ghost" onClick={onClose} style={{ flex: 1, justifyContent: 'center', padding: '10px' }}>
+                Batal
+              </Btn>
+              <Btn
+                kind="primary"
+                icon={Icon.check(14)}
+                onClick={handleSave}
+                style={{ flex: 2, justifyContent: 'center', padding: '10px' }}
+              >
+                Simpan Perubahan
+              </Btn>
+            </div>
+          )}
         </div>
       </div>
     </>
