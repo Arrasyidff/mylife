@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { transactions, budgets } from '@/lib/dashboard-data';
 import {
   BarChart, Bar, PieChart, Pie, Cell,
@@ -86,8 +86,22 @@ function HWTooltip({ active, payload, label }: {
 
 // ── Page ────────────────────────────────────────────────────────
 export default function LaporanPage() {
-  const [period,    setPeriod]    = useState(1);      // 0=Mingguan 1=Bulanan 2=Tahunan
-  const [viewMonth, setViewMonth] = useState(TODAY.getMonth()); // 0-indexed; only used in Bulanan mode
+  const [period,     setPeriod]    = useState(1);      // 0=Mingguan 1=Bulanan 2=Tahunan
+  const [viewMonth,  setViewMonth] = useState(TODAY.getMonth());
+  const [viewYear,   setViewYear]  = useState(TODAY.getFullYear());
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!pickerOpen) return;
+    function onClickOutside(e: MouseEvent) {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setPickerOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, [pickerOpen]);
 
   // ── Filtered expense transactions ────────────────────────────
   const { periodExpenses, periodLabel, btnLabel } = useMemo(() => {
@@ -104,25 +118,25 @@ export default function LaporanPage() {
     }
 
     if (period === 1) {
-      const isCurrentMonth = viewMonth === TODAY.getMonth();
-      const daysInMonth    = new Date(2026, viewMonth + 1, 0).getDate();
+      const isCurrentMonth = viewYear === TODAY.getFullYear() && viewMonth === TODAY.getMonth();
+      const daysInMonth    = new Date(viewYear, viewMonth + 1, 0).getDate();
       const lastDay        = isCurrentMonth ? TODAY.getDate() : daysInMonth;
       return {
         periodExpenses: expenses.filter(t => {
           const d = new Date(t.date);
-          return d.getFullYear() === 2026 && d.getMonth() === viewMonth;
+          return d.getFullYear() === viewYear && d.getMonth() === viewMonth;
         }),
-        periodLabel: `1–${lastDay} ${MONTH_FULL[viewMonth]} 2026`,
-        btnLabel: `${MONTH_SHORT[viewMonth]} 2026`,
+        periodLabel: `1–${lastDay} ${MONTH_FULL[viewMonth]} ${viewYear}`,
+        btnLabel: `${MONTH_SHORT[viewMonth]} ${viewYear}`,
       };
     }
 
     return {
-      periodExpenses: expenses.filter(t => new Date(t.date).getFullYear() === 2026),
-      periodLabel: 'Januari – April 2026',
-      btnLabel: 'Tahun 2026',
+      periodExpenses: expenses.filter(t => new Date(t.date).getFullYear() === viewYear),
+      periodLabel: `Januari – Desember ${viewYear}`,
+      btnLabel: `Tahun ${viewYear}`,
     };
-  }, [period, viewMonth]);
+  }, [period, viewMonth, viewYear]);
 
   // ── Category breakdown ───────────────────────────────────────
   const catBreakdown = useMemo(() => {
@@ -172,9 +186,9 @@ export default function LaporanPage() {
     }
 
     if (period === 1) {
-      const daysInMonth = new Date(2026, viewMonth + 1, 0).getDate();
+      const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
       const data = Array.from({ length: daysInMonth }, (_, i) => {
-        const date  = new Date(2026, viewMonth, i + 1);
+        const date  = new Date(viewYear, viewMonth, i + 1);
         const dayTx = periodExpenses.filter(t => isSameDay(new Date(t.date), date));
         return {
           key: String(i + 1),
@@ -182,7 +196,7 @@ export default function LaporanPage() {
           istri: dayTx.filter(t => t.user === 'W').reduce((s, t) => s + Math.abs(t.amount), 0),
         };
       });
-      const divisor = viewMonth === TODAY.getMonth() ? TODAY.getDate() : daysInMonth;
+      const divisor = (viewYear === TODAY.getFullYear() && viewMonth === TODAY.getMonth()) ? TODAY.getDate() : daysInMonth;
       const total   = data.reduce((s, d) => s + d.suami + d.istri, 0);
       return { chartData: data, chartTitle: 'Pengeluaran Harian', avgAmount: Math.round(total / divisor) };
     }
@@ -197,7 +211,7 @@ export default function LaporanPage() {
     });
     const total = data.reduce((s, d) => s + d.suami + d.istri, 0);
     return { chartData: data, chartTitle: 'Pengeluaran per Bulan', avgAmount: Math.round(total / 12) };
-  }, [period, viewMonth, periodExpenses]);
+  }, [period, viewMonth, viewYear, periodExpenses]);
 
   const maxChart = Math.max(...chartData.map(d => d.suami + d.istri), 1);
 
@@ -206,9 +220,9 @@ export default function LaporanPage() {
     const topCat     = catBreakdown[0];
     const biggestTx  = [...periodExpenses].sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))[0];
     const biggestDate = biggestTx ? new Date(biggestTx.date) : null;
-    const daysInMonth = new Date(2026, viewMonth + 1, 0).getDate();
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
     const daysRange   = period === 0 ? 7 : period === 1
-      ? (viewMonth === TODAY.getMonth() ? TODAY.getDate() : daysInMonth)
+      ? ((viewYear === TODAY.getFullYear() && viewMonth === TODAY.getMonth()) ? TODAY.getDate() : daysInMonth)
       : 365;
     const spendingDays = new Set(periodExpenses.map(t => t.date.split('T')[0])).size;
     return [
@@ -221,7 +235,7 @@ export default function LaporanPage() {
       { label: 'RATA-RATA HARIAN',     value: formatRp(avgAmount),        sub: period === 1 && viewMonth === 2 ? '−12% vs Maret' : 'per hari', tone: T.text },
       { label: 'HARI TANPA SPENDING',  value: `${daysRange - spendingDays} hari`, sub: `dari ${daysRange} hari`, tone: T.primaryDark },
     ];
-  }, [catBreakdown, periodExpenses, avgAmount, period, viewMonth]);
+  }, [catBreakdown, periodExpenses, avgAmount, period, viewMonth, viewYear]);
 
   // ── Month comparison rows (Bulanan only) ─────────────────────
   const monthRows = useMemo((): MonthRow[] => {
@@ -263,7 +277,62 @@ export default function LaporanPage() {
             );
           })}
         </div>
-        <Btn kind="ghost" size="sm" icon={Icon.calendar(14)}>{btnLabel}</Btn>
+        <div ref={pickerRef} style={{ position: 'relative' }}>
+          <Btn
+            kind="ghost" size="sm" icon={Icon.calendar(14)}
+            onClick={() => setPickerOpen(o => !o)}
+            style={{ userSelect: 'none' }}
+          >
+            {btnLabel}
+          </Btn>
+          {pickerOpen && (
+            <div style={{
+              position: 'absolute', right: 0, top: 'calc(100% + 6px)', zIndex: 200,
+              background: T.surface, border: `1px solid ${T.border}`, borderRadius: 10,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.12)', padding: 14, width: 220,
+            }}>
+              {/* Year navigation */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: period === 1 ? 12 : 0 }}>
+                <button
+                  onClick={() => setViewYear(y => y - 1)}
+                  style={{ width: 28, height: 28, borderRadius: 7, border: `1px solid ${T.border}`, background: T.surfaceAlt, color: T.text, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  {Icon.chev(12, 'left')}
+                </button>
+                <span style={{ fontWeight: 700, fontSize: 14, color: T.text }}>{viewYear}</span>
+                <button
+                  onClick={() => setViewYear(y => y + 1)}
+                  style={{ width: 28, height: 28, borderRadius: 7, border: `1px solid ${T.border}`, background: T.surfaceAlt, color: T.text, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  {Icon.chev(12, 'right')}
+                </button>
+              </div>
+              {/* Month grid — only in Bulanan mode */}
+              {period === 1 && (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 5 }}>
+                  {MONTH_SHORT.map((m, i) => {
+                    const isCurrent = i === TODAY.getMonth() && viewYear === TODAY.getFullYear();
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => { setViewMonth(i); setPickerOpen(false); }}
+                        style={{
+                          padding: '7px 4px', borderRadius: 7, border: 'none', fontSize: 12.5, fontWeight: 600,
+                          background: i === viewMonth ? T.primaryLight : 'transparent',
+                          color: i === viewMonth ? T.primaryDark : isCurrent ? T.primary : T.text,
+                          cursor: 'pointer', fontFamily: T.fontSans,
+                          outline: isCurrent && i !== viewMonth ? `1.5px solid ${T.primaryLight}` : 'none',
+                        }}
+                      >
+                        {m}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Top stats */}
