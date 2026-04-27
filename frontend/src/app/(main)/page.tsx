@@ -17,9 +17,6 @@ import { CheckCircle, XCircle, AlertTriangle, ArrowUp, ArrowDown } from 'lucide-
 
 const MONTH_NAMES = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
-const MONTH_INCOME  = 14_750_000;
-const MONTH_EXPENSE =  9_412_500;
-
 // Mock "today" sesuai data
 const TODAY = new Date(2026, 3, 27);
 
@@ -31,7 +28,12 @@ export default function DashboardPage() {
   const [toast, setToast] = useState<Toast | null>(null);
 
   const totalAssets = accounts.reduce((s, a) => s + a.balance, 0);
-  const net = MONTH_INCOME - MONTH_EXPENSE;
+
+  const currentMonthPrefix = `${TODAY.getFullYear()}-${String(TODAY.getMonth() + 1).padStart(2, '0')}`;
+  const monthTxList = txList.filter(tx => tx.date.startsWith(currentMonthPrefix));
+  const monthIncome  = monthTxList.filter(tx => tx.type === 'income').reduce((s, tx) => s + tx.amount, 0);
+  const monthExpense = monthTxList.filter(tx => tx.type === 'expense').reduce((s, tx) => s + Math.abs(tx.amount), 0);
+  const net = monthIncome - monthExpense;
 
   const currentMonth = MONTH_NAMES[TODAY.getMonth()];
   const currentYear  = TODAY.getFullYear();
@@ -111,23 +113,23 @@ export default function DashboardPage() {
         />
         <SummaryStat
           label="Pemasukan Bulan Ini"
-          value={formatRp(MONTH_INCOME)}
-          delta="vs Rp 14.500.000 lalu"
+          value={formatRp(monthIncome)}
+          delta={`${monthTxList.filter(tx => tx.type === 'income').length} transaksi masuk`}
           deltaTone="up"
           icon={<ArrowUp size={13} color={T.primary} />}
         />
         <SummaryStat
           label="Pengeluaran Bulan Ini"
-          value={formatRp(MONTH_EXPENSE)}
-          delta="73% dari rata-rata"
+          value={formatRp(monthExpense)}
+          delta={`${monthTxList.filter(tx => tx.type === 'expense').length} transaksi keluar`}
           deltaTone="down"
           icon={<ArrowDown size={13} color={T.danger} />}
         />
         <SummaryStat
           label="Net Bulan Ini"
           value={formatRp(net)}
-          delta="Surplus sehat"
-          deltaTone="up"
+          delta={net >= 0 ? 'Surplus bulan ini' : 'Defisit bulan ini'}
+          deltaTone={net >= 0 ? 'up' : 'down'}
         />
       </div>
 
@@ -184,7 +186,7 @@ export default function DashboardPage() {
             <div>
               <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: T.text }}>Transaksi Terkini</h3>
               <div style={{ fontSize: 12, color: T.textSubtle, marginTop: 3 }}>
-                {txList.length} transaksi bulan ini
+                {monthTxList.length} transaksi bulan ini
               </div>
             </div>
           </div>
