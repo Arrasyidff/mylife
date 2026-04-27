@@ -18,7 +18,8 @@ const PERIOD_LABEL: Record<string, string> = {
 };
 
 const MONTH_NAMES = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-const BASE = new Date(2026, 3); // April 2026
+const BASE  = new Date(2026, 3); // April 2026
+const TODAY = new Date(2026, 3, 27);
 
 type StatusFilter = 'all' | 'safe' | 'warn' | 'over';
 
@@ -153,6 +154,10 @@ export default function AnggaranPage() {
   const totalBudget  = displayBudgets.reduce((s, b) => s + b.total, 0);
   const totalUsed    = displayBudgets.reduce((s, b) => s + b.used,  0);
   const overallPct   = totalBudget > 0 ? Math.round((totalUsed / totalBudget) * 100) : 0;
+
+  const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+  const isCurrentMonth = currentDate.getFullYear() === TODAY.getFullYear() && currentDate.getMonth() === TODAY.getMonth();
+  const daysLeft = isCurrentMonth ? daysInMonth - TODAY.getDate() : currentDate > TODAY ? daysInMonth : 0;
   const safeCount    = displayBudgets.filter(b => b.used / b.total < 0.75).length;
   const warnCount    = displayBudgets.filter(b => { const p = b.used / b.total; return p >= 0.75 && p < 1; }).length;
   const overCount    = displayBudgets.filter(b => b.used >= b.total).length;
@@ -272,7 +277,7 @@ export default function AnggaranPage() {
             <ProgressBar pct={overallPct} height={8} />
           </div>
           <div style={{ fontSize: 12, color: T.textMuted, marginTop: 6 }}>
-            {overallPct}% terpakai · 5 hari tersisa di bulan ini
+            {overallPct}% terpakai · {daysLeft} hari tersisa di bulan ini
           </div>
         </div>
 

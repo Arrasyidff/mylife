@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { T } from '@/lib/tokens';
 import { Icon } from '@/components/ui/icon';
 import { Btn } from '@/components/ui/btn';
@@ -159,17 +160,19 @@ function AccountDetailCard({
 
       {/* Footer */}
       <div style={{ padding: '12px 20px 18px' }}>
-        <button style={{
+        <Link href="/transaksi" style={{
+          display: 'block', textAlign: 'center',
           width: '100%', padding: '9px',
           borderRadius: 8,
           border: `1px solid ${T.border}`,
           background: T.surfaceAlt,
           color: T.primaryDark,
           fontSize: 12.5, fontWeight: 600,
-          cursor: 'pointer', fontFamily: T.fontSans,
+          textDecoration: 'none', fontFamily: T.fontSans,
+          boxSizing: 'border-box',
         }}>
           Lihat semua transaksi →
-        </button>
+        </Link>
       </div>
     </div>
   );
