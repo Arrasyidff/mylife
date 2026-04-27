@@ -37,6 +37,7 @@ const INCOME_CATS = [
 interface AddTransactionModalProps {
   onClose: () => void;
   onSave: (tx: Omit<Transaction, 'id'>) => void;
+  initialType?: TxTypeId;
 }
 
 function Field({ label, children, hint }: {
@@ -75,17 +76,18 @@ function InputRow({ children, suffix, style }: {
   );
 }
 
-export function AddTransactionModal({ onClose, onSave }: AddTransactionModalProps) {
-  const [txType,       setTxType]       = useState<TxTypeId>('expense');
+export function AddTransactionModal({ onClose, onSave, initialType }: AddTransactionModalProps) {
+  const [txType,       setTxType]       = useState<TxTypeId>(initialType ?? 'expense');
   const [amountRaw,    setAmountRaw]    = useState('');
   const [merch,        setMerch]        = useState('');
   const [expenseCat,   setExpenseCat]   = useState('food');
   const [incomeCat,    setIncomeCat]    = useState('salary');
   const [selectedAcct, setSelectedAcct] = useState(accounts[0].id);
+  const [toAcctId,     setToAcctId]     = useState(accounts[1]?.id ?? accounts[0].id);
   const [dateVal,      setDateVal]      = useState(nowDatetimeLocal);
   const [selectedUser, setSelectedUser] = useState<'H' | 'W'>('W');
   const [note,         setNote]         = useState('');
-  const [errors,       setErrors]       = useState<{ amount?: string; merch?: string }>({});
+  const [errors,       setErrors]       = useState<{ amount?: string; merch?: string; toAcct?: string }>({});
 
   const amountNum = Number(amountRaw.replace(/\./g, '') || '0');
   const amountDisplay = amountNum > 0 ? amountNum.toLocaleString('id-ID') : '';
@@ -115,14 +117,19 @@ export function AddTransactionModal({ onClose, onSave }: AddTransactionModalProp
   function handleSave() {
     const errs: typeof errors = {};
     if (!amountNum) errs.amount = 'Masukkan jumlah transaksi';
-    if (!merch.trim()) errs.merch = 'Masukkan nama merchant';
+    if (txType !== 'transfer' && !merch.trim()) errs.merch = 'Masukkan nama merchant';
+    if (txType === 'transfer' && selectedAcct === toAcctId) errs.toAcct = 'Rekening tujuan harus berbeda';
     if (Object.keys(errs).length) { setErrors(errs); return; }
+
+    const autoMerch = txType === 'transfer' && !merch.trim()
+      ? `Transfer ke ${accounts.find(a => a.id === toAcctId)?.name ?? 'Rekening'}`
+      : merch.trim();
 
     const sign = txType === 'income' ? 1 : -1;
     onSave({
       user:  selectedUser,
       cat:   selectedCat,
-      merch: merch.trim(),
+      merch: autoMerch,
       acct:  selectedAcct,
       amount: sign * amountNum,
       date:  fromDatetimeLocal(dateVal),
@@ -313,34 +320,101 @@ export function AddTransactionModal({ onClose, onSave }: AddTransactionModalProp
           )}
 
           {/* Account */}
-          <Field label="Rekening">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {accounts.map(a => {
-                const active = a.id === selectedAcct;
-                return (
-                  <button
-                    key={a.id}
-                    onClick={() => setSelectedAcct(a.id)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 10,
-                      padding: '10px 12px',
-                      background: active ? T.primaryLight : T.surfaceAlt,
-                      border: `1px solid ${active ? T.primary : T.border}`,
-                      borderRadius: 9, cursor: 'pointer',
-                      fontFamily: T.fontSans, textAlign: 'left',
-                    }}
-                  >
-                    <span style={{ width: 9, height: 9, borderRadius: '50%', background: a.color, flexShrink: 0 }} />
-                    <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: T.text }}>{a.name}</span>
-                    <span style={{ fontSize: 11.5, color: T.textSubtle, fontVariantNumeric: 'tabular-nums' }}>
-                      {formatRp(a.balance)}
-                    </span>
-                    {active && <span style={{ color: T.primary }}>{Icon.check(14)}</span>}
-                  </button>
-                );
-              })}
-            </div>
-          </Field>
+          {txType === 'transfer' ? (
+            <>
+              <Field label="Rekening Asal">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {accounts.map(a => {
+                    const active = a.id === selectedAcct;
+                    return (
+                      <button
+                        key={a.id}
+                        onClick={() => setSelectedAcct(a.id)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 10,
+                          padding: '10px 12px',
+                          background: active ? T.primaryLight : T.surfaceAlt,
+                          border: `1px solid ${active ? T.primary : T.border}`,
+                          borderRadius: 9, cursor: 'pointer',
+                          fontFamily: T.fontSans, textAlign: 'left',
+                        }}
+                      >
+                        <span style={{ width: 9, height: 9, borderRadius: '50%', background: a.color, flexShrink: 0 }} />
+                        <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: T.text }}>{a.name}</span>
+                        <span style={{ fontSize: 11.5, color: T.textSubtle, fontVariantNumeric: 'tabular-nums' }}>
+                          {formatRp(a.balance)}
+                        </span>
+                        {active && <span style={{ color: T.primary }}>{Icon.check(14)}</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </Field>
+              <Field label="Rekening Tujuan">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {accounts.map(a => {
+                    const active = a.id === toAcctId;
+                    const isSame = a.id === selectedAcct;
+                    return (
+                      <button
+                        key={a.id}
+                        onClick={() => { setToAcctId(a.id); if (errors.toAcct) setErrors(p => ({ ...p, toAcct: undefined })); }}
+                        disabled={isSame}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: 10,
+                          padding: '10px 12px',
+                          background: active ? T.primaryLight : isSame ? T.surfaceAlt : T.surfaceAlt,
+                          border: `1px solid ${active ? T.primary : T.border}`,
+                          borderRadius: 9, cursor: isSame ? 'not-allowed' : 'pointer',
+                          fontFamily: T.fontSans, textAlign: 'left',
+                          opacity: isSame ? 0.4 : 1,
+                        }}
+                      >
+                        <span style={{ width: 9, height: 9, borderRadius: '50%', background: a.color, flexShrink: 0 }} />
+                        <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: T.text }}>{a.name}</span>
+                        <span style={{ fontSize: 11.5, color: T.textSubtle, fontVariantNumeric: 'tabular-nums' }}>
+                          {formatRp(a.balance)}
+                        </span>
+                        {active && <span style={{ color: T.primary }}>{Icon.check(14)}</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+                {errors.toAcct && (
+                  <div style={{ fontSize: 11.5, color: T.danger, marginTop: 4 }}>{errors.toAcct}</div>
+                )}
+              </Field>
+            </>
+          ) : (
+            <Field label="Rekening">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {accounts.map(a => {
+                  const active = a.id === selectedAcct;
+                  return (
+                    <button
+                      key={a.id}
+                      onClick={() => setSelectedAcct(a.id)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '10px 12px',
+                        background: active ? T.primaryLight : T.surfaceAlt,
+                        border: `1px solid ${active ? T.primary : T.border}`,
+                        borderRadius: 9, cursor: 'pointer',
+                        fontFamily: T.fontSans, textAlign: 'left',
+                      }}
+                    >
+                      <span style={{ width: 9, height: 9, borderRadius: '50%', background: a.color, flexShrink: 0 }} />
+                      <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: T.text }}>{a.name}</span>
+                      <span style={{ fontSize: 11.5, color: T.textSubtle, fontVariantNumeric: 'tabular-nums' }}>
+                        {formatRp(a.balance)}
+                      </span>
+                      {active && <span style={{ color: T.primary }}>{Icon.check(14)}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
+          )}
 
           {/* Date + User */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>

@@ -8,6 +8,7 @@ import { accounts as INITIAL_ACCOUNTS, transactions, type Account, type Transact
 import { formatRp, formatTxDate } from '@/lib/format';
 import { AddAccountModal } from '@/components/dashboard/add-account-modal';
 import { EditAccountModal } from '@/components/dashboard/edit-account-modal';
+import { AddTransactionModal } from '@/components/dashboard/add-transaction-modal';
 import { CheckCircle, XCircle } from 'lucide-react';
 
 const GROUP_CONFIG = [
@@ -215,6 +216,7 @@ type Toast = { msg: string; ok: boolean };
 export default function RekeningPage() {
   const [accounts, setAccounts] = useState<Account[]>(INITIAL_ACCOUNTS);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
 
@@ -236,6 +238,11 @@ export default function RekeningPage() {
   function handleSave(updated: Account) {
     setAccounts(prev => prev.map(a => a.id === updated.id ? updated : a));
     showToast(`Rekening "${updated.name}" berhasil diperbarui`);
+  }
+
+  function handleTransfer() {
+    setShowTransferModal(false);
+    showToast('Transfer berhasil dicatat');
   }
 
   function handleDelete(id: string) {
@@ -291,7 +298,7 @@ export default function RekeningPage() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-          <Btn kind="ghost" size="sm" icon={Icon.arrowLR(14)}>Transfer</Btn>
+          <Btn kind="ghost" size="sm" icon={Icon.arrowLR(14)} onClick={() => setShowTransferModal(true)}>Transfer</Btn>
           <Btn kind="primary" size="sm" icon={Icon.plus(14)} onClick={() => setShowAddModal(true)}>
             Tambah Rekening
           </Btn>
@@ -386,6 +393,14 @@ export default function RekeningPage() {
           onSave={handleSave}
           onDelete={handleDelete}
           onClose={() => setEditingAccount(null)}
+        />
+      )}
+
+      {showTransferModal && (
+        <AddTransactionModal
+          initialType="transfer"
+          onClose={() => setShowTransferModal(false)}
+          onSave={handleTransfer}
         />
       )}
     </div>
