@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { accounts, budgets, transactions, type Transaction } from '@/lib/dashboard-data';
 import { T } from '@/lib/tokens';
@@ -13,12 +13,13 @@ import { SummaryStat } from '@/components/dashboard/summary-stat';
 import { BudgetRow } from '@/components/dashboard/budget-row';
 import { TxRow } from '@/components/dashboard/tx-row';
 import { AddTransactionModal } from '@/components/dashboard/add-transaction-modal';
-import { CheckCircle, XCircle, AlertTriangle, ArrowUp, ArrowDown } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, ArrowUp, ArrowDown, ChevronDown } from 'lucide-react';
 
 const MONTH_NAMES = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
 // Mock "today" sesuai data
 const TODAY = new Date(2026, 3, 27);
+const TODAY_PREFIX = `${TODAY.getFullYear()}-${String(TODAY.getMonth() + 1).padStart(2, '0')}`;
 
 type Toast = { msg: string; ok: boolean };
 
@@ -26,8 +27,14 @@ export default function DashboardPage() {
   const [txList, setTxList] = useState<Transaction[]>(transactions);
   const [showAdd, setShowAdd] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
+  const [selectedMonth, setSelectedMonth] = useState(TODAY_PREFIX);
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
+  const monthPickerRef = useRef<HTMLDivElement>(null);
 
   const totalAssets = accounts.reduce((s, a) => s + a.balance, 0);
+
+  // Bulan yang tersedia dari data transaksi
+  const availableMonths = Array.from(new Set(txList.map(tx => tx.date.slice(0, 7)))).sort().reverse();
 
   // Rekening: selalu tampilkan Tunai + 3 rekening dengan transaksi terbaru
   const lastTxByAcct: Record<string, string> = {};
@@ -43,16 +50,18 @@ export default function DashboardPage() {
     .slice(0, 3);
   const displayedAccounts = [...recentAccounts, ...tunaiAccounts];
 
-  const currentMonthPrefix = `${TODAY.getFullYear()}-${String(TODAY.getMonth() + 1).padStart(2, '0')}`;
-  const monthTxList = txList.filter(tx => tx.date.startsWith(currentMonthPrefix));
+  const monthTxList = txList.filter(tx => tx.date.startsWith(selectedMonth));
   const monthIncome  = monthTxList.filter(tx => tx.type === 'income').reduce((s, tx) => s + tx.amount, 0);
   const monthExpense = monthTxList.filter(tx => tx.type === 'expense').reduce((s, tx) => s + Math.abs(tx.amount), 0);
   const net = monthIncome - monthExpense;
 
-  const currentMonth = MONTH_NAMES[TODAY.getMonth()];
-  const currentYear  = TODAY.getFullYear();
-  const lastDay      = new Date(TODAY.getFullYear(), TODAY.getMonth() + 1, 0).getDate();
-  const daysLeft     = lastDay - TODAY.getDate();
+  const [selYear, selMonthIdx] = selectedMonth.split('-').map(Number);
+  const currentMonth = MONTH_NAMES[selMonthIdx - 1];
+  const currentYear  = selYear;
+
+  const isCurrentMonth = selectedMonth === TODAY_PREFIX;
+  const lastDay  = new Date(selYear, selMonthIdx, 0).getDate();
+  const daysLeft = isCurrentMonth ? lastDay - TODAY.getDate() : 0;
 
   const totalBudget  = budgets.reduce((s, b) => s + b.total, 0);
   const totalUsed    = budgets.reduce((s, b) => s + b.used,  0);
@@ -63,6 +72,16 @@ export default function DashboardPage() {
     const t = setTimeout(() => setToast(null), 2800);
     return () => clearTimeout(t);
   }, [toast]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (monthPickerRef.current && !monthPickerRef.current.contains(e.target as Node)) {
+        setShowMonthPicker(false);
+      }
+    }
+    if (showMonthPicker) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showMonthPicker]);
 
   function handleAdd(data: Omit<Transaction, 'id'>[]) {
     const txs = data.map((d, i) => ({ ...d, id: Date.now() + i }));
@@ -109,13 +128,55 @@ export default function DashboardPage() {
             Dashboard
           </h1>
           <div style={{ fontSize: 12.5, color: T.textSubtle, marginTop: 3 }}>
-            {TODAY.getDate()} {currentMonth} {currentYear} · {daysLeft} hari tersisa bulan ini
+            {isCurrentMonth
+              ? `${TODAY.getDate()} ${currentMonth} ${currentYear} · ${daysLeft} hari tersisa bulan ini`
+              : `Menampilkan data ${currentMonth} ${currentYear}`}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-          <Btn kind="ghost" size="sm" icon={Icon.calendar(14)}>
-            {currentMonth} {currentYear}
-          </Btn>
+          <div ref={monthPickerRef} style={{ position: 'relative' }}>
+            <Btn
+              kind="ghost"
+              size="sm"
+              icon={Icon.calendar(14)}
+              onClick={() => setShowMonthPicker(v => !v)}
+            >
+              {currentMonth} {currentYear}
+              <ChevronDown size={12} style={{ marginLeft: 2 }} />
+            </Btn>
+            {showMonthPicker && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 6px)', right: 0,
+                background: T.surface,
+                border: `1px solid ${T.border}`,
+                borderRadius: 10,
+                boxShadow: '0 8px 24px rgba(20,30,25,0.12)',
+                minWidth: 170, zIndex: 50,
+                overflow: 'hidden',
+              }}>
+                {availableMonths.map(ym => {
+                  const [y, m] = ym.split('-').map(Number);
+                  const label = `${MONTH_NAMES[m - 1]} ${y}`;
+                  const active = ym === selectedMonth;
+                  return (
+                    <button
+                      key={ym}
+                      onClick={() => { setSelectedMonth(ym); setShowMonthPicker(false); }}
+                      style={{
+                        display: 'block', width: '100%', textAlign: 'left',
+                        padding: '9px 14px', border: 'none', cursor: 'pointer',
+                        fontSize: 13, fontWeight: active ? 700 : 400,
+                        color: active ? T.primary : T.text,
+                        background: active ? `${T.primary}12` : 'transparent',
+                      }}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
           <Btn kind="primary" size="sm" icon={Icon.plus(14)} onClick={() => setShowAdd(true)}>
             Tambah Transaksi
           </Btn>
@@ -131,23 +192,23 @@ export default function DashboardPage() {
           delta="+ Rp 1.420.000 dari bulan lalu"
         />
         <SummaryStat
-          label="Pemasukan Bulan Ini"
+          label={`Pemasukan ${currentMonth}`}
           value={formatRp(monthIncome)}
           delta={`${monthTxList.filter(tx => tx.type === 'income').length} transaksi masuk`}
           deltaTone="up"
           icon={<ArrowUp size={13} color={T.primary} />}
         />
         <SummaryStat
-          label="Pengeluaran Bulan Ini"
+          label={`Pengeluaran ${currentMonth}`}
           value={formatRp(monthExpense)}
           delta={`${monthTxList.filter(tx => tx.type === 'expense').length} transaksi keluar`}
           deltaTone="down"
           icon={<ArrowDown size={13} color={T.danger} />}
         />
         <SummaryStat
-          label="Net Bulan Ini"
+          label={`Net ${currentMonth}`}
           value={formatRp(net)}
-          delta={net >= 0 ? 'Surplus bulan ini' : 'Defisit bulan ini'}
+          delta={net >= 0 ? `Surplus ${currentMonth}` : `Defisit ${currentMonth}`}
           deltaTone={net >= 0 ? 'up' : 'down'}
         />
       </div>
@@ -187,7 +248,7 @@ export default function DashboardPage() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
             <div>
               <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: T.text }}>
-                Anggaran {currentMonth}
+                Anggaran {currentMonth} {currentYear}
               </h3>
               <div style={{ fontSize: 12, color: T.textSubtle, marginTop: 3 }}>
                 {formatRp(totalUsed)} dari {formatRp(totalBudget)} terpakai
@@ -216,12 +277,12 @@ export default function DashboardPage() {
             <div>
               <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: T.text }}>Transaksi Terkini</h3>
               <div style={{ fontSize: 12, color: T.textSubtle, marginTop: 3 }}>
-                {monthTxList.length} transaksi bulan ini
+                {monthTxList.length} transaksi {currentMonth} {currentYear}
               </div>
             </div>
           </div>
           <div style={{ marginTop: 8 }}>
-            {txList.slice(0, 7).map(t => <TxRow key={t.id} t={t} />)}
+            {monthTxList.slice(0, 7).map(t => <TxRow key={t.id} t={t} />)}
           </div>
           <Link href="/transaksi" style={{
             display: 'block', textAlign: 'center', marginTop: 12,
