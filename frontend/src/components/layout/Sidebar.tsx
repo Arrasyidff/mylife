@@ -2,211 +2,246 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
 import { can } from "@/lib/permissions";
 import { useRequiredAuth } from "@/contexts/auth-context";
-import {
-  LayoutDashboard,
-  ArrowDownCircle,
-  ArrowUpCircle,
-  FileBarChart,
-  Users,
-  UserCog,
-  ClipboardList,
-  ChevronDown,
-  X,
-} from "lucide-react";
+import { T } from "@/lib/tokens";
+import { Icon } from "@/components/ui/icon";
+import { X, LogOut } from "lucide-react";
 
-type NavLink = {
-  type: "link";
+type NavItem = {
+  id: string;
   label: string;
   href: string;
-  icon: React.ReactNode;
+  icon: (s?: number) => React.ReactNode;
+  adminOnly?: boolean;
 };
-
-type NavGroup = {
-  type: "group";
-  label: string;
-  icon: React.ReactNode;
-  children: { label: string; href: string }[];
-};
-
-type NavItem = NavLink | NavGroup;
 
 type SidebarProps = {
   isOpen: boolean;
   onClose: () => void;
 };
 
+const baseNavItems: NavItem[] = [
+  { id: 'home',     label: 'Beranda',    href: '/',          icon: Icon.home     },
+  { id: 'tx',       label: 'Transaksi',  href: '/transaksi', icon: Icon.list     },
+  { id: 'budget',   label: 'Anggaran',   href: '/anggaran',  icon: Icon.budget   },
+  { id: 'rekening', label: 'Rekening',   href: '/rekening',  icon: Icon.rekening },
+  { id: 'reports',  label: 'Laporan',    href: '/laporan',   icon: Icon.reports  },
+];
+
+const adminNavItems: NavItem[] = [
+  // { id: 'settings', label: 'Pengaturan', href: '/pengaturan', icon: Icon.settings, adminOnly: true },
+];
+
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
-  const { user } = useRequiredAuth();
-  const level = user.aksesLevel;
+  const { user, logout } = useRequiredAuth();
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
 
-  const allNavItems: NavItem[] = [
-    {
-      type: "link",
-      label: "Dashboard",
-      href: "/",
-      icon: <LayoutDashboard size={18} />,
-    },
-    {
-      type: "group",
-      label: "Transaksi",
-      icon: <FileBarChart size={18} />,
-      children: [
-        { label: "Pemasukan", href: "/transaksi/pemasukan" },
-        { label: "Pengeluaran", href: "/transaksi/pengeluaran" },
-        { label: "Rekap Laporan", href: "/transaksi/rekap-laporan" },
-      ],
-    },
-    {
-      type: "link",
-      label: "Pelanggan",
-      href: "/pelanggan",
-      icon: <Users size={18} />,
-    },
-    ...(can(level, "pengguna", "lihat")
-      ? [{
-          type: "link" as const,
-          label: "Pengguna",
-          href: "/pengguna",
-          icon: <UserCog size={18} />,
-        }]
-      : []),
-    ...(can(level, "logAktivitas", "lihat")
-      ? [{
-          type: "link" as const,
-          label: "Log Aktivitas",
-          href: "/log-aktivitas",
-          icon: <ClipboardList size={18} />,
-        }]
-      : []),
+  const navItems = [
+    ...baseNavItems,
+    ...adminNavItems.filter(item => !item.adminOnly || can(user.aksesLevel, 'pengguna', 'lihat')),
   ];
 
-  const isGroupActive = (item: NavGroup) =>
-    item.children.some((c) => pathname === c.href || pathname.startsWith(c.href + "/"));
-
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
-    const initial: Record<string, boolean> = {};
-    for (const item of allNavItems) {
-      if (item.type === "group" && isGroupActive(item)) {
-        initial[item.label] = true;
-      }
-    }
-    return initial;
-  });
-
-  useEffect(() => {
-    setOpenGroups((prev) => {
-      const updated = { ...prev };
-      for (const item of allNavItems) {
-        if (item.type === "group" && isGroupActive(item)) {
-          updated[item.label] = true;
-        }
-      }
-      return updated;
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
-
-  const toggleGroup = (label: string) => {
-    setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }));
-  };
-
   const isActive = (href: string) =>
-    href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
+    href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/');
+
+  // Close on route change (mobile)
+  useEffect(() => { onClose(); }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const initial = user.nama.charAt(0).toUpperCase();
+  const roleLabel = user.jabatan ?? user.aksesLevel;
 
   return (
-    <aside
-      className={cn(
-        "fixed top-0 left-0 z-40 h-full w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col transition-transform duration-300",
-        isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-      )}
-    >
-      {/* Brand */}
-      <div className="flex items-center justify-between px-4 py-4 border-b border-gray-200 dark:border-gray-700">
-        <div>
-          <p className="font-bold text-primary leading-tight">Nama Aplikasi</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">Sistem Manajemen</p>
-        </div>
-        <button
-          className="md:hidden text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 md:hidden"
           onClick={onClose}
-          aria-label="Tutup sidebar"
-        >
-          <X size={20} />
-        </button>
-      </div>
+        />
+      )}
 
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-        {allNavItems.map((item) => {
-          if (item.type === "link") {
+      <aside
+        style={{
+          width: 232,
+          flexShrink: 0,
+          background: T.surface,
+          borderRight: `1px solid ${T.border}`,
+          display: 'flex',
+          flexDirection: 'column',
+          padding: '20px 12px',
+          fontFamily: T.fontSans,
+          height: '100%',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          bottom: 0,
+          zIndex: 40,
+          transform: isOpen ? 'translateX(0)' : undefined,
+          transition: 'transform 0.3s',
+          boxShadow: '2px 0 16px 0 rgba(0,0,0,0.04)',
+        }}
+        className={!isOpen ? 'max-md:-translate-x-full' : ''}
+      >
+        {/* Brand */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 6px 20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{
+              width: 34,
+              height: 34,
+              borderRadius: 10,
+              background: `linear-gradient(135deg, ${T.primary}, ${T.primaryDark})`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontWeight: 800,
+              fontSize: 16,
+              flexShrink: 0,
+              boxShadow: `0 3px 10px ${T.primary}50`,
+            }}>
+              M
+            </div>
+            <div>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: T.text, letterSpacing: -0.3, lineHeight: 1.2 }}>
+                The M-Line
+              </div>
+              <div style={{ fontSize: 10.5, color: T.textSubtle, marginTop: 1 }}>Miracle Generation</div>
+            </div>
+          </div>
+          {/* Close button mobile */}
+          <button
+            onClick={onClose}
+            className="flex md:hidden"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: T.textMuted,
+              padding: 4,
+              borderRadius: 6,
+            }}
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Section label */}
+        <div style={{
+          padding: '0 10px 6px',
+          fontSize: 10,
+          fontWeight: 600,
+          color: T.textSubtle,
+          letterSpacing: 0.8,
+          textTransform: 'uppercase',
+        }}>
+          Navigasi
+        </div>
+
+        {/* Nav */}
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1 }}>
+          {navItems.map(item => {
             const active = isActive(item.href);
+            const hovered = hoveredId === item.id;
             return (
               <Link
-                key={item.href}
+                key={item.id}
                 href={item.href}
-                className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                  active
-                    ? "bg-primary text-white"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                )}
+                onMouseEnter={() => setHoveredId(item.id)}
+                onMouseLeave={() => setHoveredId(null)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 10,
+                  padding: '9px 10px 9px 9px',
+                  borderRadius: 9,
+                  fontSize: 13.5,
+                  fontWeight: active ? 600 : 500,
+                  color: active ? T.primaryDark : hovered ? T.text : T.textMuted,
+                  background: active ? T.primaryLight : hovered ? T.surfaceAlt : 'transparent',
+                  textDecoration: 'none',
+                  transition: 'background 0.12s, color 0.12s',
+                  borderLeft: `3px solid ${active ? T.primary : 'transparent'}`,
+                }}
               >
-                {item.icon}
+                <span style={{
+                  color: active ? T.primary : hovered ? T.textMuted : T.textSubtle,
+                  display: 'inline-flex',
+                  flexShrink: 0,
+                  transition: 'color 0.12s',
+                }}>
+                  {item.icon(17)}
+                </span>
                 {item.label}
               </Link>
             );
-          }
+          })}
+        </nav>
 
-          const groupOpen = openGroups[item.label] ?? false;
-          const groupActive = isGroupActive(item);
-
-          return (
-            <div key={item.label}>
-              <button
-                onClick={() => toggleGroup(item.label)}
-                className={cn(
-                  "w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                  groupActive && !groupOpen
-                    ? "bg-primary/10 text-primary dark:bg-primary/20"
-                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                )}
-              >
-                {item.icon}
-                <span className="flex-1 text-left">{item.label}</span>
-                <ChevronDown
-                  size={16}
-                  className={cn("transition-transform", groupOpen && "rotate-180")}
-                />
-              </button>
-              {groupOpen && (
-                <div className="ml-4 mt-0.5 space-y-0.5 border-l-2 border-gray-200 dark:border-gray-600 pl-3">
-                  {item.children.map((child) => {
-                    const childActive = isActive(child.href);
-                    return (
-                      <Link
-                        key={child.href}
-                        href={child.href}
-                        className={cn(
-                          "flex items-center py-1.5 px-2 rounded-md text-sm transition-colors",
-                          childActive
-                            ? "bg-primary text-white font-medium"
-                            : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
-                        )}
-                      >
-                        {child.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              )}
+        {/* User footer */}
+        <div style={{ borderTop: `1px solid ${T.divider}`, paddingTop: 12, marginTop: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '6px 6px', borderRadius: 9 }}>
+            <div style={{
+              width: 32,
+              height: 32,
+              borderRadius: 999,
+              background: `linear-gradient(135deg, ${T.primary}, ${T.primaryDark})`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontSize: 13,
+              fontWeight: 700,
+              flexShrink: 0,
+              boxShadow: `0 2px 6px ${T.primary}40`,
+            }}>
+              {initial}
             </div>
-          );
-        })}
-      </nav>
-    </aside>
+            <div style={{ minWidth: 0, flex: 1 }}>
+              <div style={{
+                fontSize: 12.5,
+                fontWeight: 600,
+                color: T.text,
+                lineHeight: 1.2,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}>
+                {user.nama}
+              </div>
+              <div style={{ fontSize: 10.5, color: T.textSubtle, marginTop: 2 }}>
+                {roleLabel}
+              </div>
+            </div>
+            <button
+              onClick={logout}
+              title="Keluar"
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                color: T.textSubtle,
+                padding: 5,
+                display: 'flex',
+                borderRadius: 6,
+                flexShrink: 0,
+                transition: 'color 0.12s, background 0.12s',
+              }}
+              onMouseEnter={e => {
+                e.currentTarget.style.color = T.danger;
+                e.currentTarget.style.background = T.dangerLight;
+              }}
+              onMouseLeave={e => {
+                e.currentTarget.style.color = T.textSubtle;
+                e.currentTarget.style.background = 'transparent';
+              }}
+            >
+              <LogOut size={15} />
+            </button>
+          </div>
+        </div>
+      </aside>
+    </>
   );
 }
