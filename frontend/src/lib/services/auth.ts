@@ -4,10 +4,10 @@ import { mockLoginApi, mockGetMeApi } from "@/lib/mock/auth";
 
 const USE_MOCK = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
-export async function loginApi(username: string, password: string): Promise<string> {
+export async function loginApi(username: string, password: string): Promise<{ token: string; user: User }> {
   if (USE_MOCK) return mockLoginApi(username, password);
-  const data = await api.post<{ token: string }>("/auth/login", { username, password });
-  return data.token;
+  const data = await api.post<{ access_token: string; user: User }>("/api/auth/login", { username, password });
+  return { token: data.access_token, user: data.user };
 }
 
 export async function getMeApi(): Promise<User> {
@@ -15,5 +15,5 @@ export async function getMeApi(): Promise<User> {
     const token = getAuthToken() ?? "";
     return mockGetMeApi(token);
   }
-  return api.get<User>("/auth/me");
+  return api.get<User>("/api/auth/me");
 }

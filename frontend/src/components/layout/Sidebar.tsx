@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { can } from "@/lib/permissions";
 import { useRequiredAuth } from "@/contexts/auth-context";
+import { AKSES_LEVEL_LABEL } from "@/lib/data";
 import { T } from "@/lib/tokens";
 import { Icon } from "@/components/ui/icon";
 import { X, LogOut } from "lucide-react";
@@ -40,7 +41,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   const navItems = [
     ...baseNavItems,
-    ...adminNavItems.filter(item => !item.adminOnly || can(user.aksesLevel, 'pengguna', 'lihat')),
+    ...adminNavItems.filter(item => !item.adminOnly || can(user.access_level, 'pengguna', 'lihat')),
   ];
 
   const isActive = (href: string) =>
@@ -49,8 +50,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   // Close on route change (mobile)
   useEffect(() => { onClose(); }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const initial = user.nama.charAt(0).toUpperCase();
-  const roleLabel = user.jabatan ?? user.aksesLevel;
+  const initial = user.full_name.charAt(0).toUpperCase();
+  const roleLabel = user.position ?? AKSES_LEVEL_LABEL[user.access_level];
 
   return (
     <>
@@ -208,7 +209,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
               }}>
-                {user.nama}
+                {user.full_name}
               </div>
               <div style={{ fontSize: 10.5, color: T.textSubtle, marginTop: 2 }}>
                 {roleLabel}

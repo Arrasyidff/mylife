@@ -1,6 +1,23 @@
 import { api } from '@/lib/api';
 import type { Account, AccountType } from '@/lib/dashboard-data';
 
+// Backend uses Prisma enum values (uppercase), frontend uses lowercase
+const BACKEND_TO_FRONTEND_TYPE: Record<string, AccountType> = {
+  TABUNGAN:    'tabungan',
+  EWALLET:     'ewallet',
+  TUNAI:       'tunai',
+  INVESTASI:   'investasi',
+  KARTU_KREDIT: 'kartukredit',
+};
+
+const FRONTEND_TO_BACKEND_TYPE: Record<AccountType, string> = {
+  tabungan:    'TABUNGAN',
+  ewallet:     'EWALLET',
+  tunai:       'TUNAI',
+  investasi:   'INVESTASI',
+  kartukredit: 'KARTU_KREDIT',
+};
+
 type AccountApiResponse = {
   id: string;
   user_id: string;
@@ -9,7 +26,7 @@ type AccountApiResponse = {
   balance: string;
   color: string;
   glyph: string;
-  type: AccountType;
+  type: string;
   account_number: string | null;
   hidden: boolean;
   created_at: string;
@@ -29,7 +46,7 @@ function mapToAccount(a: AccountApiResponse): Account {
     balance: parseFloat(a.balance),
     color: a.color,
     glyph: a.glyph,
-    type: a.type,
+    type: BACKEND_TO_FRONTEND_TYPE[a.type] ?? (a.type as AccountType),
     hidden: a.hidden,
   };
 }
@@ -67,12 +84,19 @@ export const accountService = {
   },
 
   async create(payload: CreateAccountPayload): Promise<Account> {
-    const data = await api.post<AccountApiResponse>('/api/accounts', payload);
+    const data = await api.post<AccountApiResponse>('/api/accounts', {
+      ...payload,
+      type: FRONTEND_TO_BACKEND_TYPE[payload.type],
+    });
     return mapToAccount(data);
   },
 
   async update(id: string, payload: UpdateAccountPayload): Promise<Account> {
-    const data = await api.patch<AccountApiResponse>(`/api/accounts/${id}`, payload);
+    const body = {
+      ...payload,
+      ...(payload.type ? { type: FRONTEND_TO_BACKEND_TYPE[payload.type] } : {}),
+    };
+    const data = await api.patch<AccountApiResponse>(`/api/accounts/${id}`, body);
     return mapToAccount(data);
   },
 

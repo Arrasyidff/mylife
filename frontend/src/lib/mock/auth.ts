@@ -3,27 +3,45 @@ import type { User } from "@/lib/data";
 const MOCK_USERS: Record<string, User & { password: string }> = {
   superadmin: {
     id: "1",
-    nama: "Budi Santoso",
+    full_name: "Budi Santoso",
     username: "superadmin",
+    email: "superadmin@example.com",
     password: "password",
-    aksesLevel: "Super Admin",
-    jabatan: "Direktur",
+    access_level: "SUPER_ADMIN",
+    position: "Direktur",
+    phone_number: null,
+    address: null,
+    status: "ACTIVE",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
   admin: {
     id: "2",
-    nama: "Siti Rahayu",
+    full_name: "Siti Rahayu",
     username: "admin",
+    email: "admin@example.com",
     password: "password",
-    aksesLevel: "Admin",
-    jabatan: "Manajer Operasional",
+    access_level: "ADMIN",
+    position: "Manajer Operasional",
+    phone_number: null,
+    address: null,
+    status: "ACTIVE",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
   viewer: {
     id: "3",
-    nama: "Andi Pratama",
+    full_name: "Andi Pratama",
     username: "viewer",
+    email: "viewer@example.com",
     password: "password",
-    aksesLevel: "Viewer",
-    jabatan: "Staff",
+    access_level: "VIEWER",
+    position: "Staff",
+    phone_number: null,
+    address: null,
+    status: "ACTIVE",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
   },
 };
 
@@ -33,13 +51,15 @@ function delay(ms = 400) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function mockLoginApi(username: string, password: string): Promise<string> {
+export async function mockLoginApi(username: string, password: string): Promise<{ token: string; user: User }> {
   await delay();
   const user = MOCK_USERS[username.toLowerCase()];
   if (!user || user.password !== password) {
     throw new Error("Username atau kata sandi salah.");
   }
-  return `${MOCK_TOKEN_PREFIX}${user.id}`;
+  const token = `${MOCK_TOKEN_PREFIX}${user.id}`;
+  const { password: _, ...safeUser } = user;
+  return { token, user: safeUser };
 }
 
 export async function mockGetMeApi(token: string): Promise<User> {

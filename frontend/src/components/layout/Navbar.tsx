@@ -6,6 +6,7 @@ import { Menu, Moon, Sun, Settings, LogOut, ChevronRight } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { useAuth } from "@/contexts/auth-context";
 import { T } from "@/lib/tokens";
+import { AKSES_LEVEL_LABEL } from "@/lib/data";
 import {
   Popover,
   PopoverContent,
@@ -79,7 +80,7 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
     router.replace("/login");
   };
 
-  const initials = user ? getInitials(user.nama) : "";
+  const initials = user ? getInitials(user.full_name) : "";
 
   return (
     <header style={{
@@ -170,19 +171,19 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
             </div>
             <div className="hidden sm:block" style={{ textAlign: 'left' }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: T.text, lineHeight: 1.2 }}>
-                {user.nama}
+                {user.full_name}
               </div>
               <div style={{ fontSize: 11, color: T.textSubtle, marginTop: 1 }}>
-                {user.aksesLevel}
+                {AKSES_LEVEL_LABEL[user.access_level]}
               </div>
             </div>
           </PopoverTrigger>
 
           <PopoverContent align="end" className="w-52 p-1">
             <div style={{ padding: '10px 14px', borderBottom: `1px solid ${T.divider}`, marginBottom: 4 }}>
-              <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{user.nama}</div>
-              {user.jabatan && (
-                <div style={{ fontSize: 11.5, color: T.textSubtle, marginTop: 1 }}>{user.jabatan}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{user.full_name}</div>
+              {user.position && (
+                <div style={{ fontSize: 11.5, color: T.textSubtle, marginTop: 1 }}>{user.position}</div>
               )}
             </div>
             <Link
