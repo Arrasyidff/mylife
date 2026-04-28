@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { CheckCircle, XCircle } from 'lucide-react';
 import { T } from '@/lib/tokens';
 import { Icon } from '@/components/ui/icon';
@@ -8,22 +8,33 @@ import { ProgressBar } from '@/components/ui/progress-bar';
 import { CatBubble } from '@/components/dashboard/cat-bubble';
 import { AddBudgetModal } from '@/components/dashboard/add-budget-modal';
 import { EditBudgetModal } from '@/components/dashboard/edit-budget-modal';
-import { budgets as INITIAL_BUDGETS, type Budget } from '@/lib/dashboard-data';
+import { type Budget } from '@/lib/dashboard-data';
+import { budgetService, type BudgetResponse, type CreateBudgetRequest, type UpdateBudgetRequest } from '@/lib/services/budget';
 import { formatRp } from '@/lib/format';
 
 const PERIOD_LABEL: Record<string, string> = {
-  weekly: 'Mingguan',
-  monthly: 'Bulanan',
-  yearly: 'Tahunan',
+  WEEKLY:  'Mingguan',
+  MONTHLY: 'Bulanan',
+  YEARLY:  'Tahunan',
 };
 
 const MONTH_NAMES = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-const BASE  = new Date(2026, 3); // April 2026
-const TODAY = new Date(2026, 3, 27);
 
 type StatusFilter = 'all' | 'safe' | 'warn' | 'over';
 
 type Toast = { msg: string; ok: boolean };
+
+function mapResponse(b: BudgetResponse): Budget {
+  return {
+    id: b.id,
+    name: b.name,
+    used: parseFloat(b.spent),
+    total: parseFloat(b.total),
+    cat: b.category,
+    period: b.period.toLowerCase() as Budget['period'],
+    carryOver: b.carry_over,
+  };
+}
 
 function BudgetCard({ b, onEdit }: { b: Budget; onEdit: () => void }) {
   const pct       = Math.round((b.used / b.total) * 100);
@@ -61,7 +72,7 @@ function BudgetCard({ b, onEdit }: { b: Budget; onEdit: () => void }) {
             )}
           </div>
           <div style={{ fontSize: 11.5, color: T.textSubtle }}>
-            {PERIOD_LABEL[b.period ?? 'monthly']}
+            {PERIOD_LABEL[b.period?.toUpperCase() ?? 'MONTHLY']}
           </div>
         </div>
         <button
@@ -132,21 +143,40 @@ function AddBudgetCard({ onClick }: { onClick: () => void }) {
 }
 
 export default function AnggaranPage() {
-  const [budgets, setBudgets] = useState<Budget[]>(INITIAL_BUDGETS);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
   const [monthOffset, setMonthOffset] = useState(0);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
 
-  const currentDate = new Date(BASE.getFullYear(), BASE.getMonth() + monthOffset);
-  const prevDate    = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1);
-  const nextDate    = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1);
+  const now = new Date();
+  const BASE = new Date(now.getFullYear(), now.getMonth());
+
+  const currentDate  = new Date(BASE.getFullYear(), BASE.getMonth() + monthOffset);
+  const prevDate     = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1);
+  const nextDate     = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1);
   const currentLabel = `${MONTH_NAMES[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
   const prevLabel    = MONTH_NAMES[prevDate.getMonth()];
   const nextLabel    = MONTH_NAMES[nextDate.getMonth()];
 
-  // Bulan selain April 2026 tidak punya data transaksi, tampilkan used=0
+  const fetchBudgets = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await budgetService.list();
+      setBudgets(data.map(mapResponse));
+    } catch {
+      showToast('Gagal memuat anggaran', false);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchBudgets();
+  }, [fetchBudgets]);
+
   const displayBudgets = monthOffset === 0
     ? budgets
     : budgets.map(b => ({ ...b, used: 0 }));
@@ -155,12 +185,13 @@ export default function AnggaranPage() {
   const totalUsed    = displayBudgets.reduce((s, b) => s + b.used,  0);
   const overallPct   = totalBudget > 0 ? Math.round((totalUsed / totalBudget) * 100) : 0;
 
-  const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
-  const isCurrentMonth = currentDate.getFullYear() === TODAY.getFullYear() && currentDate.getMonth() === TODAY.getMonth();
-  const daysLeft = isCurrentMonth ? daysInMonth - TODAY.getDate() : currentDate > TODAY ? daysInMonth : 0;
-  const safeCount    = displayBudgets.filter(b => b.used / b.total < 0.75).length;
-  const warnCount    = displayBudgets.filter(b => { const p = b.used / b.total; return p >= 0.75 && p < 1; }).length;
-  const overCount    = displayBudgets.filter(b => b.used >= b.total).length;
+  const daysInMonth  = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+  const isCurrentMonth = currentDate.getFullYear() === now.getFullYear() && currentDate.getMonth() === now.getMonth();
+  const daysLeft     = isCurrentMonth ? daysInMonth - now.getDate() : currentDate > now ? daysInMonth : 0;
+
+  const safeCount = displayBudgets.filter(b => b.used / b.total < 0.75).length;
+  const warnCount = displayBudgets.filter(b => { const p = b.used / b.total; return p >= 0.75 && p < 1; }).length;
+  const overCount = displayBudgets.filter(b => b.used >= b.total).length;
 
   const visibleBudgets = displayBudgets.filter(b => {
     if (statusFilter === 'all') return true;
@@ -181,18 +212,21 @@ export default function AnggaranPage() {
     return () => clearTimeout(t);
   }, [toast]);
 
-  function handleAdd(budget: Budget) {
-    setBudgets(prev => [...prev, budget]);
-    showToast(`Anggaran "${budget.name}" berhasil ditambahkan`);
+  async function handleAdd(request: CreateBudgetRequest) {
+    const data = await budgetService.create(request);
+    setBudgets(prev => [...prev, mapResponse(data)]);
+    showToast(`Anggaran "${data.name}" berhasil ditambahkan`);
   }
 
-  function handleSave(updated: Budget) {
-    setBudgets(prev => prev.map(b => b.id === updated.id ? updated : b));
-    showToast(`Anggaran "${updated.name}" berhasil diperbarui`);
+  async function handleSave(id: string, request: UpdateBudgetRequest) {
+    const data = await budgetService.update(id, request);
+    setBudgets(prev => prev.map(b => b.id === id ? mapResponse(data) : b));
+    showToast(`Anggaran "${data.name}" berhasil diperbarui`);
   }
 
-  function handleDelete(id: string) {
+  async function handleDelete(id: string) {
     const name = budgets.find(b => b.id === id)?.name ?? '';
+    await budgetService.remove(id);
     setBudgets(prev => prev.filter(b => b.id !== id));
     showToast(`Anggaran "${name}" telah dihapus`, false);
   }
@@ -315,21 +349,30 @@ export default function AnggaranPage() {
       </div>
 
       {/* Budget grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
-        {visibleBudgets.map(b => (
-          <BudgetCard key={b.id} b={b} onEdit={() => setEditingBudget(b)} />
-        ))}
-        {statusFilter === 'all' && <AddBudgetCard onClick={() => setShowModal(true)} />}
-        {statusFilter !== 'all' && visibleBudgets.length === 0 && (
-          <div style={{
-            gridColumn: '1 / -1',
-            padding: '40px 0', textAlign: 'center',
-            color: T.textMuted, fontSize: 13.5,
-          }}>
-            Tidak ada anggaran dalam kategori ini.
-          </div>
-        )}
-      </div>
+      {loading ? (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '60px 0', color: T.textMuted, fontSize: 13.5,
+        }}>
+          Memuat anggaran...
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+          {visibleBudgets.map(b => (
+            <BudgetCard key={b.id} b={b} onEdit={() => setEditingBudget(b)} />
+          ))}
+          {statusFilter === 'all' && <AddBudgetCard onClick={() => setShowModal(true)} />}
+          {statusFilter !== 'all' && visibleBudgets.length === 0 && (
+            <div style={{
+              gridColumn: '1 / -1',
+              padding: '40px 0', textAlign: 'center',
+              color: T.textMuted, fontSize: 13.5,
+            }}>
+              Tidak ada anggaran dalam kategori ini.
+            </div>
+          )}
+        </div>
+      )}
 
       {showModal && (
         <AddBudgetModal

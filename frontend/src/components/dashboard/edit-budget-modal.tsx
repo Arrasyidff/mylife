@@ -4,7 +4,8 @@ import { X, Check, Trash2, AlertTriangle } from 'lucide-react';
 import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
 import { CatBubble } from './cat-bubble';
-import type { Budget, BudgetPeriod } from '@/lib/dashboard-data';
+import type { Budget } from '@/lib/dashboard-data';
+import type { UpdateBudgetRequest } from '@/lib/services/budget';
 
 const CATS = [
   { id: 'food',      name: 'Makanan'    },
@@ -18,17 +19,17 @@ const CATS = [
 ];
 
 const PERIODS = [
-  { id: 'weekly',  label: 'Mingguan', hint: 'Reset tiap Senin'     },
-  { id: 'monthly', label: 'Bulanan',  hint: 'Reset tiap tanggal 1' },
-  { id: 'yearly',  label: 'Tahunan',  hint: 'Reset tiap Januari'   },
+  { id: 'MONTHLY' as const, label: 'Bulanan',  hint: 'Reset tiap tanggal 1' },
+  { id: 'WEEKLY'  as const, label: 'Mingguan', hint: 'Reset tiap Senin'     },
+  { id: 'YEARLY'  as const, label: 'Tahunan',  hint: 'Reset tiap Januari'   },
 ];
 
 const PRESETS = [500_000, 1_000_000, 1_500_000, 2_000_000, 3_000_000, 5_000_000];
 
 interface EditBudgetModalProps {
   budget: Budget;
-  onSave: (budget: Budget) => void;
-  onDelete: (id: string) => void;
+  onSave: (id: string, request: UpdateBudgetRequest) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
   onClose: () => void;
 }
 
@@ -78,29 +79,46 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (val: boolean) => voi
 }
 
 export function EditBudgetModal({ budget, onSave, onDelete, onClose }: EditBudgetModalProps) {
+  const initialPeriod = (budget.period?.toUpperCase() ?? 'MONTHLY') as 'MONTHLY' | 'WEEKLY' | 'YEARLY';
   const [selectedCat, setSelectedCat] = useState(budget.cat);
-  const [selectedPeriod, setSelectedPeriod] = useState<BudgetPeriod>(budget.period ?? 'monthly');
+  const [selectedPeriod, setSelectedPeriod] = useState<'MONTHLY' | 'WEEKLY' | 'YEARLY'>(initialPeriod);
   const [amount, setAmount] = useState(budget.total);
   const [carryOver, setCarryOver] = useState(budget.carryOver ?? false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const catName = CATS.find(c => c.id === selectedCat)?.name ?? selectedCat;
 
-  function handleSave() {
-    onSave({
-      ...budget,
-      name: catName,
-      cat: selectedCat,
-      total: amount,
-      period: selectedPeriod,
-      carryOver,
-    });
-    onClose();
+  async function handleSave() {
+    setLoading(true);
+    setError(null);
+    try {
+      await onSave(budget.id, {
+        name: catName,
+        category: selectedCat,
+        total: amount,
+        period: selectedPeriod,
+        carry_over: carryOver,
+      });
+      onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Gagal menyimpan perubahan');
+    } finally {
+      setLoading(false);
+    }
   }
 
-  function handleDelete() {
-    onDelete(budget.id);
-    onClose();
+  async function handleDelete() {
+    setLoading(true);
+    setError(null);
+    try {
+      await onDelete(budget.id);
+      onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Gagal menghapus anggaran');
+      setLoading(false);
+    }
   }
 
   return (
@@ -279,7 +297,7 @@ export function EditBudgetModal({ budget, onSave, onDelete, onClose }: EditBudge
                 return (
                   <button
                     key={p.id}
-                    onClick={() => setSelectedPeriod(p.id as BudgetPeriod)}
+                    onClick={() => setSelectedPeriod(p.id)}
                     style={{
                       flex: 1, padding: '12px 10px', borderRadius: 10,
                       background: active ? T.primaryLight : T.surfaceAlt,
@@ -319,6 +337,21 @@ export function EditBudgetModal({ budget, onSave, onDelete, onClose }: EditBudge
             </div>
           </Field>
 
+          {/* Error */}
+          {error && (
+            <div style={{
+              marginBottom: 16,
+              padding: '10px 14px',
+              background: '#FEF2F2',
+              border: '1px solid #FECACA',
+              borderRadius: 8,
+              fontSize: 12.5,
+              color: T.danger,
+            }}>
+              {error}
+            </div>
+          )}
+
           {/* Danger zone */}
           <div style={{
             padding: '16px 18px',
@@ -332,13 +365,16 @@ export function EditBudgetModal({ budget, onSave, onDelete, onClose }: EditBudge
             {!confirmDelete ? (
               <button
                 onClick={() => setConfirmDelete(true)}
+                disabled={loading}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 6,
                   padding: '8px 14px', borderRadius: 7,
                   border: `1px solid ${T.danger}44`,
                   background: T.surface, color: T.danger,
                   fontSize: 12.5, fontWeight: 600,
-                  cursor: 'pointer', fontFamily: T.fontSans,
+                  cursor: loading ? 'not-allowed' : 'pointer',
+                  fontFamily: T.fontSans,
+                  opacity: loading ? 0.6 : 1,
                 }}
               >
                 <Trash2 size={13} />
@@ -359,26 +395,32 @@ export function EditBudgetModal({ budget, onSave, onDelete, onClose }: EditBudge
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button
                     onClick={() => setConfirmDelete(false)}
+                    disabled={loading}
                     style={{
                       padding: '7px 16px', borderRadius: 7,
                       border: `1px solid ${T.border}`,
                       background: T.surface, color: T.text,
                       fontSize: 12.5, fontWeight: 600,
-                      cursor: 'pointer', fontFamily: T.fontSans,
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      fontFamily: T.fontSans,
+                      opacity: loading ? 0.6 : 1,
                     }}
                   >
                     Batal
                   </button>
                   <button
                     onClick={handleDelete}
+                    disabled={loading}
                     style={{
                       padding: '7px 16px', borderRadius: 7,
                       border: 'none', background: T.danger, color: 'white',
                       fontSize: 12.5, fontWeight: 600,
-                      cursor: 'pointer', fontFamily: T.fontSans,
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      fontFamily: T.fontSans,
+                      opacity: loading ? 0.7 : 1,
                     }}
                   >
-                    Ya, Hapus
+                    {loading ? 'Menghapus...' : 'Ya, Hapus'}
                   </button>
                 </div>
               </div>
@@ -395,28 +437,37 @@ export function EditBudgetModal({ budget, onSave, onDelete, onClose }: EditBudge
         }}>
           <button
             onClick={onClose}
+            disabled={loading}
             style={{
               flex: 1, padding: 11, borderRadius: 9,
               border: `1px solid ${T.border}`,
               background: T.surface, color: T.text,
               fontSize: 13.5, fontWeight: 600,
-              cursor: 'pointer', fontFamily: T.fontSans,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontFamily: T.fontSans,
+              opacity: loading ? 0.6 : 1,
             }}
           >
             Batal
           </button>
           <button
             onClick={handleSave}
+            disabled={loading}
             style={{
               flex: 2, padding: 11, borderRadius: 9,
               border: 'none', background: T.primary, color: 'white',
               fontSize: 13.5, fontWeight: 600,
-              cursor: 'pointer', fontFamily: T.fontSans,
+              cursor: loading ? 'not-allowed' : 'pointer',
+              fontFamily: T.fontSans,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              opacity: loading ? 0.7 : 1,
             }}
           >
-            <Check size={14} />
-            Simpan Perubahan
+            {loading ? (
+              <span>Menyimpan...</span>
+            ) : (
+              <><Check size={14} /> Simpan Perubahan</>
+            )}
           </button>
         </div>
       </div>

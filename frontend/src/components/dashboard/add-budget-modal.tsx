@@ -4,7 +4,7 @@ import { X, Check, CalendarDays } from 'lucide-react';
 import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
 import { CatBubble } from './cat-bubble';
-import type { Budget, BudgetPeriod } from '@/lib/dashboard-data';
+import type { CreateBudgetRequest } from '@/lib/services/budget';
 
 const CATS = [
   { id: 'food',      name: 'Makanan'    },
@@ -18,9 +18,9 @@ const CATS = [
 ];
 
 const PERIODS = [
-  { id: 'weekly',  label: 'Mingguan', hint: 'Reset tiap Senin'     },
-  { id: 'monthly', label: 'Bulanan',  hint: 'Reset tiap tanggal 1' },
-  { id: 'yearly',  label: 'Tahunan',  hint: 'Reset tiap Januari'   },
+  { id: 'MONTHLY' as const, label: 'Bulanan',  hint: 'Reset tiap tanggal 1' },
+  { id: 'WEEKLY'  as const, label: 'Mingguan', hint: 'Reset tiap Senin'     },
+  { id: 'YEARLY'  as const, label: 'Tahunan',  hint: 'Reset tiap Januari'   },
 ];
 
 const PRESETS = [500_000, 1_000_000, 1_500_000, 2_000_000, 3_000_000, 5_000_000];
@@ -38,7 +38,7 @@ const MONTHLY_INCOME = 14_750_000;
 
 interface AddBudgetModalProps {
   onClose: () => void;
-  onAdd: (budget: Budget) => void;
+  onAdd: (request: CreateBudgetRequest) => Promise<void>;
   totalExisting: number;
 }
 
@@ -99,29 +99,51 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (val: boolean) => voi
   );
 }
 
+function getStartDate(): string {
+  const d = new Date();
+  d.setDate(1);
+  d.setMonth(d.getMonth() + 1);
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString();
+}
+
 export function AddBudgetModal({ onClose, onAdd, totalExisting }: AddBudgetModalProps) {
   const [selectedCat, setSelectedCat] = useState('fun');
-  const [selectedPeriod, setSelectedPeriod] = useState('monthly');
+  const [selectedPeriod, setSelectedPeriod] = useState<'MONTHLY' | 'WEEKLY' | 'YEARLY'>('MONTHLY');
   const [amount, setAmount] = useState(1_500_000);
-  const [notifs, setNotifs] = useState({ pct75: true, pct100: true, weekly: false });
   const [carryOver, setCarryOver] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const totalAfter = totalExisting + amount;
   const remaining = MONTHLY_INCOME - totalAfter;
 
-  function handleSave() {
+  const startDateLabel = (() => {
+    const d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() + 1);
+    return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+  })();
+
+  async function handleSave() {
     const catLabel = CATS.find(c => c.id === selectedCat)?.name ?? selectedCat;
-    const budget: Budget = {
-      id: `budget-${Date.now()}`,
-      name: catLabel,
-      used: 0,
-      total: amount,
-      cat: selectedCat,
-      period: selectedPeriod as BudgetPeriod,
-      carryOver,
-    };
-    onAdd(budget);
-    onClose();
+    setLoading(true);
+    setError(null);
+    try {
+      await onAdd({
+        name: catLabel,
+        category: selectedCat,
+        total: amount,
+        period: selectedPeriod,
+        carry_over: carryOver,
+        start_date: getStartDate(),
+      });
+      onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Gagal menyimpan anggaran');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -340,52 +362,8 @@ export function AddBudgetModal({ onClose, onAdd, totalExisting }: AddBudgetModal
               padding: '10px 12px',
               fontSize: 13.5,
             }}>
-              <span style={{ flex: 1, fontWeight: 500, color: T.text }}>1 Mei 2026</span>
+              <span style={{ flex: 1, fontWeight: 500, color: T.text }}>{startDateLabel}</span>
               <CalendarDays size={15} color={T.textSubtle} />
-            </div>
-          </Field>
-
-          {/* Notification toggles */}
-          <Field
-            label="Notifikasi"
-            hint="Kami akan mengirim peringatan saat anggaran mencapai ambang ini."
-          >
-            <div style={{
-              background: T.surfaceAlt,
-              border: `1px solid ${T.border}`,
-              borderRadius: 10,
-              padding: '4px 14px',
-            }}>
-              {([
-                { key: 'pct75'  as const, label: 'Saat mencapai 75%',  dotColor: T.warning    },
-                { key: 'pct100' as const, label: 'Saat mencapai 100%', dotColor: T.danger      },
-                { key: 'weekly' as const, label: 'Ringkasan mingguan',  dotColor: T.textSubtle },
-              ] as const).map((row, i, arr) => (
-                <div
-                  key={row.key}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12,
-                    padding: '10px 0',
-                    borderBottom: i < arr.length - 1 ? `1px solid ${T.divider}` : 'none',
-                  }}
-                >
-                  <span style={{
-                    width: 8,
-                    height: 8,
-                    borderRadius: 4,
-                    background: row.dotColor,
-                    flexShrink: 0,
-                    display: 'block',
-                  }} />
-                  <span style={{ flex: 1, fontSize: 13, color: T.text }}>{row.label}</span>
-                  <Toggle
-                    on={notifs[row.key]}
-                    onChange={val => setNotifs(prev => ({ ...prev, [row.key]: val }))}
-                  />
-                </div>
-              ))}
             </div>
           </Field>
 
@@ -446,6 +424,21 @@ export function AddBudgetModal({ onClose, onAdd, totalExisting }: AddBudgetModal
               </span>
             </div>
           </div>
+
+          {/* Error */}
+          {error && (
+            <div style={{
+              marginTop: 12,
+              padding: '10px 14px',
+              background: '#FEF2F2',
+              border: '1px solid #FECACA',
+              borderRadius: 8,
+              fontSize: 12.5,
+              color: T.danger,
+            }}>
+              {error}
+            </div>
+          )}
         </div>
 
         {/* Footer */}
@@ -458,6 +451,7 @@ export function AddBudgetModal({ onClose, onAdd, totalExisting }: AddBudgetModal
         }}>
           <button
             onClick={onClose}
+            disabled={loading}
             style={{
               flex: 1,
               padding: 11,
@@ -467,14 +461,16 @@ export function AddBudgetModal({ onClose, onAdd, totalExisting }: AddBudgetModal
               color: T.text,
               fontSize: 13.5,
               fontWeight: 600,
-              cursor: 'pointer',
+              cursor: loading ? 'not-allowed' : 'pointer',
               fontFamily: T.fontSans,
+              opacity: loading ? 0.6 : 1,
             }}
           >
             Batal
           </button>
           <button
             onClick={handleSave}
+            disabled={loading}
             style={{
               flex: 2,
               padding: 11,
@@ -484,16 +480,20 @@ export function AddBudgetModal({ onClose, onAdd, totalExisting }: AddBudgetModal
               color: 'white',
               fontSize: 13.5,
               fontWeight: 600,
-              cursor: 'pointer',
+              cursor: loading ? 'not-allowed' : 'pointer',
               fontFamily: T.fontSans,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: 6,
+              opacity: loading ? 0.7 : 1,
             }}
           >
-            <Check size={14} />
-            Simpan Anggaran
+            {loading ? (
+              <span>Menyimpan...</span>
+            ) : (
+              <><Check size={14} /> Simpan Anggaran</>
+            )}
           </button>
         </div>
       </div>
