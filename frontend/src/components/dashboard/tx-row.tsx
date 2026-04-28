@@ -8,12 +8,13 @@ import { UserBadge } from './user-badge';
 interface TxRowProps {
   t: Transaction;
   showAcct?: boolean;
+  acctInfo?: { name: string; color: string };
 }
 
-export function TxRow({ t, showAcct = true }: TxRowProps) {
+export function TxRow({ t, showAcct = true, acctInfo }: TxRowProps) {
   const isIncome = t.amount > 0;
   const isTransfer = t.type === 'transfer';
-  const acct = accounts.find(a => a.id === t.acct);
+  const acct = acctInfo ?? accounts.find(a => a.id === t.acct);
 
   return (
     <div style={{

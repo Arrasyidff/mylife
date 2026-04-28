@@ -5,7 +5,7 @@ import { Icon } from '@/components/ui/icon';
 import { CatBubble } from '@/components/dashboard/cat-bubble';
 import { UserBadge } from '@/components/dashboard/user-badge';
 import { Btn } from '@/components/ui/btn';
-import { accounts, budgets, type Transaction } from '@/lib/dashboard-data';
+import { accounts as mockAccounts, budgets as mockBudgets, type Account, type Budget, type Transaction } from '@/lib/dashboard-data';
 import { formatRp, nowDatetimeLocal, fromDatetimeLocal } from '@/lib/format';
 
 const TX_TYPES = [
@@ -40,6 +40,8 @@ interface AddTransactionModalProps {
   onClose: () => void;
   onSave: (txs: Omit<Transaction, 'id'>[]) => void;
   initialType?: TxTypeId;
+  accounts?: Account[];
+  budgets?: Budget[];
 }
 
 function Field({ label, children, hint }: {
@@ -78,14 +80,17 @@ function InputRow({ children, suffix, style }: {
   );
 }
 
-export function AddTransactionModal({ onClose, onSave, initialType }: AddTransactionModalProps) {
+export function AddTransactionModal({ onClose, onSave, initialType, accounts: propAccounts, budgets: propBudgets }: AddTransactionModalProps) {
+  const accountList = propAccounts ?? mockAccounts;
+  const budgetList  = propBudgets  ?? mockBudgets;
+
   const [txType,       setTxType]       = useState<TxTypeId>(initialType ?? 'expense');
   const [amountRaw,    setAmountRaw]    = useState('');
   const [merch,        setMerch]        = useState('');
   const [expenseCat,   setExpenseCat]   = useState('food');
   const [incomeCat,    setIncomeCat]    = useState('salary');
-  const [selectedAcct, setSelectedAcct] = useState(accounts[0].id);
-  const [toAcctId,     setToAcctId]     = useState(accounts[1]?.id ?? accounts[0].id);
+  const [selectedAcct, setSelectedAcct] = useState(accountList[0]?.id ?? '');
+  const [toAcctId,     setToAcctId]     = useState(accountList[1]?.id ?? accountList[0]?.id ?? '');
   const [dateVal,      setDateVal]      = useState(nowDatetimeLocal);
   const [selectedUser, setSelectedUser] = useState<'H' | 'W'>('W');
   const [note,         setNote]         = useState('');
@@ -95,8 +100,8 @@ export function AddTransactionModal({ onClose, onSave, initialType }: AddTransac
   const amountNum = Number(amountRaw.replace(/\./g, '') || '0');
   const amountDisplay = amountNum > 0 ? amountNum.toLocaleString('id-ID') : '';
 
-  const fromAcct = accounts.find(a => a.id === selectedAcct);
-  const toAcct   = accounts.find(a => a.id === toAcctId);
+  const fromAcct = accountList.find(a => a.id === selectedAcct);
+  const toAcct   = accountList.find(a => a.id === toAcctId);
   const isInterBankTransfer =
     txType === 'transfer' &&
     fromAcct?.type === 'tabungan' &&
@@ -109,11 +114,11 @@ export function AddTransactionModal({ onClose, onSave, initialType }: AddTransac
 
   const cats = txType === 'income' ? INCOME_CATS : EXPENSE_CATS;
 
-  const budget = budgets.find(b => b.cat === selectedCat);
+  const budget = budgetList.find(b => b.cat === selectedCat);
   const budgetPct = budget ? Math.round((budget.used / budget.total) * 100) : 0;
   const showBudgetWarning = txType === 'expense' && !!budget && budgetPct >= 75;
 
-  const acct = accounts.find(a => a.id === selectedAcct) ?? accounts[0];
+  const acct = accountList.find(a => a.id === selectedAcct) ?? accountList[0];
 
   const amountColor =
     txType === 'income'   ? T.primaryDark :
@@ -132,7 +137,7 @@ export function AddTransactionModal({ onClose, onSave, initialType }: AddTransac
     if (txType === 'transfer' && selectedAcct === toAcctId) errs.toAcct = 'Rekening tujuan harus berbeda';
     if (Object.keys(errs).length) { setErrors(errs); return; }
 
-    const toName    = accounts.find(a => a.id === toAcctId)?.name ?? 'Rekening';
+    const toName    = accountList.find(a => a.id === toAcctId)?.name ?? 'Rekening';
     const autoMerch = txType === 'transfer' && !merch.trim()
       ? `Transfer ke ${toName}`
       : merch.trim();
@@ -352,7 +357,7 @@ export function AddTransactionModal({ onClose, onSave, initialType }: AddTransac
             <>
               <Field label="Rekening Asal">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {accounts.map(a => {
+                  {accountList.map(a => {
                     const active = a.id === selectedAcct;
                     return (
                       <button
@@ -380,7 +385,7 @@ export function AddTransactionModal({ onClose, onSave, initialType }: AddTransac
               </Field>
               <Field label="Rekening Tujuan">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {accounts.map(a => {
+                  {accountList.map(a => {
                     const active = a.id === toAcctId;
                     const isSame = a.id === selectedAcct;
                     return (
@@ -416,7 +421,7 @@ export function AddTransactionModal({ onClose, onSave, initialType }: AddTransac
           ) : (
             <Field label="Rekening">
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {accounts.map(a => {
+                {accountList.map(a => {
                   const active = a.id === selectedAcct;
                   return (
                     <button

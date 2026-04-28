@@ -1,15 +1,15 @@
-import type { Account, Transaction } from '@/lib/dashboard-data';
+import type { Account } from '@/lib/dashboard-data';
 import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
 
 interface AccountCardProps {
   acct: Account;
-  lastTx?: Transaction;
+  lastTxAmount?: number;
   lastUpdated?: string;
 }
 
 function relativeTime(isoDate: string): string {
-  const now = new Date(2026, 3, 27); // mock today
+  const now = new Date();
   const d = new Date(isoDate);
   const diffMs = now.getTime() - d.getTime();
   const diffMin = Math.floor(diffMs / 60_000);
@@ -21,8 +21,8 @@ function relativeTime(isoDate: string): string {
   return `${diffD} hari lalu`;
 }
 
-export function AccountCard({ acct, lastTx, lastUpdated }: AccountCardProps) {
-  const isPositive = lastTx && lastTx.amount > 0;
+export function AccountCard({ acct, lastTxAmount, lastUpdated }: AccountCardProps) {
+  const isPositive = lastTxAmount !== undefined && lastTxAmount > 0;
   const deltaColor = isPositive ? T.primary : T.danger;
   const deltaSign  = isPositive ? '+' : '';
 
@@ -81,7 +81,7 @@ export function AccountCard({ acct, lastTx, lastUpdated }: AccountCardProps) {
           {formatRp(acct.balance)}
         </div>
       </div>
-      {lastTx && lastUpdated && (
+      {lastTxAmount !== undefined && lastUpdated && (
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -94,7 +94,7 @@ export function AccountCard({ acct, lastTx, lastUpdated }: AccountCardProps) {
             {relativeTime(lastUpdated)}
           </span>
           <span style={{ fontSize: 11, fontWeight: 600, color: deltaColor, fontVariantNumeric: 'tabular-nums' }}>
-            {deltaSign}{formatRp(lastTx.amount)}
+            {deltaSign}{formatRp(lastTxAmount)}
           </span>
         </div>
       )}

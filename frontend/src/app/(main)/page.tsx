@@ -1,7 +1,7 @@
 "use client";
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { accounts, budgets, transactions, type Transaction } from '@/lib/dashboard-data';
+import { type Transaction, type Account, type Budget, type AccountType, type BudgetPeriod } from '@/lib/dashboard-data';
 import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
 import { Surface } from '@/components/ui/surface';
@@ -13,59 +13,103 @@ import { SummaryStat } from '@/components/dashboard/summary-stat';
 import { BudgetRow } from '@/components/dashboard/budget-row';
 import { TxRow } from '@/components/dashboard/tx-row';
 import { AddTransactionModal } from '@/components/dashboard/add-transaction-modal';
-import { CheckCircle, XCircle, AlertTriangle, ArrowUp, ArrowDown, ChevronDown } from 'lucide-react';
+import { CheckCircle, XCircle, AlertTriangle, ArrowUp, ArrowDown } from 'lucide-react';
+import { dashboardService, type DashboardApiResponse, type DashboardAccountItem, type DashboardTransactionItem, type DashboardBudgetItem } from '@/lib/services/dashboard';
+import { transactionService } from '@/lib/services/transaction';
 
 const MONTH_NAMES = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
-// Mock "today" sesuai data
-const TODAY = new Date(2026, 3, 27);
-const TODAY_PREFIX = `${TODAY.getFullYear()}-${String(TODAY.getMonth() + 1).padStart(2, '0')}`;
+const ACCOUNT_TYPE_MAP: Record<string, AccountType> = {
+  TABUNGAN: 'tabungan',
+  EWALLET: 'ewallet',
+  TUNAI: 'tunai',
+  INVESTASI: 'investasi',
+  KARTU_KREDIT: 'kartukredit',
+};
+
+const TX_TYPE_MAP: Record<string, Transaction['type']> = {
+  EXPENSE: 'expense',
+  INCOME: 'income',
+  TRANSFER: 'transfer',
+};
+
+const RECORDER_MAP: Record<string, 'H' | 'W'> = {
+  SUAMI: 'H',
+  ISTRI: 'W',
+};
+
+function toLocalIso(dateVal: string | Date): string {
+  const d = new Date(dateVal);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+function mapAccount(a: DashboardAccountItem): Account {
+  return {
+    id: a.id,
+    name: a.name,
+    subtitle: a.subtitle ?? '',
+    balance: parseFloat(a.balance),
+    color: a.color,
+    glyph: a.glyph,
+    type: ACCOUNT_TYPE_MAP[a.type] ?? 'tabungan',
+  };
+}
+
+function mapBudget(b: DashboardBudgetItem): Budget {
+  return {
+    id: b.id,
+    name: b.name,
+    used: parseFloat(b.spent),
+    total: parseFloat(b.total),
+    cat: b.category,
+    period: b.period.toLowerCase() as BudgetPeriod,
+  };
+}
+
+type DashTx = Transaction & { acctInfo: { name: string; color: string } };
+
+function mapTransaction(t: DashboardTransactionItem, accounts: DashboardAccountItem[]): DashTx {
+  const type = TX_TYPE_MAP[t.type] ?? 'expense';
+  const amount = parseFloat(t.amount);
+  const acctColor = accounts.find(a => a.name === t.account_name)?.color ?? '#888';
+  return {
+    id: t.id,
+    user: RECORDER_MAP[t.recorder] ?? 'H',
+    cat: t.category,
+    merch: t.merchant,
+    acct: '',
+    amount: type === 'expense' ? -amount : amount,
+    date: toLocalIso(t.date),
+    type,
+    note: t.note ?? undefined,
+    acctInfo: { name: t.account_name, color: acctColor },
+  };
+}
 
 type Toast = { msg: string; ok: boolean };
 
 export default function DashboardPage() {
-  const [txList, setTxList] = useState<Transaction[]>(transactions);
+  const [data, setData] = useState<DashboardApiResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
-  const [selectedMonth, setSelectedMonth] = useState(TODAY_PREFIX);
-  const [showMonthPicker, setShowMonthPicker] = useState(false);
-  const monthPickerRef = useRef<HTMLDivElement>(null);
+  const [saving, setSaving] = useState(false);
 
-  const totalAssets = accounts.reduce((s, a) => s + a.balance, 0);
-
-  // Bulan yang tersedia dari data transaksi
-  const availableMonths = Array.from(new Set(txList.map(tx => tx.date.slice(0, 7)))).sort().reverse();
-
-  // Rekening: selalu tampilkan Tunai + 3 rekening dengan transaksi terbaru
-  const lastTxByAcct: Record<string, string> = {};
-  txList.forEach(tx => {
-    if (!lastTxByAcct[tx.acct] || tx.date > lastTxByAcct[tx.acct]) {
-      lastTxByAcct[tx.acct] = tx.date;
+  const fetchDashboard = useCallback(async () => {
+    try {
+      setError(null);
+      const result = await dashboardService.get();
+      setData(result);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Gagal memuat data dashboard');
+    } finally {
+      setLoading(false);
     }
-  });
-  const tunaiAccounts = accounts.filter(a => a.type === 'tunai');
-  const recentAccounts = accounts
-    .filter(a => a.type !== 'tunai')
-    .sort((a, b) => (lastTxByAcct[b.id] ?? '').localeCompare(lastTxByAcct[a.id] ?? ''))
-    .slice(0, 3);
-  const displayedAccounts = [...recentAccounts, ...tunaiAccounts];
+  }, []);
 
-  const monthTxList = txList.filter(tx => tx.date.startsWith(selectedMonth));
-  const monthIncome  = monthTxList.filter(tx => tx.type === 'income').reduce((s, tx) => s + tx.amount, 0);
-  const monthExpense = monthTxList.filter(tx => tx.type === 'expense').reduce((s, tx) => s + Math.abs(tx.amount), 0);
-  const net = monthIncome - monthExpense;
-
-  const [selYear, selMonthIdx] = selectedMonth.split('-').map(Number);
-  const currentMonth = MONTH_NAMES[selMonthIdx - 1];
-  const currentYear  = selYear;
-
-  const isCurrentMonth = selectedMonth === TODAY_PREFIX;
-  const lastDay  = new Date(selYear, selMonthIdx, 0).getDate();
-  const daysLeft = isCurrentMonth ? lastDay - TODAY.getDate() : 0;
-
-  const totalBudget  = budgets.reduce((s, b) => s + b.total, 0);
-  const totalUsed    = budgets.reduce((s, b) => s + b.used,  0);
-  const alertCount   = budgets.filter(b => (b.used / b.total) >= 0.75).length;
+  useEffect(() => { fetchDashboard(); }, [fetchDashboard]);
 
   useEffect(() => {
     if (!toast) return;
@@ -73,26 +117,78 @@ export default function DashboardPage() {
     return () => clearTimeout(t);
   }, [toast]);
 
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (monthPickerRef.current && !monthPickerRef.current.contains(e.target as Node)) {
-        setShowMonthPicker(false);
+  async function handleAdd(txs: Omit<Transaction, 'id'>[]) {
+    setSaving(true);
+    try {
+      for (const tx of txs) {
+        await transactionService.create({
+          recorder: tx.user === 'H' ? 'SUAMI' : 'ISTRI',
+          category: tx.cat,
+          merchant: tx.merch,
+          account_id: tx.acct,
+          amount: Math.abs(tx.amount),
+          date: tx.date,
+          type: tx.type === 'expense' ? 'EXPENSE' : tx.type === 'income' ? 'INCOME' : 'TRANSFER',
+          note: tx.note,
+        });
       }
+      setShowAdd(false);
+      setToast({
+        msg: txs.length > 1
+          ? 'Transfer + biaya admin berhasil dicatat'
+          : `Transaksi "${txs[0]?.merch}" berhasil ditambahkan`,
+        ok: true,
+      });
+      await fetchDashboard();
+    } catch (e) {
+      setToast({
+        msg: e instanceof Error ? e.message : 'Gagal menyimpan transaksi',
+        ok: false,
+      });
+    } finally {
+      setSaving(false);
     }
-    if (showMonthPicker) document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showMonthPicker]);
+  }
 
-  function handleAdd(data: Omit<Transaction, 'id'>[]) {
-    const txs = data.map((d, i) => ({ ...d, id: Date.now() + i }));
-    setTxList(prev => [...prev, ...txs].sort((a, b) => b.date.localeCompare(a.date)));
-    setShowAdd(false);
-    setToast({
-      msg: txs.length > 1
-        ? `Transfer + biaya admin berhasil dicatat`
-        : `Transaksi "${data[0]?.merch}" berhasil ditambahkan`,
-      ok: true,
-    });
+  const today = new Date();
+  const summary = data?.monthly_summary;
+  const currentMonth = summary ? MONTH_NAMES[summary.month - 1] : '';
+  const currentYear  = summary?.year ?? today.getFullYear();
+  const lastDay  = summary ? new Date(summary.year, summary.month, 0).getDate() : 0;
+  const daysLeft = summary ? lastDay - today.getDate() : 0;
+
+  const accounts   = (data?.accounts ?? []).map(mapAccount);
+  const budgets    = (data?.budget_overview ?? []).map(mapBudget);
+  const txList     = (data?.recent_transactions ?? []).map(t => mapTransaction(t, data?.accounts ?? []));
+
+  const totalAssets  = parseFloat(data?.total_balance ?? '0');
+  const monthIncome  = parseFloat(summary?.total_income  ?? '0');
+  const monthExpense = parseFloat(summary?.total_expense ?? '0');
+  const net          = parseFloat(summary?.net           ?? '0');
+
+  const totalBudget = budgets.reduce((s, b) => s + b.total, 0);
+  const totalUsed   = budgets.reduce((s, b) => s + b.used,  0);
+  const alertCount  = (data?.budget_overview ?? []).filter(b => b.percentage_used >= 75).length;
+
+  if (loading) {
+    return (
+      <div style={{ fontFamily: T.fontSans, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
+        <div style={{ textAlign: 'center', color: T.textSubtle }}>
+          <div style={{ fontSize: 13 }}>Memuat dashboard…</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ fontFamily: T.fontSans, display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 13, color: T.danger, marginBottom: 12 }}>{error}</div>
+          <Btn kind="ghost" size="sm" onClick={fetchDashboard}>Coba lagi</Btn>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -128,59 +224,12 @@ export default function DashboardPage() {
             Dashboard
           </h1>
           <div style={{ fontSize: 12.5, color: T.textSubtle, marginTop: 3 }}>
-            {isCurrentMonth
-              ? `${TODAY.getDate()} ${currentMonth} ${currentYear} · ${daysLeft} hari tersisa bulan ini`
-              : `Menampilkan data ${currentMonth} ${currentYear}`}
+            {today.getDate()} {currentMonth} {currentYear} · {daysLeft} hari tersisa bulan ini
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-          <div ref={monthPickerRef} style={{ position: 'relative' }}>
-            <Btn
-              kind="ghost"
-              size="sm"
-              icon={Icon.calendar(14)}
-              onClick={() => setShowMonthPicker(v => !v)}
-            >
-              {currentMonth} {currentYear}
-              <ChevronDown size={12} style={{ marginLeft: 2 }} />
-            </Btn>
-            {showMonthPicker && (
-              <div style={{
-                position: 'absolute', top: 'calc(100% + 6px)', right: 0,
-                background: T.surface,
-                border: `1px solid ${T.border}`,
-                borderRadius: 10,
-                boxShadow: '0 8px 24px rgba(20,30,25,0.12)',
-                minWidth: 170, zIndex: 50,
-                overflow: 'hidden',
-              }}>
-                {availableMonths.map(ym => {
-                  const [y, m] = ym.split('-').map(Number);
-                  const label = `${MONTH_NAMES[m - 1]} ${y}`;
-                  const active = ym === selectedMonth;
-                  return (
-                    <button
-                      key={ym}
-                      onClick={() => { setSelectedMonth(ym); setShowMonthPicker(false); }}
-                      style={{
-                        display: 'block', width: '100%', textAlign: 'left',
-                        padding: '9px 14px', border: 'none', cursor: 'pointer',
-                        fontSize: 13, fontWeight: active ? 700 : 400,
-                        color: active ? T.primary : T.text,
-                        background: active ? `${T.primary}12` : 'transparent',
-                      }}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-          <Btn kind="primary" size="sm" icon={Icon.plus(14)} onClick={() => setShowAdd(true)}>
-            Tambah Transaksi
-          </Btn>
-        </div>
+        <Btn kind="primary" size="sm" icon={Icon.plus(14)} onClick={() => setShowAdd(true)}>
+          Tambah Transaksi
+        </Btn>
       </div>
 
       {/* Hero summary stats */}
@@ -189,19 +238,18 @@ export default function DashboardPage() {
           large
           label="TOTAL ASET"
           value={formatRp(totalAssets)}
-          delta="+ Rp 1.420.000 dari bulan lalu"
         />
         <SummaryStat
           label={`Pemasukan ${currentMonth}`}
           value={formatRp(monthIncome)}
-          delta={`${monthTxList.filter(tx => tx.type === 'income').length} transaksi masuk`}
+          delta={`${txList.filter(tx => tx.type === 'income').length} transaksi masuk`}
           deltaTone="up"
           icon={<ArrowUp size={13} color={T.primary} />}
         />
         <SummaryStat
           label={`Pengeluaran ${currentMonth}`}
           value={formatRp(monthExpense)}
-          delta={`${monthTxList.filter(tx => tx.type === 'expense').length} transaksi keluar`}
+          delta={`${txList.filter(tx => tx.type === 'expense').length} transaksi keluar`}
           deltaTone="down"
           icon={<ArrowDown size={13} color={T.danger} />}
         />
@@ -226,15 +274,14 @@ export default function DashboardPage() {
         </Link>
       </div>
       <div style={{ display: 'flex', gap: 14, marginBottom: 24 }}>
-        {displayedAccounts.map(a => {
-          const lastDate = lastTxByAcct[a.id];
-          const lastTx = lastDate ? txList.find(tx => tx.acct === a.id && tx.date === lastDate) : undefined;
+        {accounts.slice(0, 4).map(a => {
+          const lastTx = txList.find(tx => tx.acctInfo.name === a.name);
           return (
             <AccountCard
               key={a.id}
               acct={a}
-              lastTx={lastTx}
-              lastUpdated={lastDate}
+              lastTxAmount={lastTx?.amount}
+              lastUpdated={lastTx?.date}
             />
           );
         })}
@@ -277,12 +324,18 @@ export default function DashboardPage() {
             <div>
               <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: T.text }}>Transaksi Terkini</h3>
               <div style={{ fontSize: 12, color: T.textSubtle, marginTop: 3 }}>
-                {monthTxList.length} transaksi {currentMonth} {currentYear}
+                {txList.length} transaksi terakhir
               </div>
             </div>
           </div>
           <div style={{ marginTop: 8 }}>
-            {monthTxList.slice(0, 7).map(t => <TxRow key={t.id} t={t} />)}
+            {txList.map(t => (
+              <TxRow
+                key={t.id}
+                t={t}
+                acctInfo={t.acctInfo}
+              />
+            ))}
           </div>
           <Link href="/transaksi" style={{
             display: 'block', textAlign: 'center', marginTop: 12,
@@ -294,7 +347,12 @@ export default function DashboardPage() {
       </div>
 
       {showAdd && (
-        <AddTransactionModal onClose={() => setShowAdd(false)} onSave={handleAdd} />
+        <AddTransactionModal
+          accounts={accounts}
+          budgets={budgets}
+          onClose={() => setShowAdd(false)}
+          onSave={saving ? () => {} : handleAdd}
+        />
       )}
     </div>
   );
