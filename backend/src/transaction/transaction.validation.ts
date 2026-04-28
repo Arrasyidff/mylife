@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { FamilyMember, TransactionType } from '../generated/prisma';
+import { FamilyMember, TransactionType } from '../../generated/prisma';
 
 const transactionTypeValues = Object.values(TransactionType) as [TransactionType, ...TransactionType[]];
 const familyMemberValues = Object.values(FamilyMember) as [FamilyMember, ...FamilyMember[]];

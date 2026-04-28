@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { BudgetPeriod, TransactionType, User } from '../generated/prisma';
+import { BudgetPeriod, TransactionType, User } from '../../generated/prisma';
 import { PrismaService } from '../common/prisma.service';
 import { ValidationService } from '../common/validation.service';
 import { BudgetValidation } from './budget.validation';

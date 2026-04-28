@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { FamilyMember, TransactionType, User } from '../generated/prisma';
+import { FamilyMember, TransactionType, User } from '../../generated/prisma';
 import { PrismaService } from '../common/prisma.service';
 import { ValidationService } from '../common/validation.service';
 import { ReportValidation } from './report.validation';

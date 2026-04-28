@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { BudgetPeriod, TransactionType, User } from '../generated/prisma';
+import { BudgetPeriod, TransactionType, User } from '../../generated/prisma';
 import { PrismaService } from '../common/prisma.service';
 import {
   DashboardAccountItem,

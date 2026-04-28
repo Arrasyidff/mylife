@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { BudgetPeriod } from '../generated/prisma';
+import { BudgetPeriod } from '../../generated/prisma';
 
 const budgetPeriodValues = Object.values(BudgetPeriod) as [BudgetPeriod, ...BudgetPeriod[]];
 

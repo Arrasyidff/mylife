@@ -1,4 +1,4 @@
-import { FamilyMember, TransactionType } from '../generated/prisma';
+import { FamilyMember, TransactionType } from '../../generated/prisma';
 
 export class CreateTransactionRequest {
   recorder: FamilyMember;

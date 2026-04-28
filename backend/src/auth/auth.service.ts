@@ -10,7 +10,7 @@ import {
   AuthUserResponse,
 } from '../model/auth.model';
 import { AuthValidation } from './auth.validation';
-import { User } from '../generated/prisma';
+import { User } from '../../generated/prisma';
 
 @Injectable()
 export class AuthService {
