@@ -5,7 +5,7 @@ import { Icon } from '@/components/ui/icon';
 import { CatBubble } from '@/components/dashboard/cat-bubble';
 import { UserBadge } from '@/components/dashboard/user-badge';
 import { Btn } from '@/components/ui/btn';
-import { accounts, budgets, type Transaction } from '@/lib/dashboard-data';
+import { accounts as mockAccounts, budgets as mockBudgets, type Account, type Budget, type Transaction } from '@/lib/dashboard-data';
 import { formatRp, toDatetimeLocal, fromDatetimeLocal } from '@/lib/format';
 
 const TX_TYPES = [
@@ -39,6 +39,8 @@ interface EditTransactionModalProps {
   onClose: () => void;
   onSave: (tx: Transaction) => void;
   onDelete: (id: number) => void;
+  accounts?: Account[];
+  budgets?: Budget[];
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -65,7 +67,9 @@ function InputRow({ children, style }: { children: React.ReactNode; style?: Reac
   );
 }
 
-export function EditTransactionModal({ tx, onClose, onSave, onDelete }: EditTransactionModalProps) {
+export function EditTransactionModal({ tx, onClose, onSave, onDelete, accounts: propAccounts, budgets: propBudgets }: EditTransactionModalProps) {
+  const accountList = propAccounts ?? mockAccounts;
+  const budgetList  = propBudgets  ?? mockBudgets;
   const initType = tx.type;
   const initAmt  = Math.abs(tx.amount);
 
@@ -89,7 +93,7 @@ export function EditTransactionModal({ tx, onClose, onSave, onDelete }: EditTran
 
   const cats = txType === 'income' ? INCOME_CATS : EXPENSE_CATS;
 
-  const budget = budgets.find(b => b.cat === selectedCat);
+  const budget = budgetList.find(b => b.cat === selectedCat);
   const budgetPct = budget ? Math.round((budget.used / budget.total) * 100) : 0;
   const showBudgetWarning = txType === 'expense' && !!budget && budgetPct >= 75;
 
@@ -111,6 +115,7 @@ export function EditTransactionModal({ tx, onClose, onSave, onDelete }: EditTran
       cat:    selectedCat,
       merch:  merch.trim(),
       acct:   selectedAcct,
+      ...(txType === 'transfer' && tx.toAcct ? { toAcct: tx.toAcct } : {}),
       amount: sign * amountNum,
       date:   fromDatetimeLocal(dateVal),
       type:   txType,
@@ -293,7 +298,7 @@ export function EditTransactionModal({ tx, onClose, onSave, onDelete }: EditTran
           {/* Account */}
           <Field label="Rekening">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              {accounts.map(a => {
+              {accountList.map(a => {
                 const active = a.id === selectedAcct;
                 return (
                   <button

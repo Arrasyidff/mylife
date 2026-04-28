@@ -29,6 +29,8 @@ export type Transaction = {
   cat: string;
   merch: string;
   acct: string;
+  /** Destination account id when type === 'transfer' */
+  toAcct?: string;
   amount: number;
   date: string; // ISO datetime: "2026-04-27T09:15:00"
   type: 'expense' | 'income' | 'transfer';

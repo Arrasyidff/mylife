@@ -15,7 +15,7 @@ import { TxRow } from '@/components/dashboard/tx-row';
 import { AddTransactionModal } from '@/components/dashboard/add-transaction-modal';
 import { CheckCircle, XCircle, AlertTriangle, ArrowUp, ArrowDown } from 'lucide-react';
 import { dashboardService, type DashboardApiResponse, type DashboardAccountItem, type DashboardTransactionItem, type DashboardBudgetItem } from '@/lib/services/dashboard';
-import { transactionService } from '@/lib/services/transaction';
+import { transactionService, toCreatePayload } from '@/lib/services/transaction';
 
 const MONTH_NAMES = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
@@ -121,16 +121,7 @@ export default function DashboardPage() {
     setSaving(true);
     try {
       for (const tx of txs) {
-        await transactionService.create({
-          recorder: tx.user === 'H' ? 'SUAMI' : 'ISTRI',
-          category: tx.cat,
-          merchant: tx.merch,
-          account_id: tx.acct,
-          amount: Math.abs(tx.amount),
-          date: tx.date,
-          type: tx.type === 'expense' ? 'EXPENSE' : tx.type === 'income' ? 'INCOME' : 'TRANSFER',
-          note: tx.note,
-        });
+        await transactionService.create(toCreatePayload(tx));
       }
       setShowAdd(false);
       setToast({

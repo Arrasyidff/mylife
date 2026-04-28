@@ -1,6 +1,6 @@
 "use client";
-import { useState, useMemo, useRef, useEffect } from 'react';
-import { CheckCircle, XCircle } from 'lucide-react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { T } from '@/lib/tokens';
 import { Icon } from '@/components/ui/icon';
 import { Btn } from '@/components/ui/btn';
@@ -9,8 +9,15 @@ import { CatBubble } from '@/components/dashboard/cat-bubble';
 import { UserBadge } from '@/components/dashboard/user-badge';
 import { AddTransactionModal } from '@/components/dashboard/add-transaction-modal';
 import { EditTransactionModal } from '@/components/dashboard/edit-transaction-modal';
-import { transactions as SEED, accounts, type Transaction } from '@/lib/dashboard-data';
+import { type Account, type Transaction } from '@/lib/dashboard-data';
 import { formatRp, formatTxDate, txDateGroupKey, formatGroupLabel } from '@/lib/format';
+import { accountService } from '@/lib/services/account';
+import {
+  transactionService,
+  mapToTransaction,
+  toCreatePayload,
+  toUpdatePayload,
+} from '@/lib/services/transaction';
 
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 const MONTHS_FULL  = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
@@ -58,16 +65,19 @@ function FilterChip({
 
 function TxLine({
   t,
+  accounts,
   expanded,
   onToggle,
   onEdit,
 }: {
   t: Transaction;
+  accounts: Account[];
   expanded: boolean;
   onToggle: () => void;
   onEdit: () => void;
 }) {
   const acct = accounts.find(a => a.id === t.acct);
+  const toAcct = t.toAcct ? accounts.find(a => a.id === t.toAcct) : undefined;
   const isIncome = t.type === 'income';
   const borderColor =
     t.type === 'income'   ? T.primary  :
@@ -138,7 +148,7 @@ function TxLine({
           {isIncome ? '+' : ''}{formatRp(t.amount)}
         </div>
 
-        {t.type === 'transfer' && (
+        {t.type === 'transfer' && toAcct && (
           <button
             onClick={e => { e.stopPropagation(); onToggle(); }}
             style={{
@@ -151,7 +161,7 @@ function TxLine({
         )}
       </div>
 
-      {expanded && t.type === 'transfer' && (
+      {expanded && t.type === 'transfer' && acct && toAcct && (
         <div style={{
           background: T.surfaceAlt,
           borderLeft: '3px solid #3B82F6',
@@ -159,22 +169,23 @@ function TxLine({
           padding: '12px 18px 14px 64px',
         }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: T.textMuted, letterSpacing: 0.3, marginBottom: 8 }}>
-            3 ENTRI TERHUBUNG
+            DETAIL TRANSFER
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {[
-              { label: 'Debit dari Mandiri', amt: -500_000, color: T.danger  },
-              { label: 'Kredit ke GoPay',    amt:  500_000, color: T.primary },
-              { label: 'Biaya Admin',        amt:   -2_500, color: T.warning },
-            ].map((r, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12.5 }}>
-                <span style={{ width: 8, height: 8, borderRadius: 4, background: r.color, flexShrink: 0 }} />
-                <span style={{ flex: 1, color: T.text }}>{r.label}</span>
-                <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, color: r.color }}>
-                  {r.amt > 0 ? '+' : ''}{formatRp(r.amt)}
-                </span>
-              </div>
-            ))}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12.5 }}>
+              <span style={{ width: 8, height: 8, borderRadius: 4, background: acct.color, flexShrink: 0 }} />
+              <span style={{ flex: 1, color: T.text }}>Debit dari {acct.name}</span>
+              <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, color: T.danger }}>
+                -{formatRp(Math.abs(t.amount))}
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12.5 }}>
+              <span style={{ width: 8, height: 8, borderRadius: 4, background: toAcct.color, flexShrink: 0 }} />
+              <span style={{ flex: 1, color: T.text }}>Kredit ke {toAcct.name}</span>
+              <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, color: T.primary }}>
+                +{formatRp(Math.abs(t.amount))}
+              </span>
+            </div>
           </div>
         </div>
       )}
@@ -185,10 +196,11 @@ function TxLine({
 // ── Date group ─────────────────────────────────────────────────────────────────
 
 function TxGroup({
-  label, txs, expandedId, onToggle, onEdit,
+  label, txs, accounts, expandedId, onToggle, onEdit,
 }: {
   label: string;
   txs: Transaction[];
+  accounts: Account[];
   expandedId: number | null;
   onToggle: (id: number) => void;
   onEdit: (t: Transaction) => void;
@@ -227,6 +239,7 @@ function TxGroup({
           <TxLine
             key={t.id}
             t={t}
+            accounts={accounts}
             expanded={expandedId === t.id}
             onToggle={() => onToggle(t.id)}
             onEdit={() => onEdit(t)}
@@ -289,7 +302,11 @@ type Toast = { msg: string; ok: boolean };
 export default function TransactionsPage() {
   const _now = new Date();
 
-  const [txList,          setTxList]          = useState<Transaction[]>(SEED);
+  const [accounts,        setAccounts]        = useState<Account[]>([]);
+  const [txList,          setTxList]          = useState<Transaction[]>([]);
+  const [loading,         setLoading]         = useState(true);
+  const [error,           setError]           = useState<string | null>(null);
+  const [saving,          setSaving]          = useState(false);
   const [showAdd,         setShowAdd]         = useState(false);
   const [editTx,          setEditTx]          = useState<Transaction | null>(null);
   const [expandedId,      setExpandedId]      = useState<number | null>(null);
@@ -301,8 +318,11 @@ export default function TransactionsPage() {
   const [pickerYear,      setPickerYear]      = useState(_now.getFullYear());
   const [toast,           setToast]           = useState<Toast | null>(null);
 
-  const nextId         = useRef(Math.max(...SEED.map(t => t.id)) + 1);
   const monthPickerRef = useRef<HTMLDivElement>(null);
+
+  function showToast(msg: string, ok = true) {
+    setToast({ msg, ok });
+  }
 
   useEffect(() => {
     if (!toast) return;
@@ -321,35 +341,72 @@ export default function TransactionsPage() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showMonthPicker]);
 
-  function showToast(msg: string, ok = true) {
-    setToast({ msg, ok });
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [{ accounts: accountList }, txItems] = await Promise.all([
+        accountService.list(true),
+        transactionService.listAll(),
+      ]);
+      setAccounts(accountList);
+      setTxList(txItems.map(mapToTransaction).sort((a, b) => b.date.localeCompare(a.date)));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Gagal memuat transaksi');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  async function handleAdd(data: Omit<Transaction, 'id'>[]) {
+    setSaving(true);
+    try {
+      for (const draft of data) {
+        await transactionService.create(toCreatePayload(draft));
+      }
+      setShowAdd(false);
+      showToast(
+        data.length > 1
+          ? 'Transfer + biaya admin berhasil dicatat'
+          : `Transaksi "${data[0]?.merch}" berhasil ditambahkan`,
+      );
+      await fetchData();
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Gagal menyimpan transaksi', false);
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function handleAdd(data: Omit<Transaction, 'id'>[]) {
-    const txs = data.map(d => ({ ...d, id: nextId.current++ }));
-    setTxList(prev => [...prev, ...txs].sort((a, b) => b.date.localeCompare(a.date)));
-    setShowAdd(false);
-    showToast(
-      txs.length > 1
-        ? `Transfer + biaya admin berhasil dicatat`
-        : `Transaksi "${data[0]?.merch}" berhasil ditambahkan`
-    );
+  async function handleEdit(data: Transaction) {
+    setSaving(true);
+    try {
+      await transactionService.update(data.id, toUpdatePayload(data));
+      setEditTx(null);
+      showToast(`Transaksi "${data.merch}" berhasil diperbarui`);
+      await fetchData();
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Gagal memperbarui transaksi', false);
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function handleEdit(data: Transaction) {
-    setTxList(prev =>
-      prev.map(t => t.id === data.id ? data : t)
-          .sort((a, b) => b.date.localeCompare(a.date))
-    );
-    setEditTx(null);
-    showToast(`Transaksi "${data.merch}" berhasil diperbarui`);
-  }
-
-  function handleDelete(id: number) {
+  async function handleDelete(id: number) {
     const name = txList.find(t => t.id === id)?.merch ?? 'Transaksi';
-    setTxList(prev => prev.filter(t => t.id !== id));
-    setEditTx(null);
-    showToast(`"${name}" telah dihapus`, false);
+    setSaving(true);
+    try {
+      await transactionService.remove(id);
+      setEditTx(null);
+      showToast(`"${name}" telah dihapus`, false);
+      await fetchData();
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : 'Gagal menghapus transaksi', false);
+    } finally {
+      setSaving(false);
+    }
   }
 
   function resetFilters() {
@@ -475,239 +532,292 @@ export default function TransactionsPage() {
             Transaksi
           </h1>
           <div style={{ fontSize: 12.5, color: T.textSubtle, marginTop: 3 }}>
-            {filtered.length} dari {txList.length} transaksi · {monthLabel}
+            {loading ? 'Memuat…' : `${filtered.length} dari ${txList.length} transaksi · ${monthLabel}`}
           </div>
         </div>
         <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
           <Btn kind="ghost" size="sm" icon={Icon.download(14)} onClick={handleExport} disabled={filtered.length === 0}>Ekspor</Btn>
-          <Btn kind="primary" size="sm" icon={Icon.plus(14)} onClick={() => setShowAdd(true)}>
+          <Btn
+            kind="primary"
+            size="sm"
+            icon={Icon.plus(14)}
+            onClick={() => setShowAdd(true)}
+            disabled={loading || accounts.length === 0}
+          >
             Tambah
           </Btn>
         </div>
       </div>
 
-      {/* Filter bar */}
-      <div style={{
-        background: T.surface,
-        border: `1px solid ${T.border}`,
-        borderRadius: T.radius.lg,
-        padding: 16, marginBottom: 16,
-      }}>
-        {/* Search */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-          <div style={{
-            flex: 1, display: 'flex', alignItems: 'center', gap: 9,
-            padding: '9px 12px',
-            background: T.surfaceAlt, borderRadius: 9,
-            border: `1px solid ${T.border}`,
-          }}>
-            <span style={{ color: T.textSubtle, flexShrink: 0 }}>{Icon.search(16)}</span>
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Cari merchant atau catatan…"
-              style={{
-                flex: 1, border: 'none', outline: 'none',
-                background: 'transparent', fontSize: 13, color: T.text,
-                fontFamily: T.fontSans,
-              }}
-            />
-            {search && (
-              <button
-                onClick={() => setSearch('')}
-                style={{
-                  border: 'none', background: 'transparent',
-                  color: T.textSubtle, cursor: 'pointer', padding: 0, lineHeight: 1,
-                }}
-              >
-                {Icon.close(14)}
-              </button>
-            )}
-          </div>
-          {/* Month picker */}
-          <div ref={monthPickerRef} style={{ position: 'relative' }}>
-            <Btn
-              kind={monthFilter ? 'soft' : 'ghost'}
-              size="sm"
-              icon={Icon.calendar(14)}
-              onClick={() => { setShowMonthPicker(v => !v); setPickerYear(monthFilter?.year ?? _now.getFullYear()); }}
-            >
-              {monthLabel}
-              <span style={{ marginLeft: 2 }}>{Icon.chev(12, showMonthPicker ? 'up' : 'down')}</span>
-            </Btn>
-
-            {showMonthPicker && (
-              <div style={{
-                position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 120,
-                background: T.surface, border: `1px solid ${T.border}`,
-                borderRadius: T.radius.lg,
-                boxShadow: '0 8px 24px rgba(20,30,25,0.13)',
-                padding: 14, width: 240,
-              }}>
-                {/* Year navigation */}
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                  <button
-                    onClick={() => setPickerYear(y => y - 1)}
-                    style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: T.textSubtle, padding: 4, display: 'flex' }}
-                  >
-                    {Icon.chev(16, 'left')}
-                  </button>
-                  <span style={{ fontWeight: 700, fontSize: 14, color: T.text, fontFamily: T.fontSans }}>{pickerYear}</span>
-                  <button
-                    onClick={() => setPickerYear(y => y + 1)}
-                    style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: T.textSubtle, padding: 4, display: 'flex' }}
-                  >
-                    {Icon.chev(16, 'right')}
-                  </button>
-                </div>
-
-                {/* All-time option */}
-                <button
-                  onClick={() => { setMonthFilter(null); setShowMonthPicker(false); }}
-                  style={{
-                    width: '100%', padding: '7px 10px', marginBottom: 8,
-                    borderRadius: 7, border: `1px solid ${!monthFilter ? T.primary : T.border}`,
-                    background: !monthFilter ? T.primaryLight : T.surfaceAlt,
-                    color: !monthFilter ? T.primaryDark : T.textSubtle,
-                    fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
-                    fontFamily: T.fontSans, textAlign: 'center',
-                  }}
-                >
-                  Semua Waktu
-                </button>
-
-                {/* Month grid */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 5 }}>
-                  {MONTHS_SHORT.map((m, i) => {
-                    const isSelected = monthFilter?.year === pickerYear && monthFilter?.month === (i + 1);
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => { setMonthFilter({ year: pickerYear, month: i + 1 }); setShowMonthPicker(false); }}
-                        style={{
-                          padding: '7px 4px', borderRadius: 7,
-                          border: `1px solid ${isSelected ? T.primary : T.border}`,
-                          background: isSelected ? T.primary : T.surface,
-                          color: isSelected ? '#fff' : T.text,
-                          fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                          fontFamily: T.fontSans,
-                        }}
-                      >
-                        {m}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Chips: type */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-          {(['all', 'expense', 'income', 'transfer'] as TypeFilter[]).map(type => (
-            <FilterChip
-              key={type}
-              active={typeFilter === type}
-              count={typeCounts[type]}
-              onClick={() => setTypeFilter(type)}
-            >
-              {type === 'all' ? 'Semua' : type === 'expense' ? 'Pengeluaran' : type === 'income' ? 'Pemasukan' : 'Transfer'}
-            </FilterChip>
-          ))}
-
-          <span style={{ width: 1, background: T.border, margin: '0 4px', alignSelf: 'stretch' }} />
-
-          {/* User filter */}
-          {(['all', 'H', 'W'] as UserFilter[]).map(u => (
-            <FilterChip
-              key={u}
-              active={userFilter === u}
-              onClick={() => setUserFilter(u)}
-            >
-              {u === 'all' ? (
-                'Semua Pencatat'
-              ) : (
-                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                  <UserBadge user={u} size={16} />
-                  {u === 'H' ? 'Suami' : 'Istri'}
-                </span>
-              )}
-            </FilterChip>
-          ))}
-
-          {hasFilters && (
-            <>
-              <span style={{ width: 1, background: T.border, margin: '0 4px', alignSelf: 'stretch' }} />
-              <button
-                onClick={resetFilters}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                  padding: '7px 12px', borderRadius: 999,
-                  border: `1px solid ${T.border}`, background: T.dangerLight,
-                  color: T.danger, cursor: 'pointer',
-                  fontSize: 12.5, fontWeight: 600, fontFamily: T.fontSans,
-                }}
-              >
-                {Icon.close(12)} Reset
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Summary bar */}
-      {filtered.length > 0 && (
+      {/* Error state */}
+      {error && (
         <div style={{
-          display: 'flex', gap: 12, marginBottom: 20,
+          background: T.dangerLight, border: `1px solid ${T.danger}33`,
+          borderRadius: T.radius.lg, padding: '16px 20px',
+          marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12,
         }}>
-          {[
-            { label: 'Pemasukan', value: totalIncome,  color: T.primaryDark, prefix: '+' },
-            { label: 'Pengeluaran', value: totalExpense, color: T.danger,     prefix: '-' },
-            { label: 'Selisih', value: totalIncome - totalExpense, color: (totalIncome - totalExpense) >= 0 ? T.primaryDark : T.danger, prefix: (totalIncome - totalExpense) >= 0 ? '+' : '' },
-          ].map(s => (
-            <div
-              key={s.label}
-              style={{
-                flex: 1, padding: '12px 16px',
-                background: T.surface, border: `1px solid ${T.border}`,
-                borderRadius: T.radius.lg,
-              }}
-            >
-              <div style={{ fontSize: 11, fontWeight: 700, color: T.textMuted, letterSpacing: 0.3, marginBottom: 4 }}>
-                {s.label.toUpperCase()}
-              </div>
-              <div style={{ fontSize: 15, fontWeight: 700, color: s.color, fontVariantNumeric: 'tabular-nums' }}>
-                {s.prefix}{formatRp(Math.abs(s.value))}
-              </div>
-            </div>
-          ))}
+          <XCircle size={18} color={T.danger} />
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13.5, fontWeight: 600, color: T.danger }}>{error}</div>
+          </div>
+          <button
+            onClick={fetchData}
+            style={{
+              padding: '6px 14px', borderRadius: 7,
+              border: `1px solid ${T.danger}44`,
+              background: T.surface, color: T.danger,
+              fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+              fontFamily: T.fontSans,
+            }}
+          >
+            Coba lagi
+          </button>
         </div>
       )}
 
-      {/* Groups or empty state */}
-      {groups.length === 0 ? (
-        <EmptyState hasFilters={hasFilters} onReset={resetFilters} />
-      ) : (
-        groups.map(g => (
-          <TxGroup
-            key={g.key}
-            label={g.label}
-            txs={g.txs}
-            expandedId={expandedId}
-            onToggle={id => setExpandedId(prev => prev === id ? null : id)}
-            onEdit={t => setEditTx(t)}
-          />
-        ))
+      {/* Loading state */}
+      {loading && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          padding: '60px 0', color: T.textMuted, gap: 10,
+        }}>
+          <Loader2 size={20} style={{ animation: 'spin 1s linear infinite' }} />
+          <span style={{ fontSize: 13.5, fontWeight: 500 }}>Memuat transaksi…</span>
+        </div>
+      )}
+
+      {!loading && !error && (
+        <>
+          {/* Filter bar */}
+          <div style={{
+            background: T.surface,
+            border: `1px solid ${T.border}`,
+            borderRadius: T.radius.lg,
+            padding: 16, marginBottom: 16,
+          }}>
+            {/* Search */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+              <div style={{
+                flex: 1, display: 'flex', alignItems: 'center', gap: 9,
+                padding: '9px 12px',
+                background: T.surfaceAlt, borderRadius: 9,
+                border: `1px solid ${T.border}`,
+              }}>
+                <span style={{ color: T.textSubtle, flexShrink: 0 }}>{Icon.search(16)}</span>
+                <input
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder="Cari merchant atau catatan…"
+                  style={{
+                    flex: 1, border: 'none', outline: 'none',
+                    background: 'transparent', fontSize: 13, color: T.text,
+                    fontFamily: T.fontSans,
+                  }}
+                />
+                {search && (
+                  <button
+                    onClick={() => setSearch('')}
+                    style={{
+                      border: 'none', background: 'transparent',
+                      color: T.textSubtle, cursor: 'pointer', padding: 0, lineHeight: 1,
+                    }}
+                  >
+                    {Icon.close(14)}
+                  </button>
+                )}
+              </div>
+              {/* Month picker */}
+              <div ref={monthPickerRef} style={{ position: 'relative' }}>
+                <Btn
+                  kind={monthFilter ? 'soft' : 'ghost'}
+                  size="sm"
+                  icon={Icon.calendar(14)}
+                  onClick={() => { setShowMonthPicker(v => !v); setPickerYear(monthFilter?.year ?? _now.getFullYear()); }}
+                >
+                  {monthLabel}
+                  <span style={{ marginLeft: 2 }}>{Icon.chev(12, showMonthPicker ? 'up' : 'down')}</span>
+                </Btn>
+
+                {showMonthPicker && (
+                  <div style={{
+                    position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 120,
+                    background: T.surface, border: `1px solid ${T.border}`,
+                    borderRadius: T.radius.lg,
+                    boxShadow: '0 8px 24px rgba(20,30,25,0.13)',
+                    padding: 14, width: 240,
+                  }}>
+                    {/* Year navigation */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                      <button
+                        onClick={() => setPickerYear(y => y - 1)}
+                        style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: T.textSubtle, padding: 4, display: 'flex' }}
+                      >
+                        {Icon.chev(16, 'left')}
+                      </button>
+                      <span style={{ fontWeight: 700, fontSize: 14, color: T.text, fontFamily: T.fontSans }}>{pickerYear}</span>
+                      <button
+                        onClick={() => setPickerYear(y => y + 1)}
+                        style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: T.textSubtle, padding: 4, display: 'flex' }}
+                      >
+                        {Icon.chev(16, 'right')}
+                      </button>
+                    </div>
+
+                    {/* All-time option */}
+                    <button
+                      onClick={() => { setMonthFilter(null); setShowMonthPicker(false); }}
+                      style={{
+                        width: '100%', padding: '7px 10px', marginBottom: 8,
+                        borderRadius: 7, border: `1px solid ${!monthFilter ? T.primary : T.border}`,
+                        background: !monthFilter ? T.primaryLight : T.surfaceAlt,
+                        color: !monthFilter ? T.primaryDark : T.textSubtle,
+                        fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
+                        fontFamily: T.fontSans, textAlign: 'center',
+                      }}
+                    >
+                      Semua Waktu
+                    </button>
+
+                    {/* Month grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 5 }}>
+                      {MONTHS_SHORT.map((m, i) => {
+                        const isSelected = monthFilter?.year === pickerYear && monthFilter?.month === (i + 1);
+                        return (
+                          <button
+                            key={i}
+                            onClick={() => { setMonthFilter({ year: pickerYear, month: i + 1 }); setShowMonthPicker(false); }}
+                            style={{
+                              padding: '7px 4px', borderRadius: 7,
+                              border: `1px solid ${isSelected ? T.primary : T.border}`,
+                              background: isSelected ? T.primary : T.surface,
+                              color: isSelected ? '#fff' : T.text,
+                              fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                              fontFamily: T.fontSans,
+                            }}
+                          >
+                            {m}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Chips: type */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {(['all', 'expense', 'income', 'transfer'] as TypeFilter[]).map(type => (
+                <FilterChip
+                  key={type}
+                  active={typeFilter === type}
+                  count={typeCounts[type]}
+                  onClick={() => setTypeFilter(type)}
+                >
+                  {type === 'all' ? 'Semua' : type === 'expense' ? 'Pengeluaran' : type === 'income' ? 'Pemasukan' : 'Transfer'}
+                </FilterChip>
+              ))}
+
+              <span style={{ width: 1, background: T.border, margin: '0 4px', alignSelf: 'stretch' }} />
+
+              {/* User filter */}
+              {(['all', 'H', 'W'] as UserFilter[]).map(u => (
+                <FilterChip
+                  key={u}
+                  active={userFilter === u}
+                  onClick={() => setUserFilter(u)}
+                >
+                  {u === 'all' ? (
+                    'Semua Pencatat'
+                  ) : (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <UserBadge user={u} size={16} />
+                      {u === 'H' ? 'Suami' : 'Istri'}
+                    </span>
+                  )}
+                </FilterChip>
+              ))}
+
+              {hasFilters && (
+                <>
+                  <span style={{ width: 1, background: T.border, margin: '0 4px', alignSelf: 'stretch' }} />
+                  <button
+                    onClick={resetFilters}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 5,
+                      padding: '7px 12px', borderRadius: 999,
+                      border: `1px solid ${T.border}`, background: T.dangerLight,
+                      color: T.danger, cursor: 'pointer',
+                      fontSize: 12.5, fontWeight: 600, fontFamily: T.fontSans,
+                    }}
+                  >
+                    {Icon.close(12)} Reset
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Summary bar */}
+          {filtered.length > 0 && (
+            <div style={{
+              display: 'flex', gap: 12, marginBottom: 20,
+            }}>
+              {[
+                { label: 'Pemasukan', value: totalIncome,  color: T.primaryDark, prefix: '+' },
+                { label: 'Pengeluaran', value: totalExpense, color: T.danger,     prefix: '-' },
+                { label: 'Selisih', value: totalIncome - totalExpense, color: (totalIncome - totalExpense) >= 0 ? T.primaryDark : T.danger, prefix: (totalIncome - totalExpense) >= 0 ? '+' : '' },
+              ].map(s => (
+                <div
+                  key={s.label}
+                  style={{
+                    flex: 1, padding: '12px 16px',
+                    background: T.surface, border: `1px solid ${T.border}`,
+                    borderRadius: T.radius.lg,
+                  }}
+                >
+                  <div style={{ fontSize: 11, fontWeight: 700, color: T.textMuted, letterSpacing: 0.3, marginBottom: 4 }}>
+                    {s.label.toUpperCase()}
+                  </div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: s.color, fontVariantNumeric: 'tabular-nums' }}>
+                    {s.prefix}{formatRp(Math.abs(s.value))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Groups or empty state */}
+          {groups.length === 0 ? (
+            <EmptyState hasFilters={hasFilters} onReset={resetFilters} />
+          ) : (
+            groups.map(g => (
+              <TxGroup
+                key={g.key}
+                label={g.label}
+                txs={g.txs}
+                accounts={accounts}
+                expandedId={expandedId}
+                onToggle={id => setExpandedId(prev => prev === id ? null : id)}
+                onEdit={t => setEditTx(t)}
+              />
+            ))
+          )}
+        </>
       )}
 
       {showAdd && (
-        <AddTransactionModal onClose={() => setShowAdd(false)} onSave={handleAdd} />
+        <AddTransactionModal
+          onClose={() => saving ? undefined : setShowAdd(false)}
+          onSave={handleAdd}
+          accounts={accounts}
+        />
       )}
       {editTx && (
         <EditTransactionModal
           tx={editTx}
-          onClose={() => setEditTx(null)}
+          accounts={accounts}
+          onClose={() => saving ? undefined : setEditTx(null)}
           onSave={handleEdit}
           onDelete={handleDelete}
         />

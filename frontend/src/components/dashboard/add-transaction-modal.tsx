@@ -148,6 +148,7 @@ export function AddTransactionModal({ onClose, onSave, initialType, accounts: pr
       cat:    selectedCat,
       merch:  autoMerch,
       acct:   selectedAcct,
+      ...(txType === 'transfer' ? { toAcct: toAcctId } : {}),
       amount: sign * amountNum,
       date:   fromDatetimeLocal(dateVal),
       type:   txType,
