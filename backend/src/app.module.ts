@@ -5,11 +5,12 @@ import { AccountModule } from './account/account.module';
 import { TransactionModule } from './transaction/transaction.module';
 import { BudgetModule } from './budget/budget.module';
 import { ReportModule } from './report/report.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 import { AuthMiddleware } from './middleware/auth.middleware';
 import { HealthController } from './health/health.controller';
 
 @Module({
-  imports: [CommonModule, AuthModule, AccountModule, TransactionModule, BudgetModule, ReportModule],
+  imports: [CommonModule, AuthModule, AccountModule, TransactionModule, BudgetModule, ReportModule, DashboardModule],
   controllers: [HealthController],
 })
 export class AppModule implements NestModule {
