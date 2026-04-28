@@ -1,9 +1,10 @@
 "use client";
 import { useState } from 'react';
-import { X, Check } from 'lucide-react';
+import { X, Check, Loader2 } from 'lucide-react';
 import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
 import type { Account, AccountType } from '@/lib/dashboard-data';
+import { accountService } from '@/lib/services/account';
 
 const ACCOUNT_TYPES: { id: AccountType; label: string; hint: string }[] = [
   { id: 'tabungan',    label: 'Tabungan',     hint: 'Rekening bank biasa'     },
@@ -65,6 +66,8 @@ export function AddAccountModal({ onClose, onAdd }: AddAccountModalProps) {
   const [color, setColor] = useState('#1565C0');
   const [balance, setBalance] = useState(0);
   const [accountNumber, setAccountNumber] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const previewGlyph = name ? name.slice(0, 3).toUpperCase() : '···';
   const typeLabel = ACCOUNT_TYPES.find(t => t.id === type)?.label ?? '';
@@ -75,19 +78,27 @@ export function AddAccountModal({ onClose, onAdd }: AddAccountModalProps) {
     setBalance(raw ? parseInt(raw) : 0);
   }
 
-  function handleSave() {
-    if (!name.trim()) return;
-    const account: Account = {
-      id: `acct-${Date.now()}`,
-      name: name.trim(),
-      subtitle: previewSubtitle || typeLabel,
-      balance,
-      color,
-      glyph: name.slice(0, 3).toUpperCase(),
-      type,
-    };
-    onAdd(account);
-    onClose();
+  async function handleSave() {
+    if (!name.trim() || loading) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const account = await accountService.create({
+        name: name.trim(),
+        subtitle: previewSubtitle || typeLabel,
+        balance,
+        color,
+        glyph: name.slice(0, 3).toUpperCase(),
+        type,
+        account_number: accountNumber.trim() || undefined,
+      });
+      onAdd(account);
+      onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Gagal menyimpan rekening');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -318,37 +329,50 @@ export function AddAccountModal({ onClose, onAdd }: AddAccountModalProps) {
           padding: '14px 24px',
           borderTop: `1px solid ${T.divider}`,
           background: T.surfaceAlt,
-          display: 'flex', gap: 10,
         }}>
-          <button
-            onClick={onClose}
-            style={{
-              flex: 1, padding: 11, borderRadius: 9,
-              border: `1px solid ${T.border}`,
-              background: T.surface, color: T.text,
-              fontSize: 13.5, fontWeight: 600,
-              cursor: 'pointer', fontFamily: T.fontSans,
-            }}
-          >
-            Batal
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={!name.trim()}
-            style={{
-              flex: 2, padding: 11, borderRadius: 9,
-              border: 'none',
-              background: name.trim() ? T.primary : T.borderStrong,
-              color: 'white',
-              fontSize: 13.5, fontWeight: 600,
-              cursor: name.trim() ? 'pointer' : 'not-allowed',
-              fontFamily: T.fontSans,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            }}
-          >
-            <Check size={14} />
-            Simpan Rekening
-          </button>
+          {error && (
+            <div style={{
+              fontSize: 12.5, color: T.danger, fontWeight: 500,
+              marginBottom: 10, padding: '8px 12px',
+              background: T.dangerLight, borderRadius: 7,
+              border: `1px solid ${T.danger}22`,
+            }}>
+              {error}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              onClick={onClose}
+              disabled={loading}
+              style={{
+                flex: 1, padding: 11, borderRadius: 9,
+                border: `1px solid ${T.border}`,
+                background: T.surface, color: T.text,
+                fontSize: 13.5, fontWeight: 600,
+                cursor: loading ? 'not-allowed' : 'pointer',
+                fontFamily: T.fontSans, opacity: loading ? 0.6 : 1,
+              }}
+            >
+              Batal
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={!name.trim() || loading}
+              style={{
+                flex: 2, padding: 11, borderRadius: 9,
+                border: 'none',
+                background: name.trim() && !loading ? T.primary : T.borderStrong,
+                color: 'white',
+                fontSize: 13.5, fontWeight: 600,
+                cursor: name.trim() && !loading ? 'pointer' : 'not-allowed',
+                fontFamily: T.fontSans,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              }}
+            >
+              {loading ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Check size={14} />}
+              {loading ? 'Menyimpan…' : 'Simpan Rekening'}
+            </button>
+          </div>
         </div>
       </div>
     </>

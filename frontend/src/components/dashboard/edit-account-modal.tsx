@@ -1,9 +1,10 @@
 "use client";
 import { useState } from 'react';
-import { X, Check, Trash2, AlertTriangle } from 'lucide-react';
+import { X, Check, Trash2, AlertTriangle, Loader2 } from 'lucide-react';
 import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
 import type { Account, AccountType } from '@/lib/dashboard-data';
+import { accountService } from '@/lib/services/account';
 
 const ACCOUNT_TYPES: { id: AccountType; label: string; hint: string }[] = [
   { id: 'tabungan',    label: 'Tabungan',     hint: 'Rekening bank biasa'     },
@@ -66,6 +67,9 @@ export function EditAccountModal({ account, onSave, onDelete, onClose }: EditAcc
   const [balance, setBalance] = useState(account.balance);
   const [accountNumber, setAccountNumber] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const previewGlyph = name ? name.slice(0, 3).toUpperCase() : '···';
   const typeLabel = ACCOUNT_TYPES.find(t => t.id === type)?.label ?? '';
@@ -76,23 +80,41 @@ export function EditAccountModal({ account, onSave, onDelete, onClose }: EditAcc
     setBalance(raw ? parseInt(raw) : 0);
   }
 
-  function handleSave() {
-    if (!name.trim()) return;
-    onSave({
-      ...account,
-      name: name.trim(),
-      subtitle: previewSubtitle || typeLabel,
-      balance,
-      color,
-      glyph: name.slice(0, 3).toUpperCase(),
-      type,
-    });
-    onClose();
+  async function handleSave() {
+    if (!name.trim() || loading) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const updated = await accountService.update(account.id, {
+        name: name.trim(),
+        subtitle: previewSubtitle || typeLabel,
+        balance,
+        color,
+        glyph: name.slice(0, 3).toUpperCase(),
+        type,
+        ...(accountNumber.trim() ? { account_number: accountNumber.trim() } : {}),
+      });
+      onSave(updated);
+      onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Gagal menyimpan perubahan');
+    } finally {
+      setLoading(false);
+    }
   }
 
-  function handleDelete() {
-    onDelete(account.id);
-    onClose();
+  async function handleDelete() {
+    if (deleting) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      await accountService.remove(account.id);
+      onDelete(account.id);
+      onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Gagal menghapus rekening');
+      setDeleting(false);
+    }
   }
 
   return (
@@ -335,26 +357,33 @@ export function EditAccountModal({ account, onSave, onDelete, onClose }: EditAcc
                 <div style={{ display: 'flex', gap: 8 }}>
                   <button
                     onClick={() => setConfirmDelete(false)}
+                    disabled={deleting}
                     style={{
                       padding: '7px 16px', borderRadius: 7,
                       border: `1px solid ${T.border}`,
                       background: T.surface, color: T.text,
                       fontSize: 12.5, fontWeight: 600,
-                      cursor: 'pointer', fontFamily: T.fontSans,
+                      cursor: deleting ? 'not-allowed' : 'pointer',
+                      fontFamily: T.fontSans, opacity: deleting ? 0.6 : 1,
                     }}
                   >
                     Batal
                   </button>
                   <button
                     onClick={handleDelete}
+                    disabled={deleting}
                     style={{
                       padding: '7px 16px', borderRadius: 7,
                       border: 'none', background: T.danger, color: 'white',
                       fontSize: 12.5, fontWeight: 600,
-                      cursor: 'pointer', fontFamily: T.fontSans,
+                      cursor: deleting ? 'not-allowed' : 'pointer',
+                      fontFamily: T.fontSans,
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      opacity: deleting ? 0.8 : 1,
                     }}
                   >
-                    Ya, Hapus
+                    {deleting && <Loader2 size={12} style={{ animation: 'spin 1s linear infinite' }} />}
+                    {deleting ? 'Menghapus…' : 'Ya, Hapus'}
                   </button>
                 </div>
               </div>
@@ -367,37 +396,50 @@ export function EditAccountModal({ account, onSave, onDelete, onClose }: EditAcc
           padding: '14px 24px',
           borderTop: `1px solid ${T.divider}`,
           background: T.surfaceAlt,
-          display: 'flex', gap: 10,
         }}>
-          <button
-            onClick={onClose}
-            style={{
-              flex: 1, padding: 11, borderRadius: 9,
-              border: `1px solid ${T.border}`,
-              background: T.surface, color: T.text,
-              fontSize: 13.5, fontWeight: 600,
-              cursor: 'pointer', fontFamily: T.fontSans,
-            }}
-          >
-            Batal
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={!name.trim()}
-            style={{
-              flex: 2, padding: 11, borderRadius: 9,
-              border: 'none',
-              background: name.trim() ? T.primary : T.borderStrong,
-              color: 'white',
-              fontSize: 13.5, fontWeight: 600,
-              cursor: name.trim() ? 'pointer' : 'not-allowed',
-              fontFamily: T.fontSans,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            }}
-          >
-            <Check size={14} />
-            Simpan Perubahan
-          </button>
+          {error && (
+            <div style={{
+              fontSize: 12.5, color: T.danger, fontWeight: 500,
+              marginBottom: 10, padding: '8px 12px',
+              background: T.dangerLight, borderRadius: 7,
+              border: `1px solid ${T.danger}22`,
+            }}>
+              {error}
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 10 }}>
+            <button
+              onClick={onClose}
+              disabled={loading || deleting}
+              style={{
+                flex: 1, padding: 11, borderRadius: 9,
+                border: `1px solid ${T.border}`,
+                background: T.surface, color: T.text,
+                fontSize: 13.5, fontWeight: 600,
+                cursor: loading || deleting ? 'not-allowed' : 'pointer',
+                fontFamily: T.fontSans, opacity: loading || deleting ? 0.6 : 1,
+              }}
+            >
+              Batal
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={!name.trim() || loading || deleting}
+              style={{
+                flex: 2, padding: 11, borderRadius: 9,
+                border: 'none',
+                background: name.trim() && !loading && !deleting ? T.primary : T.borderStrong,
+                color: 'white',
+                fontSize: 13.5, fontWeight: 600,
+                cursor: name.trim() && !loading && !deleting ? 'pointer' : 'not-allowed',
+                fontFamily: T.fontSans,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              }}
+            >
+              {loading ? <Loader2 size={14} style={{ animation: 'spin 1s linear infinite' }} /> : <Check size={14} />}
+              {loading ? 'Menyimpan…' : 'Simpan Perubahan'}
+            </button>
+          </div>
         </div>
       </div>
     </>
