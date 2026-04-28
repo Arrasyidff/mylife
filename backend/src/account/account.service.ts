@@ -8,7 +8,7 @@ import {
   CreateAccountRequest,
   UpdateAccountRequest,
 } from '../model/account.model';
-import { User } from '../../generated/prisma';
+import { User } from '../generated/prisma';
 
 @Injectable()
 export class AccountService {

@@ -8,7 +8,7 @@ import {
   ReportSummaryRequest,
   ReportSummaryResponse,
 } from '../model/report.model';
-import { User } from '../../generated/prisma';
+import { User } from '../generated/prisma';
 
 @Controller('api/reports')
 export class ReportController {

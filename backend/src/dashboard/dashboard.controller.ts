@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { User } from '../../generated/prisma';
+import { User } from '../generated/prisma';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { WebResponse } from '../model/web.model';
 import { DashboardResponse } from '../model/dashboard.model';

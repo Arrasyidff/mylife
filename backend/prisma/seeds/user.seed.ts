@@ -1,4 +1,4 @@
-import { PrismaClient, AksesLevel, Status } from '../../generated/prisma'
+import { PrismaClient, AksesLevel, Status } from '../../src/generated/prisma'
 import { PrismaPg } from '@prisma/adapter-pg'
 import * as bcrypt from 'bcrypt'
 import { Pool } from 'pg'

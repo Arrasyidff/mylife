@@ -8,7 +8,7 @@ import {
   AuthLoginResponse,
   AuthUserResponse,
 } from '../model/auth.model';
-import { User } from '../../generated/prisma';
+import { User } from '../generated/prisma';
 
 @Controller('api/auth')
 export class AuthController {

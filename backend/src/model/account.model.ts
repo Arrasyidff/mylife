@@ -1,4 +1,4 @@
-import { AccountType } from '../../generated/prisma';
+import { AccountType } from '../generated/prisma';
 
 export class CreateAccountRequest {
   name: string;

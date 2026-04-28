@@ -21,7 +21,7 @@ import {
   TransactionResponse,
   UpdateTransactionRequest,
 } from '../model/transaction.model';
-import { User } from '../../generated/prisma';
+import { User } from '../generated/prisma';
 
 @Controller('api/transactions')
 export class TransactionController {

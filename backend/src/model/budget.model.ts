@@ -1,4 +1,4 @@
-import { BudgetPeriod } from '../../generated/prisma';
+import { BudgetPeriod } from '../generated/prisma';
 
 export class CreateBudgetRequest {
   name: string;

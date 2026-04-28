@@ -10,7 +10,7 @@ import { ZodError } from 'zod';
 import {
   PrismaClientKnownRequestError,
   PrismaClientValidationError,
-} from '../../../generated/prisma/runtime/library';
+} from '../../generated/prisma/runtime/library';
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {

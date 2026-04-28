@@ -1,4 +1,4 @@
-import { AksesLevel, Status } from '../../generated/prisma';
+import { AksesLevel, Status } from '../generated/prisma';
 
 export class AuthLoginRequest {
   username: string;

@@ -2,7 +2,7 @@ import { Injectable, NestMiddleware, HttpException, HttpStatus } from '@nestjs/c
 import { Request, Response, NextFunction } from 'express';
 import * as jwt from 'jsonwebtoken';
 import { PrismaService } from '../common/prisma.service';
-import { User } from '../../generated/prisma';
+import { User } from '../generated/prisma';
 
 export interface AuthRequest extends Request {
   user?: Omit<User, 'password'>;
