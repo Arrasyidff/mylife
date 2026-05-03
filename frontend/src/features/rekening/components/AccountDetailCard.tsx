@@ -45,7 +45,7 @@ export function AccountDetailCard({ acct, isHidden, onEdit, onToggleHide }: Acco
     >
       {/* Colored header */}
       <div
-        className="px-5 py-4.5 flex flex-col sm:flex-row items-start gap-2.5 sm:gap-3.5 border-b"
+        className="px-5 py-4.5 flex flex-row items-start gap-3 border-b"
         style={{
           background: isHidden ? '#F6F9F7' : acct.color + '12',
           borderBottomColor: isHidden ? '#EEF2F0' : acct.color + '28',

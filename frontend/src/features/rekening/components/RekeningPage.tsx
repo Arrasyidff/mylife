@@ -7,7 +7,6 @@ import { formatRp } from '@/lib/format';
 import { AddTransactionModal } from '@/components/dashboard/add-transaction-modal';
 import { GROUP_CONFIG } from '../constants';
 import { useRekening } from '../hooks/useRekening';
-import { useIsMobile } from '@/lib/hooks/useIsMobile';
 import { AccountDetailCard } from './AccountDetailCard';
 import { AddAccountCard } from './AddAccountCard';
 import { AddAccountModal } from './AddAccountModal';
@@ -34,22 +33,60 @@ export function RekeningPage() {
     handleToggleHide,
   } = useRekening();
 
-  const isMobile = useIsMobile();
-
   const visibleGroupsWithBalance = GROUP_CONFIG.filter(g =>
     visibleAccounts.some(a => (g.types as readonly string[]).includes(a.type))
   );
 
-  const summaryGridCols = isMobile
-    ? '1fr'
-    : `1.6fr ${visibleGroupsWithBalance.map(() => '1fr').join(' ')}`;
+  const totalContent = (
+    <>
+      <div className="text-[11.5px] font-semibold text-[#7D9590] tracking-[0.3px] mb-2 flex items-center gap-1.5">
+        TOTAL ASET
+        {hiddenCount > 0 && (
+          <span className="text-[10px] font-semibold text-[#7D9590] bg-[#F6F9F7] border border-[#E0EAE6] rounded-lg py-px px-1.25">
+            {hiddenCount} DISEMBUNYIKAN
+          </span>
+        )}
+      </div>
+      <div className="text-[32px] font-bold text-[#1A2420] tracking-[-1px] tabular-nums">
+        {formatRp(totalBalance)}
+      </div>
+      <div className={`text-xs font-semibold mt-1.5 flex items-center gap-1 ${monthlyNet >= 0 ? 'text-[#15735A]' : 'text-[#C0392B]'}`}>
+        {monthlyNet >= 0 ? Icon.arrowUp(12) : Icon.arrowDown(12)}
+        {monthlyNet >= 0 ? '+' : ''}{formatRp(monthlyNet)} bulan ini
+      </div>
+    </>
+  );
+
+  const groupCards = visibleGroupsWithBalance.map((g, i) => {
+    const bal = visibleAccounts
+      .filter(a => (g.types as readonly string[]).includes(a.type))
+      .reduce((s, a) => s + a.balance, 0);
+    const count = visibleAccounts.filter(a => (g.types as readonly string[]).includes(a.type)).length;
+    return (
+      <div
+        key={i}
+        className="rounded-[12px] py-4 px-4.5"
+        style={{ background: g.tint, border: `1px solid ${g.color}30` }}
+      >
+        <div className="text-[11px] font-semibold text-[#7D9590] tracking-[0.3px] mb-1">
+          {g.label}
+        </div>
+        <div className="text-[19px] font-bold tracking-[-0.4px] tabular-nums" style={{ color: g.color }}>
+          {formatRp(bal)}
+        </div>
+        <div className="text-[11.5px] text-[#7D9590] mt-0.75">
+          {count} rekening
+        </div>
+      </div>
+    );
+  });
 
   return (
     <div className="font-sans">
       {/* Toast */}
       {toast && (
         <div
-          className="fixed top-5 right-6 bg-white rounded-[10px] py-3 px-4 shadow-[0_4px_20px_rgba(20,30,25,0.12)] flex items-center gap-2.5 z-[100] max-w-[340px]"
+          className="fixed top-5 right-6 bg-white rounded-[10px] py-3 px-4 shadow-[0_4px_20px_rgba(20,30,25,0.12)] flex items-center gap-2.5 z-100 max-w-85"
           style={{
             border: `1px solid ${toast.ok ? T.primary : T.danger}44`,
             borderLeft: `4px solid ${toast.ok ? T.primary : T.danger}`,
@@ -80,61 +117,38 @@ export function RekeningPage() {
           </div>
         </div>
         <div className="flex gap-2 shrink-0 w-full sm:w-auto">
-          <Btn kind="ghost" size="sm" icon={Icon.arrowLR(14)} onClick={() => setShowTransferModal(true)}>Transfer</Btn>
-          <Btn kind="primary" size="sm" icon={Icon.plus(14)} onClick={() => setShowAddModal(true)}>
+          <Btn
+            className="flex-1 sm:flex-none justify-center"
+            kind="ghost" size="sm" icon={Icon.arrowLR(14)}
+            onClick={() => setShowTransferModal(true)}
+          >
+            Transfer
+          </Btn>
+          <Btn
+            className="flex-1 sm:flex-none justify-center"
+            kind="primary" size="sm" icon={Icon.plus(14)}
+            onClick={() => setShowAddModal(true)}
+          >
             Tambah Rekening
           </Btn>
         </div>
       </div>
 
-      {/* Summary banner */}
-      <div
-        className="bg-white border border-[#E0EAE6] rounded-[12px] mb-[22px] grid py-[18px] px-4 gap-3 sm:py-[22px] sm:px-7 sm:gap-7"
-        style={{ gridTemplateColumns: summaryGridCols }}
-      >
-        {/* Total */}
-        <div>
-          <div className="text-[11.5px] font-semibold text-[#7D9590] tracking-[0.3px] mb-2 flex items-center gap-1.5">
-            TOTAL ASET
-            {hiddenCount > 0 && (
-              <span className="text-[10px] font-semibold text-[#7D9590] bg-[#F6F9F7] border border-[#E0EAE6] rounded-[4px] py-[1px] px-[5px]">
-                {hiddenCount} DISEMBUNYIKAN
-              </span>
-            )}
-          </div>
-          <div className="text-[32px] font-bold text-[#1A2420] tracking-[-1px] tabular-nums">
-            {formatRp(totalBalance)}
-          </div>
-          <div className={`text-xs font-semibold mt-1.5 flex items-center gap-1 ${monthlyNet >= 0 ? 'text-[#15735A]' : 'text-[#C0392B]'}`}>
-            {monthlyNet >= 0 ? Icon.arrowUp(12) : Icon.arrowDown(12)}
-            {monthlyNet >= 0 ? '+' : ''}{formatRp(monthlyNet)} bulan ini
-          </div>
+      {/* Summary banner – mobile & tablet (hidden on lg+) */}
+      <div className="bg-white border border-[#E0EAE6] rounded-[12px] mb-5.5 py-4.5 px-4 sm:py-5 sm:px-6 xl:hidden grid grid-cols-3 gap-3">
+        <div className="col-span-3 pb-4 border-b border-[#E0EAE6]">
+          {totalContent}
         </div>
+        {groupCards}
+      </div>
 
-        {/* Per-group breakdown */}
-        {visibleGroupsWithBalance.map((g, i) => {
-          const bal = visibleAccounts
-            .filter(a => (g.types as readonly string[]).includes(a.type))
-            .reduce((s, a) => s + a.balance, 0);
-          const count = visibleAccounts.filter(a => (g.types as readonly string[]).includes(a.type)).length;
-          return (
-            <div
-              key={i}
-              className="rounded-[12px] py-4 px-[18px]"
-              style={{ background: g.tint, border: `1px solid ${g.color}30` }}
-            >
-              <div className="text-[11px] font-semibold text-[#7D9590] tracking-[0.3px] mb-1">
-                {g.label}
-              </div>
-              <div className="text-[19px] font-bold tracking-[-0.4px] tabular-nums" style={{ color: g.color }}>
-                {formatRp(bal)}
-              </div>
-              <div className="text-[11.5px] text-[#7D9590] mt-[3px]">
-                {count} rekening
-              </div>
-            </div>
-          );
-        })}
+      {/* Summary banner – desktop (hidden below lg) */}
+      <div
+        className="hidden xl:grid bg-white border border-[#E0EAE6] rounded-[12px] mb-5.5 py-5.5 px-7 gap-7"
+        style={{ gridTemplateColumns: `1.6fr ${visibleGroupsWithBalance.map(() => '1fr').join(' ')}` }}
+      >
+        <div>{totalContent}</div>
+        {groupCards}
       </div>
 
       {/* Account grid */}
