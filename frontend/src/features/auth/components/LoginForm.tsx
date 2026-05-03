@@ -51,10 +51,10 @@ export function LoginForm() {
             type="submit"
             disabled={isDisabled}
             className={cn(
-              "w-full py-4 rounded-xl text-sm font-bold tracking-[0.02em] transition-transform active:scale-[0.98]",
+              "w-full py-3.5 sm:py-4 rounded-xl text-sm font-bold tracking-[0.02em] transition-transform active:scale-[0.98]",
               isDisabled
                 ? "bg-zinc-200 text-zinc-400 cursor-not-allowed"
-                : "bg-[#1a1a1a] text-white hover:bg-zinc-800"
+                : "bg-[#16a34a] text-white hover:bg-[#15803d]"
             )}
           >
             {submitting ? "Memproses..." : "Masuk"}
