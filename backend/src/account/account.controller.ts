@@ -19,7 +19,7 @@ import {
   CreateAccountRequest,
   UpdateAccountRequest,
 } from '../model/account.model';
-import { User } from '../generated/prisma';
+import { User } from '../../generated/prisma';
 
 @Controller('api/accounts')
 export class AccountController {

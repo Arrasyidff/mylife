@@ -22,7 +22,6 @@ export default function LoginPage() {
   }, [loading, user, router]);
 
   if (loading) return null;
-  if (user) return null;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -65,7 +64,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={(e) => handleSubmit(e)} className="space-y-4">
             {/* Username */}
             <div>
               <label

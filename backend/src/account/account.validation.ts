@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { AccountType } from '../generated/prisma';
+import { AccountType } from '../../generated/prisma';
 
 const accountTypeValues = Object.values(AccountType) as [AccountType, ...AccountType[]];
 

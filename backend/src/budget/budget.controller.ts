@@ -17,7 +17,7 @@ import {
   CreateBudgetRequest,
   UpdateBudgetRequest,
 } from '../model/budget.model';
-import { User } from '../generated/prisma';
+import { User } from '../../generated/prisma';
 
 @Controller('api/budgets')
 export class BudgetController {

@@ -10,7 +10,7 @@ import {
   TransactionResponse,
   UpdateTransactionRequest,
 } from '../model/transaction.model';
-import { TransactionType, User } from '../generated/prisma';
+import { TransactionType, User } from '../../generated/prisma';
 
 @Injectable()
 export class TransactionService {

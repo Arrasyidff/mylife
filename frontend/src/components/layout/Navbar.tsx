@@ -79,7 +79,7 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
     router.replace("/login");
   };
 
-  const initials = user ? getInitials(user.nama) : "";
+  const initials = user ? getInitials(user.username) : "";
 
   return (
     <header style={{

@@ -49,7 +49,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   // Close on route change (mobile)
   useEffect(() => { onClose(); }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const initial = user.nama.charAt(0).toUpperCase();
+  const initial = user.username.charAt(0).toUpperCase();
   const roleLabel = user.jabatan ?? user.aksesLevel;
 
   return (
