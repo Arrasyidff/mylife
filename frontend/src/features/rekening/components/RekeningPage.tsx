@@ -45,52 +45,41 @@ export function RekeningPage() {
     : `1.6fr ${visibleGroupsWithBalance.map(() => '1fr').join(' ')}`;
 
   return (
-    <div style={{ fontFamily: T.fontSans }}>
+    <div className="font-sans">
       {/* Toast */}
       {toast && (
-        <div style={{
-          position: 'fixed', top: 20, right: 24,
-          background: T.surface,
-          border: `1px solid ${toast.ok ? T.primary : T.danger}44`,
-          borderLeft: `4px solid ${toast.ok ? T.primary : T.danger}`,
-          borderRadius: 10,
-          padding: '12px 16px',
-          boxShadow: '0 4px 20px rgba(20,30,25,0.12)',
-          display: 'flex', alignItems: 'center', gap: 10,
-          zIndex: 100, maxWidth: 340,
-          animation: 'slideIn 0.2s ease',
-        }}>
+        <div
+          className="fixed top-5 right-6 bg-white rounded-[10px] py-3 px-4 shadow-[0_4px_20px_rgba(20,30,25,0.12)] flex items-center gap-2.5 z-[100] max-w-[340px]"
+          style={{
+            border: `1px solid ${toast.ok ? T.primary : T.danger}44`,
+            borderLeft: `4px solid ${toast.ok ? T.primary : T.danger}`,
+            animation: 'slideIn 0.2s ease',
+          }}
+        >
           {toast.ok
             ? <CheckCircle size={16} color={T.primary} />
             : <XCircle size={16} color={T.danger} />
           }
-          <span style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{toast.msg}</span>
+          <span className="text-[13px] font-semibold text-[#1A2420]">{toast.msg}</span>
         </div>
       )}
 
       {/* Page header */}
-      <div style={{
-        display: 'flex',
-        flexDirection: isMobile ? 'column' : 'row',
-        alignItems: isMobile ? 'flex-start' : 'flex-start',
-        justifyContent: 'space-between',
-        gap: isMobile ? 12 : 0,
-        marginBottom: 20,
-      }}>
+      <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-0 mb-5">
         <div>
-          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: T.text, letterSpacing: -0.3 }}>
+          <h1 className="m-0 text-xl font-bold text-[#1A2420] tracking-[-0.3px]">
             Rekening
           </h1>
-          <div style={{ fontSize: 12.5, color: T.textSubtle, marginTop: 3 }}>
+          <div className="text-[12.5px] text-[#A4B8B2] mt-[3px]">
             {accounts.length} rekening aktif · April 2026
             {hiddenCount > 0 && (
-              <span style={{ color: T.textMuted, marginLeft: 6 }}>
+              <span className="text-[#7D9590] ml-1.5">
                 · {hiddenCount} tidak dihitung
               </span>
             )}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0, width: isMobile ? '100%' : 'auto' }}>
+        <div className="flex gap-2 shrink-0 w-full sm:w-auto">
           <Btn kind="ghost" size="sm" icon={Icon.arrowLR(14)} onClick={() => setShowTransferModal(true)}>Transfer</Btn>
           <Btn kind="primary" size="sm" icon={Icon.plus(14)} onClick={() => setShowAddModal(true)}>
             Tambah Rekening
@@ -99,44 +88,24 @@ export function RekeningPage() {
       </div>
 
       {/* Summary banner */}
-      <div style={{
-        background: T.surface,
-        border: `1px solid ${T.border}`,
-        borderRadius: T.radius.lg,
-        padding: isMobile ? '18px 16px' : '22px 28px',
-        marginBottom: 22,
-        display: 'grid',
-        gridTemplateColumns: summaryGridCols,
-        gap: isMobile ? 12 : 28,
-      }}>
+      <div
+        className="bg-white border border-[#E0EAE6] rounded-[12px] mb-[22px] grid py-[18px] px-4 gap-3 sm:py-[22px] sm:px-7 sm:gap-7"
+        style={{ gridTemplateColumns: summaryGridCols }}
+      >
         {/* Total */}
         <div>
-          <div style={{
-            fontSize: 11.5, fontWeight: 600, color: T.textMuted,
-            letterSpacing: 0.3, marginBottom: 8,
-            display: 'flex', alignItems: 'center', gap: 6,
-          }}>
+          <div className="text-[11.5px] font-semibold text-[#7D9590] tracking-[0.3px] mb-2 flex items-center gap-1.5">
             TOTAL ASET
             {hiddenCount > 0 && (
-              <span style={{
-                fontSize: 10, fontWeight: 600, color: T.textMuted,
-                background: T.surfaceAlt, border: `1px solid ${T.border}`,
-                borderRadius: 4, padding: '1px 5px',
-              }}>
+              <span className="text-[10px] font-semibold text-[#7D9590] bg-[#F6F9F7] border border-[#E0EAE6] rounded-[4px] py-[1px] px-[5px]">
                 {hiddenCount} DISEMBUNYIKAN
               </span>
             )}
           </div>
-          <div style={{
-            fontSize: 32, fontWeight: 700, color: T.text,
-            letterSpacing: -1, fontVariantNumeric: 'tabular-nums',
-          }}>
+          <div className="text-[32px] font-bold text-[#1A2420] tracking-[-1px] tabular-nums">
             {formatRp(totalBalance)}
           </div>
-          <div style={{
-            fontSize: 12, color: monthlyNet >= 0 ? T.primaryDark : T.danger, fontWeight: 600,
-            marginTop: 6, display: 'flex', alignItems: 'center', gap: 4,
-          }}>
+          <div className={`text-xs font-semibold mt-1.5 flex items-center gap-1 ${monthlyNet >= 0 ? 'text-[#15735A]' : 'text-[#C0392B]'}`}>
             {monthlyNet >= 0 ? Icon.arrowUp(12) : Icon.arrowDown(12)}
             {monthlyNet >= 0 ? '+' : ''}{formatRp(monthlyNet)} bulan ini
           </div>
@@ -149,21 +118,18 @@ export function RekeningPage() {
             .reduce((s, a) => s + a.balance, 0);
           const count = visibleAccounts.filter(a => (g.types as readonly string[]).includes(a.type)).length;
           return (
-            <div key={i} style={{
-              background: g.tint,
-              borderRadius: 12, padding: '16px 18px',
-              border: `1px solid ${g.color}30`,
-            }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: T.textMuted, letterSpacing: 0.3, marginBottom: 4 }}>
+            <div
+              key={i}
+              className="rounded-[12px] py-4 px-[18px]"
+              style={{ background: g.tint, border: `1px solid ${g.color}30` }}
+            >
+              <div className="text-[11px] font-semibold text-[#7D9590] tracking-[0.3px] mb-1">
                 {g.label}
               </div>
-              <div style={{
-                fontSize: 19, fontWeight: 700, color: g.color,
-                letterSpacing: -0.4, fontVariantNumeric: 'tabular-nums',
-              }}>
+              <div className="text-[19px] font-bold tracking-[-0.4px] tabular-nums" style={{ color: g.color }}>
                 {formatRp(bal)}
               </div>
-              <div style={{ fontSize: 11.5, color: T.textMuted, marginTop: 3 }}>
+              <div className="text-[11.5px] text-[#7D9590] mt-[3px]">
                 {count} rekening
               </div>
             </div>
@@ -172,7 +138,7 @@ export function RekeningPage() {
       </div>
 
       {/* Account grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 16 }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {accounts.map(a => (
           <AccountDetailCard
             key={a.id}
