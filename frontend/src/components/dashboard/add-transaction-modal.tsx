@@ -1,5 +1,6 @@
 "use client";
 import { useState } from 'react';
+import { useScrollLock } from '@/lib/hooks/useScrollLock';
 import { T } from '@/lib/tokens';
 import { Icon } from '@/components/ui/icon';
 import { CatBubble } from '@/components/dashboard/cat-bubble';
@@ -79,6 +80,7 @@ function InputRow({ children, suffix, style }: {
 }
 
 export function AddTransactionModal({ onClose, onSave, initialType }: AddTransactionModalProps) {
+  useScrollLock();
   const [txType,       setTxType]       = useState<TxTypeId>(initialType ?? 'expense');
   const [amountRaw,    setAmountRaw]    = useState('');
   const [merch,        setMerch]        = useState('');

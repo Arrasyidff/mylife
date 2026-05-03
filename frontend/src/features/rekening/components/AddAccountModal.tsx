@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { X, Check } from 'lucide-react';
 import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
+import { useScrollLock } from '@/lib/hooks/useScrollLock';
 import { ACCOUNT_TYPES, COLORS, BALANCE_PRESETS } from '../constants';
 import type { Account, AccountType } from '../types';
 
@@ -45,6 +46,7 @@ const inputStyle: React.CSSProperties = {
 };
 
 export function AddAccountModal({ onClose, onAdd }: AddAccountModalProps) {
+  useScrollLock();
   const [name, setName] = useState('');
   const [type, setType] = useState<AccountType>('tabungan');
   const [color, setColor] = useState('#1565C0');

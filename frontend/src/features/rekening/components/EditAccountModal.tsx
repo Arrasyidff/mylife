@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { X, Check, Trash2, AlertTriangle } from 'lucide-react';
 import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
+import { useScrollLock } from '@/lib/hooks/useScrollLock';
 import { ACCOUNT_TYPES, COLORS } from '../constants';
 import type { Account, AccountType } from '../types';
 
@@ -47,6 +48,7 @@ const inputStyle: React.CSSProperties = {
 };
 
 export function EditAccountModal({ account, onSave, onDelete, onClose }: EditAccountModalProps) {
+  useScrollLock();
   const [name, setName] = useState(account.name);
   const [type, setType] = useState<AccountType>(account.type);
   const [color, setColor] = useState(account.color);
