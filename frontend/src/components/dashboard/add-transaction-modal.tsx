@@ -10,9 +10,9 @@ import { accounts, budgets, type Transaction } from '@/lib/dashboard-data';
 import { formatRp, nowDatetimeLocal, fromDatetimeLocal } from '@/lib/format';
 
 const TX_TYPES = [
-  { id: 'expense',  label: 'Pengeluaran', color: T.danger,  },
-  { id: 'income',   label: 'Pemasukan',   color: T.primary, },
-  { id: 'transfer', label: 'Transfer',    color: '#1846A8', },
+  { id: 'expense',  label: 'Pengeluaran', color: T.danger  },
+  { id: 'income',   label: 'Pemasukan',   color: T.primary },
+  { id: 'transfer', label: 'Transfer',    color: '#1846A8' },
 ] as const;
 
 type TxTypeId = typeof TX_TYPES[number]['id'];
@@ -29,10 +29,10 @@ const EXPENSE_CATS = [
 ];
 
 const INCOME_CATS = [
-  { id: 'salary',   name: 'Gaji'      },
-  { id: 'fun',      name: 'Bonus'     },
-  { id: 'home',     name: 'Sewa'      },
-  { id: 'edu',      name: 'Lainnya'   },
+  { id: 'salary',   name: 'Gaji'    },
+  { id: 'fun',      name: 'Bonus'   },
+  { id: 'home',     name: 'Sewa'    },
+  { id: 'edu',      name: 'Lainnya' },
 ];
 
 const ADMIN_FEE_DEFAULT = 2_500;
@@ -49,31 +49,24 @@ function Field({ label, children, hint }: {
   hint?: string;
 }) {
   return (
-    <div style={{ marginBottom: 16 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: T.textMuted, marginBottom: 7, letterSpacing: 0.5 }}>
+    <div className="mb-4">
+      <div className="text-[11px] font-bold text-[#7D9590] mb-1.5 tracking-[0.5px]">
         {label.toUpperCase()}
       </div>
       {children}
-      {hint && <div style={{ fontSize: 11.5, color: T.textSubtle, marginTop: 5 }}>{hint}</div>}
+      {hint && <div className="text-[11.5px] text-[#A4B8B2] mt-1.5">{hint}</div>}
     </div>
   );
 }
 
-function InputRow({ children, suffix, style }: {
+function InputRow({ children, suffix, error }: {
   children: React.ReactNode;
   suffix?: React.ReactNode;
-  style?: React.CSSProperties;
+  error?: boolean;
 }) {
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center',
-      background: T.surfaceAlt,
-      border: `1px solid ${T.border}`,
-      borderRadius: 9, padding: '10px 12px',
-      fontSize: 13.5, color: T.text,
-      ...style,
-    }}>
-      <div style={{ flex: 1, minWidth: 0 }}>{children}</div>
+    <div className={`flex items-center bg-[#F6F9F7] rounded-[9px] px-3 py-2.5 text-[13.5px] text-[#1A2420] border ${error ? 'border-[#C0392B]' : 'border-[#E0EAE6]'}`}>
+      <div className="flex-1 min-w-0">{children}</div>
       {suffix}
     </div>
   );
@@ -114,8 +107,6 @@ export function AddTransactionModal({ onClose, onSave, initialType }: AddTransac
   const budget = budgets.find(b => b.cat === selectedCat);
   const budgetPct = budget ? Math.round((budget.used / budget.total) * 100) : 0;
   const showBudgetWarning = txType === 'expense' && !!budget && budgetPct >= 75;
-
-  const acct = accounts.find(a => a.id === selectedAcct) ?? accounts[0];
 
   const amountColor =
     txType === 'income'   ? T.primaryDark :
@@ -170,77 +161,52 @@ export function AddTransactionModal({ onClose, onSave, initialType }: AddTransac
 
   return (
     <>
+      {/* Backdrop */}
       <div
         onClick={onClose}
-        style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(20,30,25,0.4)',
-          backdropFilter: 'blur(2px)',
-          zIndex: 40,
-        }}
+        className="fixed inset-0 bg-[rgba(20,30,25,0.4)] backdrop-blur-[2px] z-40"
       />
-      <div style={{
-        position: 'fixed',
-        top: 0, right: 0, bottom: 0,
-        width: 480,
-        background: T.surface,
-        boxShadow: '-16px 0 40px rgba(20,30,25,0.18), -1px 0 0 rgba(20,30,25,0.06)',
-        display: 'flex', flexDirection: 'column',
-        overflow: 'hidden',
-        zIndex: 50,
-        fontFamily: T.fontSans,
-      }}>
+
+      {/* Panel — full-screen on mobile, right drawer on sm+ */}
+      <div className="fixed inset-0 sm:inset-y-0 sm:left-auto sm:right-0 sm:w-[480px] bg-white flex flex-col overflow-hidden z-50 shadow-[-16px_0_40px_rgba(20,30,25,0.18),-1px_0_0_rgba(20,30,25,0.06)]">
+
         {/* Header */}
-        <div style={{
-          padding: '20px 24px',
-          borderBottom: `1px solid ${T.divider}`,
-          display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
-          flexShrink: 0,
-        }}>
+        <div className="px-5 sm:px-6 py-4 sm:py-5 border-b border-[#EEF2F0] flex items-start justify-between shrink-0">
           <div>
-            <div style={{ fontSize: 11, color: T.primary, fontWeight: 700, letterSpacing: 0.5, marginBottom: 3 }}>TRANSAKSI BARU</div>
-            <h2 style={{ margin: 0, fontSize: 19, fontWeight: 700, letterSpacing: -0.4, color: T.text }}>
+            <div className="text-[11px] text-[#1D9E75] font-bold tracking-[0.5px] mb-0.5">
+              TRANSAKSI BARU
+            </div>
+            <h2 className="m-0 text-lg sm:text-[19px] font-bold tracking-[-0.4px] text-[#1A2420]">
               Tambah Transaksi
             </h2>
-            <div style={{ fontSize: 12.5, color: T.textMuted, marginTop: 4 }}>
+            <div className="text-xs sm:text-[12.5px] text-[#7D9590] mt-1">
               Catat pengeluaran, pemasukan, atau transfer
             </div>
           </div>
           <button
             onClick={onClose}
-            style={{
-              width: 32, height: 32, borderRadius: 8,
-              border: 'none', background: T.surfaceAlt,
-              cursor: 'pointer', color: T.textMuted,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
+            className="w-8 h-8 rounded-lg border-none bg-[#F6F9F7] cursor-pointer text-[#7D9590] flex items-center justify-center shrink-0 mt-0.5"
           >
             {Icon.close(16)}
           </button>
         </div>
 
-        <div style={{ padding: '22px 24px', overflowY: 'auto', flex: 1 }}>
+        {/* Body */}
+        <div className="px-5 sm:px-6 py-5 overflow-y-auto flex-1">
+
           {/* Type toggle */}
-          <div style={{
-            display: 'flex', gap: 6, padding: 4,
-            background: T.surfaceAlt, borderRadius: 11,
-            border: `1px solid ${T.border}`, marginBottom: 20,
-          }}>
+          <div className="flex gap-1.5 p-1 bg-[#F6F9F7] rounded-[11px] border border-[#E0EAE6] mb-5">
             {TX_TYPES.map(tt => {
               const active = tt.id === txType;
               return (
                 <button
                   key={tt.id}
                   onClick={() => setTxType(tt.id)}
+                  className="flex-1 py-2 sm:py-2.5 px-2 rounded-lg border-none cursor-pointer font-bold text-[13px] transition-all duration-150"
                   style={{
-                    flex: 1, padding: '9px 10px', borderRadius: 8,
-                    border: 'none', cursor: 'pointer',
-                    background: active ? T.surface : 'transparent',
+                    background: active ? '#FFFFFF' : 'transparent',
                     color: active ? tt.color : T.textMuted,
-                    fontWeight: 700, fontSize: 13,
-                    fontFamily: T.fontSans,
                     boxShadow: active ? '0 1px 4px rgba(20,30,25,0.08)' : 'none',
-                    transition: 'all 0.15s',
                   }}
                 >
                   {tt.label}
@@ -250,76 +216,63 @@ export function AddTransactionModal({ onClose, onSave, initialType }: AddTransac
           </div>
 
           {/* Amount */}
-          <div style={{ marginBottom: 20, textAlign: 'center' }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: T.textMuted, letterSpacing: 0.5, marginBottom: 8 }}>
+          <div className="mb-5 text-center">
+            <div className="text-[11px] font-bold text-[#7D9590] tracking-[0.5px] mb-2">
               JUMLAH
             </div>
-            <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: 6 }}>
-              <span style={{ fontSize: 18, color: T.textSubtle, fontWeight: 600 }}>Rp</span>
+            <div className="inline-flex items-baseline gap-1.5">
+              <span className="text-lg text-[#A4B8B2] font-semibold">Rp</span>
               <input
                 autoFocus
                 value={amountDisplay}
                 onChange={handleAmountKey}
                 placeholder="0"
                 inputMode="numeric"
+                className="text-4xl font-bold tracking-[-1px] bg-transparent border-none outline-none text-right tabular-nums min-w-[60px] max-w-[240px]"
                 style={{
-                  fontSize: 40, fontWeight: 700, letterSpacing: -1,
                   color: amountColor,
-                  fontVariantNumeric: 'tabular-nums',
-                  background: 'transparent',
-                  border: 'none', outline: 'none',
                   width: Math.max((amountDisplay.length || 1) * 24, 60) + 'px',
-                  minWidth: 60, maxWidth: 240,
-                  textAlign: 'right',
-                  fontFamily: T.fontSans,
                 }}
               />
             </div>
             {errors.amount && (
-              <div style={{ fontSize: 11.5, color: T.danger, marginTop: 6 }}>{errors.amount}</div>
+              <div className="text-[11.5px] text-[#C0392B] mt-1.5">{errors.amount}</div>
             )}
           </div>
 
           {/* Merchant */}
           <Field label="Merchant / Keterangan">
-            <InputRow style={{ borderColor: errors.merch ? T.danger : T.border }}>
+            <InputRow error={!!errors.merch}>
               <input
                 value={merch}
                 onChange={e => { setMerch(e.target.value); if (errors.merch) setErrors(p => ({ ...p, merch: undefined })); }}
                 placeholder="Misal: Kopi Kenangan, Gaji Bulanan…"
-                style={{
-                  width: '100%', border: 'none', outline: 'none',
-                  background: 'transparent', fontSize: 13.5, color: T.text,
-                  fontFamily: T.fontSans,
-                }}
+                className="w-full border-none outline-none bg-transparent text-[13.5px] text-[#1A2420]"
               />
             </InputRow>
             {errors.merch && (
-              <div style={{ fontSize: 11.5, color: T.danger, marginTop: 4 }}>{errors.merch}</div>
+              <div className="text-[11.5px] text-[#C0392B] mt-1">{errors.merch}</div>
             )}
           </Field>
 
-          {/* Category (not shown for transfer) */}
+          {/* Category — hidden for transfer */}
           {txType !== 'transfer' && (
             <Field label="Kategori">
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+              <div className="grid grid-cols-4 gap-2">
                 {cats.map(c => {
                   const active = c.id === selectedCat;
                   return (
                     <button
                       key={c.id}
                       onClick={() => txType === 'income' ? setIncomeCat(c.id) : setExpenseCat(c.id)}
-                      style={{
-                        display: 'flex', flexDirection: 'column', alignItems: 'center',
-                        gap: 6, padding: '11px 4px',
-                        background: active ? T.primaryLight : T.surfaceAlt,
-                        border: `1px solid ${active ? T.primary : T.border}`,
-                        borderRadius: 10, cursor: 'pointer',
-                        fontFamily: T.fontSans, transition: 'all 0.12s',
-                      }}
+                      className={`flex flex-col items-center gap-1.5 py-2.5 px-1 rounded-[10px] cursor-pointer border transition-all duration-[120ms] ${
+                        active
+                          ? 'bg-[#E6F6F0] border-[#1D9E75]'
+                          : 'bg-[#F6F9F7] border-[#E0EAE6]'
+                      }`}
                     >
                       <CatBubble cat={c.id} size={32} />
-                      <span style={{ fontSize: 10.5, fontWeight: 700, color: active ? T.primaryDark : T.textMuted }}>
+                      <span className={`text-[10.5px] font-bold ${active ? 'text-[#15735A]' : 'text-[#7D9590]'}`}>
                         {c.name}
                       </span>
                     </button>
@@ -331,17 +284,13 @@ export function AddTransactionModal({ onClose, onSave, initialType }: AddTransac
 
           {/* Budget warning */}
           {showBudgetWarning && budget && (
-            <div style={{
-              display: 'flex', gap: 11, padding: '12px 14px',
-              background: T.warningLight, border: `1px solid #F4D7A0`,
-              borderRadius: 10, marginBottom: 16,
-            }}>
-              <span style={{ color: T.warning, flexShrink: 0, marginTop: 1 }}>{Icon.warn(16)}</span>
+            <div className="flex gap-2.5 px-3.5 py-3 bg-[#FDF1DD] border border-[#F4D7A0] rounded-[10px] mb-4">
+              <span className="text-[#D4860B] shrink-0 mt-0.5">{Icon.warn(16)}</span>
               <div>
-                <div style={{ fontSize: 12.5, fontWeight: 700, color: '#8C5A0E', marginBottom: 2 }}>
+                <div className="text-[12.5px] font-bold text-[#8C5A0E] mb-0.5">
                   Anggaran {budget.name} sudah {budgetPct}% terpakai
                 </div>
-                <div style={{ fontSize: 11.5, color: '#8C5A0E', lineHeight: 1.4 }}>
+                <div className="text-[11.5px] text-[#8C5A0E] leading-[1.4]">
                   {formatRp(budget.used)} dari {formatRp(budget.total)}.{' '}
                   {budgetPct >= 100 ? 'Transaksi ini akan menambah selisih.' : 'Mendekati batas anggaran.'}
                 </div>
@@ -353,35 +302,28 @@ export function AddTransactionModal({ onClose, onSave, initialType }: AddTransac
           {txType === 'transfer' ? (
             <>
               <Field label="Rekening Asal">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div className="flex flex-col gap-1.5">
                   {accounts.map(a => {
                     const active = a.id === selectedAcct;
                     return (
                       <button
                         key={a.id}
                         onClick={() => setSelectedAcct(a.id)}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 10,
-                          padding: '10px 12px',
-                          background: active ? T.primaryLight : T.surfaceAlt,
-                          border: `1px solid ${active ? T.primary : T.border}`,
-                          borderRadius: 9, cursor: 'pointer',
-                          fontFamily: T.fontSans, textAlign: 'left',
-                        }}
+                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-[9px] cursor-pointer text-left border ${
+                          active ? 'bg-[#E6F6F0] border-[#1D9E75]' : 'bg-[#F6F9F7] border-[#E0EAE6]'
+                        }`}
                       >
-                        <span style={{ width: 9, height: 9, borderRadius: '50%', background: a.color, flexShrink: 0 }} />
-                        <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: T.text }}>{a.name}</span>
-                        <span style={{ fontSize: 11.5, color: T.textSubtle, fontVariantNumeric: 'tabular-nums' }}>
-                          {formatRp(a.balance)}
-                        </span>
-                        {active && <span style={{ color: T.primary }}>{Icon.check(14)}</span>}
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: a.color }} />
+                        <span className="flex-1 text-[13px] font-semibold text-[#1A2420]">{a.name}</span>
+                        <span className="text-[11.5px] text-[#A4B8B2] tabular-nums">{formatRp(a.balance)}</span>
+                        {active && <span className="text-[#1D9E75]">{Icon.check(14)}</span>}
                       </button>
                     );
                   })}
                 </div>
               </Field>
               <Field label="Rekening Tujuan">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <div className="flex flex-col gap-1.5">
                   {accounts.map(a => {
                     const active = a.id === toAcctId;
                     const isSame = a.id === selectedAcct;
@@ -390,55 +332,40 @@ export function AddTransactionModal({ onClose, onSave, initialType }: AddTransac
                         key={a.id}
                         onClick={() => { setToAcctId(a.id); if (errors.toAcct) setErrors(p => ({ ...p, toAcct: undefined })); }}
                         disabled={isSame}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 10,
-                          padding: '10px 12px',
-                          background: active ? T.primaryLight : isSame ? T.surfaceAlt : T.surfaceAlt,
-                          border: `1px solid ${active ? T.primary : T.border}`,
-                          borderRadius: 9, cursor: isSame ? 'not-allowed' : 'pointer',
-                          fontFamily: T.fontSans, textAlign: 'left',
-                          opacity: isSame ? 0.4 : 1,
-                        }}
+                        className={`flex items-center gap-2.5 px-3 py-2.5 rounded-[9px] text-left border ${
+                          active ? 'bg-[#E6F6F0] border-[#1D9E75]' : 'bg-[#F6F9F7] border-[#E0EAE6]'
+                        } ${isSame ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}`}
                       >
-                        <span style={{ width: 9, height: 9, borderRadius: '50%', background: a.color, flexShrink: 0 }} />
-                        <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: T.text }}>{a.name}</span>
-                        <span style={{ fontSize: 11.5, color: T.textSubtle, fontVariantNumeric: 'tabular-nums' }}>
-                          {formatRp(a.balance)}
-                        </span>
-                        {active && <span style={{ color: T.primary }}>{Icon.check(14)}</span>}
+                        <span className="w-2 h-2 rounded-full shrink-0" style={{ background: a.color }} />
+                        <span className="flex-1 text-[13px] font-semibold text-[#1A2420]">{a.name}</span>
+                        <span className="text-[11.5px] text-[#A4B8B2] tabular-nums">{formatRp(a.balance)}</span>
+                        {active && <span className="text-[#1D9E75]">{Icon.check(14)}</span>}
                       </button>
                     );
                   })}
                 </div>
                 {errors.toAcct && (
-                  <div style={{ fontSize: 11.5, color: T.danger, marginTop: 4 }}>{errors.toAcct}</div>
+                  <div className="text-[11.5px] text-[#C0392B] mt-1">{errors.toAcct}</div>
                 )}
               </Field>
             </>
           ) : (
             <Field label="Rekening">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <div className="flex flex-col gap-1.5">
                 {accounts.map(a => {
                   const active = a.id === selectedAcct;
                   return (
                     <button
                       key={a.id}
                       onClick={() => setSelectedAcct(a.id)}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 10,
-                        padding: '10px 12px',
-                        background: active ? T.primaryLight : T.surfaceAlt,
-                        border: `1px solid ${active ? T.primary : T.border}`,
-                        borderRadius: 9, cursor: 'pointer',
-                        fontFamily: T.fontSans, textAlign: 'left',
-                      }}
+                      className={`flex items-center gap-2.5 px-3 py-2.5 rounded-[9px] cursor-pointer text-left border ${
+                        active ? 'bg-[#E6F6F0] border-[#1D9E75]' : 'bg-[#F6F9F7] border-[#E0EAE6]'
+                      }`}
                     >
-                      <span style={{ width: 9, height: 9, borderRadius: '50%', background: a.color, flexShrink: 0 }} />
-                      <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: T.text }}>{a.name}</span>
-                      <span style={{ fontSize: 11.5, color: T.textSubtle, fontVariantNumeric: 'tabular-nums' }}>
-                        {formatRp(a.balance)}
-                      </span>
-                      {active && <span style={{ color: T.primary }}>{Icon.check(14)}</span>}
+                      <span className="w-2 h-2 rounded-full shrink-0" style={{ background: a.color }} />
+                      <span className="flex-1 text-[13px] font-semibold text-[#1A2420]">{a.name}</span>
+                      <span className="text-[11.5px] text-[#A4B8B2] tabular-nums">{formatRp(a.balance)}</span>
+                      {active && <span className="text-[#1D9E75]">{Icon.check(14)}</span>}
                     </button>
                   );
                 })}
@@ -448,43 +375,30 @@ export function AddTransactionModal({ onClose, onSave, initialType }: AddTransac
 
           {/* Inter-bank admin fee notice */}
           {isInterBankTransfer && (
-            <div style={{
-              padding: '12px 14px',
-              background: '#EEF4FF', border: '1px solid #BFCFEF',
-              borderRadius: 10, marginBottom: 16,
-            }}>
-              <div style={{ display: 'flex', gap: 11, marginBottom: 10 }}>
-                <span style={{ color: '#1846A8', flexShrink: 0, marginTop: 1 }}>{Icon.warn(16)}</span>
-                <div style={{ fontSize: 12.5, fontWeight: 700, color: '#1B3A8C' }}>
+            <div className="px-3.5 py-3 bg-[#EEF4FF] border border-[#BFCFEF] rounded-[10px] mb-4">
+              <div className="flex gap-2.5 mb-2.5">
+                <span className="text-[#1846A8] shrink-0 mt-0.5">{Icon.warn(16)}</span>
+                <div className="text-[12.5px] font-bold text-[#1B3A8C]">
                   Biaya Admin Beda Bank
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ fontSize: 12, color: '#1B3A8C', flex: 1 }}>
+              <div className="flex items-center gap-2">
+                <span className="text-[12px] text-[#1B3A8C] flex-1">
                   Biaya transfer (dicatat terpisah):
                 </span>
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: 4,
-                  background: '#fff', border: '1px solid #BFCFEF',
-                  borderRadius: 7, padding: '5px 10px',
-                }}>
-                  <span style={{ fontSize: 12, color: '#1B3A8C', fontWeight: 600 }}>Rp</span>
+                <div className="flex items-center gap-1 bg-white border border-[#BFCFEF] rounded-[7px] px-2.5 py-1.5">
+                  <span className="text-[12px] text-[#1B3A8C] font-semibold">Rp</span>
                   <input
                     value={adminFeeRaw === '0' ? '' : Number(adminFeeRaw).toLocaleString('id-ID')}
                     onChange={e => setAdminFeeRaw(e.target.value.replace(/\D/g, '') || '0')}
                     inputMode="numeric"
                     placeholder={ADMIN_FEE_DEFAULT.toLocaleString('id-ID')}
-                    style={{
-                      border: 'none', outline: 'none', background: 'transparent',
-                      fontSize: 13, fontWeight: 700, color: '#1B3A8C',
-                      width: 80, textAlign: 'right', fontFamily: T.fontSans,
-                      fontVariantNumeric: 'tabular-nums',
-                    }}
+                    className="border-none outline-none bg-transparent text-[13px] font-bold text-[#1B3A8C] w-20 text-right tabular-nums"
                   />
                 </div>
               </div>
               {Number(adminFeeRaw) === 0 && (
-                <div style={{ fontSize: 11, color: '#1B3A8C', marginTop: 6, opacity: 0.7 }}>
+                <div className="text-[11px] text-[#1B3A8C] mt-1.5 opacity-70">
                   Biaya 0 — hanya transfer yang akan dicatat.
                 </div>
               )}
@@ -492,41 +406,33 @@ export function AddTransactionModal({ onClose, onSave, initialType }: AddTransac
           )}
 
           {/* Date + User */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Tanggal & Waktu">
               <input
                 type="datetime-local"
                 value={dateVal}
                 onChange={e => setDateVal(e.target.value)}
-                style={{
-                  width: '100%', padding: '10px 12px',
-                  background: T.surfaceAlt,
-                  border: `1px solid ${T.border}`,
-                  borderRadius: 9, fontSize: 13, color: T.text,
-                  fontFamily: T.fontSans, outline: 'none',
-                  boxSizing: 'border-box',
-                }}
+                className="w-full px-3 py-2.5 bg-[#F6F9F7] border border-[#E0EAE6] rounded-[9px] text-[13px] text-[#1A2420] outline-none box-border"
               />
             </Field>
             <Field label="Pencatat">
-              <div style={{ display: 'flex', gap: 6 }}>
+              <div className="flex gap-1.5">
                 {(['H', 'W'] as const).map(u => {
                   const active = u === selectedUser;
                   return (
                     <button
                       key={u}
                       onClick={() => setSelectedUser(u)}
-                      style={{
-                        flex: 1, padding: '10px 8px', borderRadius: 9,
-                        background: active ? (u === 'H' ? T.primaryLight : '#FBE9F2') : T.surfaceAlt,
-                        border: `1px solid ${active ? (u === 'H' ? T.primary : '#A82672') : T.border}`,
-                        cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-                        fontFamily: T.fontSans,
-                      }}
+                      className={`flex-1 py-2.5 px-2 rounded-[9px] cursor-pointer flex items-center justify-center gap-1.5 border ${
+                        active
+                          ? u === 'H'
+                            ? 'bg-[#E6F6F0] border-[#1D9E75]'
+                            : 'bg-[#FBE9F2] border-[#A82672]'
+                          : 'bg-[#F6F9F7] border-[#E0EAE6]'
+                      }`}
                     >
                       <UserBadge user={u} size={20} />
-                      <span style={{ fontSize: 12.5, fontWeight: 700, color: active ? T.text : T.textMuted }}>
+                      <span className={`text-[12.5px] font-bold ${active ? 'text-[#1A2420]' : 'text-[#7D9590]'}`}>
                         {u === 'H' ? 'Suami' : 'Istri'}
                       </span>
                     </button>
@@ -543,24 +449,14 @@ export function AddTransactionModal({ onClose, onSave, initialType }: AddTransac
                 value={note}
                 onChange={e => setNote(e.target.value)}
                 placeholder="Misal: belanja mingguan, bonus Q1…"
-                style={{
-                  width: '100%', border: 'none', outline: 'none',
-                  background: 'transparent', fontSize: 13.5, color: T.text,
-                  fontFamily: T.fontSans,
-                }}
+                className="w-full border-none outline-none bg-transparent text-[13.5px] text-[#1A2420]"
               />
             </InputRow>
           </Field>
         </div>
 
         {/* Footer */}
-        <div style={{
-          padding: '14px 24px',
-          borderTop: `1px solid ${T.divider}`,
-          display: 'flex', gap: 10,
-          background: T.surfaceAlt,
-          flexShrink: 0,
-        }}>
+        <div className="px-5 sm:px-6 py-3.5 border-t border-[#EEF2F0] flex gap-2.5 bg-[#F6F9F7] shrink-0">
           <Btn kind="ghost" onClick={onClose} style={{ flex: 1, justifyContent: 'center', padding: '10px' }}>
             Batal
           </Btn>
