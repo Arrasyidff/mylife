@@ -73,32 +73,26 @@ export function AddAccountModal({ onClose, onAdd }: AddAccountModalProps) {
         className="fixed inset-0 bg-[rgba(20,30,25,0.35)] backdrop-blur-[2px] z-40"
       />
 
-      <div className="fixed inset-x-0 bottom-0 max-h-[92dvh] rounded-t-[16px] shadow-[0_-8px_40px_rgba(20,30,25,0.18)] sm:inset-y-0 sm:right-0 sm:left-auto sm:bottom-auto sm:w-120 sm:max-h-none sm:rounded-none sm:shadow-[-16px_0_40px_rgba(20,30,25,0.18),-1px_0_0_rgba(20,30,25,0.06)] bg-white flex flex-col z-50">
+      <div className="fixed inset-0 sm:inset-y-0 sm:left-auto sm:right-0 sm:w-120 bg-white flex flex-col overflow-hidden z-50 shadow-[-16px_0_40px_rgba(20,30,25,0.18),-1px_0_0_rgba(20,30,25,0.06)]">
         {/* Header */}
-        <div className="px-5 pt-3 pb-4 sm:px-6 sm:py-5 border-b border-[#EEF2F0]">
-          {/* Mobile drag handle */}
-          <div className="flex justify-center mb-2.5 sm:hidden">
-            <div className="w-9 h-1 rounded-full bg-[#CEDAD4]" />
-          </div>
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="text-[11px] text-[#1D9E75] font-bold tracking-[0.5px] mb-0.75">
-                REKENING BARU
-              </div>
-              <h2 className="m-0 text-[19px] font-bold tracking-[-0.4px] text-[#1A2420]">
-                Tambah Rekening
-              </h2>
-              <div className="text-[12.5px] text-[#7D9590] mt-1">
-                Sambungkan rekening bank, e-wallet, atau tunai
-              </div>
+        <div className="px-5 sm:px-6 py-4 sm:py-5 border-b border-[#EEF2F0] flex items-start justify-between shrink-0">
+          <div>
+            <div className="text-[11px] text-[#1D9E75] font-bold tracking-[0.5px] mb-0.75">
+              REKENING BARU
             </div>
-            <button
-              onClick={onClose}
-              className="w-8 h-8 rounded-[8px] border-none bg-[#F6F9F7] cursor-pointer text-[#7D9590] flex items-center justify-center shrink-0"
-            >
-              <X size={16} />
-            </button>
+            <h2 className="m-0 text-[19px] font-bold tracking-[-0.4px] text-[#1A2420]">
+              Tambah Rekening
+            </h2>
+            <div className="text-[12.5px] text-[#7D9590] mt-1">
+              Sambungkan rekening bank, e-wallet, atau tunai
+            </div>
           </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-[8px] border-none bg-[#F6F9F7] cursor-pointer text-[#7D9590] flex items-center justify-center shrink-0 mt-0.5"
+          >
+            <X size={16} />
+          </button>
         </div>
 
         {/* Body */}
@@ -229,7 +223,7 @@ export function AddAccountModal({ onClose, onAdd }: AddAccountModalProps) {
         </div>
 
         {/* Footer */}
-        <div className="px-5 pb-6 pt-3 sm:px-6 sm:py-3.5 border-t border-[#EEF2F0] bg-[#F6F9F7] flex gap-2.5">
+        <div className="px-5 sm:px-6 py-3.5 border-t border-[#EEF2F0] bg-[#F6F9F7] flex gap-2.5 shrink-0">
           <button
             onClick={onClose}
             className="flex-1 py-2.75 rounded-[9px] border border-[#E0EAE6] bg-white text-[#1A2420] text-[13.5px] font-semibold cursor-pointer font-sans"

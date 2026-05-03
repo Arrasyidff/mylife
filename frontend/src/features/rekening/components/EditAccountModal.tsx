@@ -79,9 +79,9 @@ export function EditAccountModal({ account, onSave, onDelete, onClose }: EditAcc
         className="fixed inset-0 bg-[rgba(20,30,25,0.35)] backdrop-blur-[2px] z-40"
       />
 
-      <div className="fixed inset-y-0 right-0 w-120 bg-white shadow-[-16px_0_40px_rgba(20,30,25,0.18),-1px_0_0_rgba(20,30,25,0.06)] flex flex-col z-50">
+      <div className="fixed inset-0 sm:inset-y-0 sm:left-auto sm:right-0 sm:w-120 bg-white flex flex-col overflow-hidden z-50 shadow-[-16px_0_40px_rgba(20,30,25,0.18),-1px_0_0_rgba(20,30,25,0.06)]">
         {/* Header */}
-        <div className="px-6 py-5 border-b border-[#EEF2F0] flex items-start justify-between">
+        <div className="px-5 sm:px-6 py-4 sm:py-5 border-b border-[#EEF2F0] flex items-start justify-between shrink-0">
           <div>
             <div className="text-[11px] text-[#D4860B] font-bold tracking-[0.5px] mb-0.75">
               EDIT REKENING
@@ -102,7 +102,7 @@ export function EditAccountModal({ account, onSave, onDelete, onClose }: EditAcc
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-5.5">
+        <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4.5 sm:py-5.5">
 
           {/* Preview card */}
           <div
@@ -253,7 +253,7 @@ export function EditAccountModal({ account, onSave, onDelete, onClose }: EditAcc
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3.5 border-t border-[#EEF2F0] bg-[#F6F9F7] flex gap-2.5">
+        <div className="px-5 sm:px-6 py-3.5 border-t border-[#EEF2F0] bg-[#F6F9F7] flex gap-2.5 shrink-0">
           <button
             onClick={onClose}
             className="flex-1 py-2.75 rounded-[9px] border border-[#E0EAE6] bg-white text-[#1A2420] text-[13.5px] font-semibold cursor-pointer font-sans"
