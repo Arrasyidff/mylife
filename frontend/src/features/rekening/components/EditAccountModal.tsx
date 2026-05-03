@@ -3,21 +3,8 @@ import { useState } from 'react';
 import { X, Check, Trash2, AlertTriangle } from 'lucide-react';
 import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
-import type { Account, AccountType } from '@/lib/dashboard-data';
-
-const ACCOUNT_TYPES: { id: AccountType; label: string; hint: string }[] = [
-  { id: 'tabungan',    label: 'Tabungan',     hint: 'Rekening bank biasa'     },
-  { id: 'ewallet',     label: 'E-Wallet',     hint: 'Gopay, OVO, Dana, dll.'  },
-  { id: 'tunai',       label: 'Tunai',        hint: 'Uang fisik / dompet'     },
-  { id: 'investasi',   label: 'Investasi',    hint: 'Saham, reksa dana, dll.' },
-  { id: 'kartukredit', label: 'Kartu Kredit', hint: 'Saldo = utang'           },
-];
-
-const COLORS = [
-  '#1565C0', '#003D79', '#00A6E2', '#5C815B',
-  '#1D9E75', '#D4860B', '#C0392B', '#7B1FA2',
-  '#1846A8', '#E65100', '#2E7D32', '#4527A0',
-];
+import { ACCOUNT_TYPES, COLORS } from '../constants';
+import type { Account, AccountType } from '../types';
 
 interface EditAccountModalProps {
   account: Account;
@@ -175,15 +162,11 @@ export function EditAccountModal({ account, onSave, onDelete, onClose }: EditAcc
                 {previewSubtitle || account.subtitle}
               </div>
             </div>
-            <div style={{
-              fontVariantNumeric: 'tabular-nums',
-              fontWeight: 700, fontSize: 15, color: T.text,
-            }}>
+            <div style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700, fontSize: 15, color: T.text }}>
               {formatRp(balance)}
             </div>
           </div>
 
-          {/* Name */}
           <Field label="Nama Rekening">
             <input
               value={name}
@@ -193,7 +176,6 @@ export function EditAccountModal({ account, onSave, onDelete, onClose }: EditAcc
             />
           </Field>
 
-          {/* Type */}
           <Field label="Jenis Rekening">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {ACCOUNT_TYPES.map(t => {
@@ -232,7 +214,6 @@ export function EditAccountModal({ account, onSave, onDelete, onClose }: EditAcc
             </div>
           </Field>
 
-          {/* Color */}
           <Field label="Warna Label">
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {COLORS.map(c => (
@@ -254,7 +235,6 @@ export function EditAccountModal({ account, onSave, onDelete, onClose }: EditAcc
             </div>
           </Field>
 
-          {/* Account number */}
           <Field label="Nomor Rekening / ID" optional>
             <input
               value={accountNumber}
@@ -264,11 +244,7 @@ export function EditAccountModal({ account, onSave, onDelete, onClose }: EditAcc
             />
           </Field>
 
-          {/* Balance */}
-          <Field
-            label="Saldo Terkini"
-            hint="Perbarui jika ada perbedaan dengan saldo aktual."
-          >
+          <Field label="Saldo Terkini" hint="Perbarui jika ada perbedaan dengan saldo aktual.">
             <div style={{
               background: T.primarySoft,
               border: `1.5px solid ${T.primary}`,

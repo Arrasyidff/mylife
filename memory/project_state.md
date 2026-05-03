@@ -17,8 +17,10 @@ What already matches target:
 - `components/ui/` — button, form-input, icon, pill, popover, progress-bar, surface, btn
 - `lib/utils.ts` — exists
 
+What's already been refactored:
+- `features/rekening/` — DONE: types.ts, constants.ts, hooks/useRekening.ts, components/AccountCard, AccountDetailCard, AddAccountCard, AddAccountModal, EditAccountModal, RekeningPage. app/(main)/rekening/page.tsx is now a thin re-export.
+
 What needs to be created/moved:
-- `features/rekening/` — currently in `components/dashboard/` (account-card, add-account-modal, edit-account-modal)
 - `features/transaksi/` — currently in `components/dashboard/` (tx-row, add-transaction-modal, edit-transaction-modal)
 - `features/anggaran/` — currently in `components/dashboard/` (budget-row, add-budget-modal, edit-budget-modal)
 - `features/auth/store/` — auth context lives at `contexts/auth-context.tsx`, needs to move here

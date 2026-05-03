@@ -1,4 +1,4 @@
-import type { Account, Transaction } from '@/lib/dashboard-data';
+import type { Account, Transaction } from '../types';
 import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
 

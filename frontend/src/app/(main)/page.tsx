@@ -8,7 +8,7 @@ import { Surface } from '@/components/ui/surface';
 import { Pill } from '@/components/ui/pill';
 import { Btn } from '@/components/ui/btn';
 import { Icon } from '@/components/ui/icon';
-import { AccountCard } from '@/components/dashboard/account-card';
+import { AccountCard } from '@/features/rekening/components/AccountCard';
 import { SummaryStat } from '@/components/dashboard/summary-stat';
 import { BudgetRow } from '@/components/dashboard/budget-row';
 import { TxRow } from '@/components/dashboard/tx-row';
