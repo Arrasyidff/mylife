@@ -1,5 +1,4 @@
 "use client";
-import { T } from '@/lib/tokens';
 import { Icon } from '@/components/ui/icon';
 
 interface AddAccountCardProps {
@@ -10,27 +9,14 @@ export function AddAccountCard({ onClick }: AddAccountCardProps) {
   return (
     <button
       onClick={onClick}
-      style={{
-        background: 'transparent',
-        border: `1.5px dashed ${T.borderStrong}`,
-        borderRadius: T.radius.lg,
-        cursor: 'pointer',
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        gap: 10, minHeight: 240,
-        color: T.textMuted, fontFamily: T.fontSans,
-      }}
+      className="bg-transparent border-[1.5px] border-dashed border-[#CEDAD4] rounded-[12px] cursor-pointer flex flex-col items-center justify-center gap-2.5 min-h-60 text-[#7D9590] font-sans"
     >
-      <div style={{
-        width: 46, height: 46, borderRadius: 13,
-        border: `1.5px dashed ${T.borderStrong}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-      }}>
+      <div className="w-11.5 h-11.5 rounded-[13px] border-[1.5px] border-dashed border-[#CEDAD4] flex items-center justify-center">
         {Icon.plus(20)}
       </div>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ fontSize: 14, fontWeight: 600, color: T.text }}>Tambah Rekening</div>
-        <div style={{ fontSize: 12, color: T.textSubtle, marginTop: 3 }}>
+      <div className="text-center">
+        <div className="text-sm font-semibold text-[#1A2420]">Tambah Rekening</div>
+        <div className="text-xs text-[#A4B8B2] mt-0.75">
           Bank, e-wallet, atau tunai
         </div>
       </div>

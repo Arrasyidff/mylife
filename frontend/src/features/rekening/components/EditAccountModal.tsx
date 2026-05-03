@@ -1,7 +1,6 @@
 "use client";
 import { useState } from 'react';
 import { X, Check, Trash2, AlertTriangle } from 'lucide-react';
-import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
 import { useScrollLock } from '@/lib/hooks/useScrollLock';
 import { ACCOUNT_TYPES, COLORS } from '../constants';
@@ -21,31 +20,20 @@ function Field({ label, children, hint, optional }: {
   optional?: boolean;
 }) {
   return (
-    <div style={{ marginBottom: 18 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-        <div style={{ fontSize: 11.5, fontWeight: 600, color: T.textMuted, letterSpacing: 0.3 }}>
+    <div className="mb-4.5">
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-[11.5px] font-semibold text-[#7D9590] tracking-[0.3px]">
           {label.toUpperCase()}
         </div>
-        {optional && <span style={{ fontSize: 11, color: T.textSubtle, fontWeight: 500 }}>opsional</span>}
+        {optional && <span className="text-[11px] text-[#A4B8B2] font-medium">opsional</span>}
       </div>
       {children}
-      {hint && <div style={{ fontSize: 11.5, color: T.textSubtle, marginTop: 6, lineHeight: 1.45 }}>{hint}</div>}
+      {hint && <div className="text-[11.5px] text-[#A4B8B2] mt-1.5 leading-[1.45]">{hint}</div>}
     </div>
   );
 }
 
-const inputStyle: React.CSSProperties = {
-  width: '100%',
-  padding: '10px 12px',
-  borderRadius: 9,
-  border: `1px solid ${T.border}`,
-  background: T.surfaceAlt,
-  fontSize: 13.5,
-  color: T.text,
-  fontFamily: T.fontSans,
-  outline: 'none',
-  boxSizing: 'border-box',
-};
+const inputCls = "w-full py-2.5 px-3 rounded-[9px] border border-[#E0EAE6] bg-[#F6F9F7] text-[13.5px] text-[#1A2420] font-sans outline-none box-border";
 
 export function EditAccountModal({ account, onSave, onDelete, onClose }: EditAccountModalProps) {
   useScrollLock();
@@ -88,83 +76,58 @@ export function EditAccountModal({ account, onSave, onDelete, onClose }: EditAcc
     <>
       <div
         onClick={onClose}
-        style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(20,30,25,0.35)',
-          backdropFilter: 'blur(2px)',
-          zIndex: 40,
-        }}
+        className="fixed inset-0 bg-[rgba(20,30,25,0.35)] backdrop-blur-[2px] z-40"
       />
 
-      <div style={{
-        position: 'fixed', top: 0, right: 0, bottom: 0,
-        width: 480,
-        background: T.surface,
-        boxShadow: '-16px 0 40px rgba(20,30,25,0.18), -1px 0 0 rgba(20,30,25,0.06)',
-        display: 'flex', flexDirection: 'column',
-        zIndex: 50,
-      }}>
+      <div className="fixed inset-y-0 right-0 w-120 bg-white shadow-[-16px_0_40px_rgba(20,30,25,0.18),-1px_0_0_rgba(20,30,25,0.06)] flex flex-col z-50">
         {/* Header */}
-        <div style={{
-          padding: '20px 24px',
-          borderBottom: `1px solid ${T.divider}`,
-          display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
-        }}>
+        <div className="px-6 py-5 border-b border-[#EEF2F0] flex items-start justify-between">
           <div>
-            <div style={{ fontSize: 11, color: T.warning, fontWeight: 700, letterSpacing: 0.5, marginBottom: 3 }}>
+            <div className="text-[11px] text-[#D4860B] font-bold tracking-[0.5px] mb-0.75">
               EDIT REKENING
             </div>
-            <h2 style={{ margin: 0, fontSize: 19, fontWeight: 700, letterSpacing: -0.4, color: T.text }}>
+            <h2 className="m-0 text-[19px] font-bold tracking-[-0.4px] text-[#1A2420]">
               {account.name}
             </h2>
-            <div style={{ fontSize: 12.5, color: T.textMuted, marginTop: 4 }}>
+            <div className="text-[12.5px] text-[#7D9590] mt-1">
               Perbarui detail rekening
             </div>
           </div>
           <button
             onClick={onClose}
-            style={{
-              width: 32, height: 32, borderRadius: 8,
-              border: 'none', background: T.surfaceAlt,
-              cursor: 'pointer', color: T.textMuted,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0,
-            }}
+            className="w-8 h-8 rounded-[8px] border-none bg-[#F6F9F7] cursor-pointer text-[#7D9590] flex items-center justify-center shrink-0"
           >
             <X size={16} />
           </button>
         </div>
 
         {/* Body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '22px 24px' }}>
+        <div className="flex-1 overflow-y-auto px-6 py-5.5">
 
           {/* Preview card */}
-          <div style={{
-            background: color + '14',
-            border: `1px solid ${color}30`,
-            borderLeft: `4px solid ${color}`,
-            borderRadius: 12,
-            padding: '16px 18px',
-            marginBottom: 22,
-            display: 'flex', alignItems: 'center', gap: 14,
-          }}>
-            <div style={{
-              width: 40, height: 40, borderRadius: 11,
-              background: color, color: 'white',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 12, fontWeight: 700, flexShrink: 0,
-            }}>
+          <div
+            className="rounded-[12px] py-4 px-4.5 mb-5.5 flex items-center gap-3.5"
+            style={{
+              background: color + '14',
+              border: `1px solid ${color}30`,
+              borderLeft: `4px solid ${color}`,
+            }}
+          >
+            <div
+              className="w-10 h-10 rounded-[11px] flex items-center justify-center text-xs font-bold shrink-0 text-white"
+              style={{ background: color }}
+            >
               {previewGlyph}
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: T.text }}>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-semibold text-[#1A2420]">
                 {name || 'Nama Rekening'}
               </div>
-              <div style={{ fontSize: 11.5, color: T.textSubtle, marginTop: 2 }}>
+              <div className="text-[11.5px] text-[#A4B8B2] mt-0.5">
                 {previewSubtitle || account.subtitle}
               </div>
             </div>
-            <div style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 700, fontSize: 15, color: T.text }}>
+            <div className="tabular-nums font-bold text-[15px] text-[#1A2420]">
               {formatRp(balance)}
             </div>
           </div>
@@ -174,39 +137,30 @@ export function EditAccountModal({ account, onSave, onDelete, onClose }: EditAcc
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="cth: BCA Utama, GoPay, Dompet Harian…"
-              style={inputStyle}
+              className={inputCls}
             />
           </Field>
 
           <Field label="Jenis Rekening">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            <div className="flex flex-col gap-1.5">
               {ACCOUNT_TYPES.map(t => {
                 const active = t.id === type;
                 return (
                   <button
                     key={t.id}
                     onClick={() => setType(t.id)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '11px 14px',
-                      background: active ? T.primaryLight : T.surfaceAlt,
-                      border: `1px solid ${active ? T.primary : T.border}`,
-                      borderRadius: 9,
-                      cursor: 'pointer', fontFamily: T.fontSans, textAlign: 'left',
-                    }}
+                    className={`flex items-center gap-3 py-2.75 px-3.5 rounded-[9px] border cursor-pointer font-sans text-left ${
+                      active ? 'bg-[#E6F6F0] border-[#1D9E75]' : 'bg-[#F6F9F7] border-[#E0EAE6]'
+                    }`}
                   >
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: active ? T.primaryDark : T.text }}>
+                    <div className="flex-1">
+                      <div className={`text-[13px] font-semibold ${active ? 'text-[#15735A]' : 'text-[#1A2420]'}`}>
                         {t.label}
                       </div>
-                      <div style={{ fontSize: 11.5, color: T.textSubtle }}>{t.hint}</div>
+                      <div className="text-[11.5px] text-[#A4B8B2]">{t.hint}</div>
                     </div>
                     {active && (
-                      <div style={{
-                        width: 18, height: 18, borderRadius: 9,
-                        background: T.primary, color: 'white',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}>
+                      <div className="w-4.5 h-4.5 rounded-full bg-[#1D9E75] text-white flex items-center justify-center">
                         <Check size={10} strokeWidth={3} />
                       </div>
                     )}
@@ -217,18 +171,15 @@ export function EditAccountModal({ account, onSave, onDelete, onClose }: EditAcc
           </Field>
 
           <Field label="Warna Label">
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+            <div className="flex flex-wrap gap-2">
               {COLORS.map(c => (
                 <button
                   key={c}
                   onClick={() => setColor(c)}
+                  className="w-8 h-8 rounded-[9px] cursor-pointer outline-none flex items-center justify-center transition-[border-color] duration-100"
                   style={{
-                    width: 32, height: 32, borderRadius: 9,
                     background: c,
-                    border: color === c ? `3px solid ${T.text}` : '3px solid transparent',
-                    cursor: 'pointer', outline: 'none',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'border-color 0.1s',
+                    border: color === c ? `3px solid #1A2420` : '3px solid transparent',
                   }}
                 >
                   {color === c && <Check size={14} color="white" strokeWidth={3} />}
@@ -242,95 +193,56 @@ export function EditAccountModal({ account, onSave, onDelete, onClose }: EditAcc
               value={accountNumber}
               onChange={e => setAccountNumber(e.target.value)}
               placeholder={account.subtitle}
-              style={inputStyle}
+              className={inputCls}
             />
           </Field>
 
           <Field label="Saldo Terkini" hint="Perbarui jika ada perbedaan dengan saldo aktual.">
-            <div style={{
-              background: T.primarySoft,
-              border: `1.5px solid ${T.primary}`,
-              borderRadius: 12,
-              padding: '16px 18px',
-              textAlign: 'center',
-              marginBottom: 10,
-            }}>
-              <div style={{ display: 'inline-flex', alignItems: 'baseline', gap: 8 }}>
-                <span style={{ fontSize: 17, color: T.primaryDark, fontWeight: 600 }}>Rp</span>
+            <div className="bg-[#F0FAF6] border-[1.5px] border-[#1D9E75] rounded-[12px] py-4 px-4.5 text-center mb-2.5">
+              <div className="inline-flex items-baseline gap-2">
+                <span className="text-[17px] text-[#15735A] font-semibold">Rp</span>
                 <input
                   type="text"
                   value={balance.toLocaleString('id-ID')}
                   onChange={handleBalanceInput}
-                  style={{
-                    fontSize: 34, fontWeight: 700, letterSpacing: -1,
-                    color: T.text, fontVariantNumeric: 'tabular-nums',
-                    border: 'none', background: 'transparent',
-                    outline: 'none', fontFamily: T.fontSans,
-                    textAlign: 'center', width: 200,
-                  }}
+                  className="text-[34px] font-bold tracking-[-1px] text-[#1A2420] tabular-nums border-none bg-transparent outline-none font-sans text-center w-50"
                 />
               </div>
             </div>
           </Field>
 
           {/* Danger zone */}
-          <div style={{
-            padding: '16px 18px',
-            background: T.dangerLight,
-            borderRadius: 10,
-            border: `1px solid ${T.danger}22`,
-          }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: T.danger, marginBottom: 10 }}>
+          <div className="py-4 px-4.5 bg-[#FDEEEE] rounded-[10px] border border-[#C0392B22]">
+            <div className="text-xs font-semibold text-[#C0392B] mb-2.5">
               Zona Bahaya
             </div>
             {!confirmDelete ? (
               <button
                 onClick={() => setConfirmDelete(true)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '8px 14px', borderRadius: 7,
-                  border: `1px solid ${T.danger}44`,
-                  background: T.surface, color: T.danger,
-                  fontSize: 12.5, fontWeight: 600,
-                  cursor: 'pointer', fontFamily: T.fontSans,
-                }}
+                className="flex items-center gap-1.5 py-2 px-3.5 rounded-[7px] border border-[#C0392B44] bg-white text-[#C0392B] text-[12.5px] font-semibold cursor-pointer font-sans"
               >
                 <Trash2 size={13} />
                 Hapus Rekening Ini
               </button>
             ) : (
               <div>
-                <div style={{
-                  display: 'flex', alignItems: 'flex-start', gap: 7,
-                  fontSize: 12.5, color: T.danger, marginBottom: 12, lineHeight: 1.5,
-                }}>
-                  <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 1 }} />
+                <div className="flex items-start gap-1.75 text-[12.5px] text-[#C0392B] mb-3 leading-normal">
+                  <AlertTriangle size={14} className="shrink-0 mt-px" />
                   <span>
                     Yakin hapus rekening <strong>{account.name}</strong>?
                     Tindakan ini tidak dapat dibatalkan.
                   </span>
                 </div>
-                <div style={{ display: 'flex', gap: 8 }}>
+                <div className="flex gap-2">
                   <button
                     onClick={() => setConfirmDelete(false)}
-                    style={{
-                      padding: '7px 16px', borderRadius: 7,
-                      border: `1px solid ${T.border}`,
-                      background: T.surface, color: T.text,
-                      fontSize: 12.5, fontWeight: 600,
-                      cursor: 'pointer', fontFamily: T.fontSans,
-                    }}
+                    className="py-1.75 px-4 rounded-[7px] border border-[#E0EAE6] bg-white text-[#1A2420] text-[12.5px] font-semibold cursor-pointer font-sans"
                   >
                     Batal
                   </button>
                   <button
                     onClick={handleDelete}
-                    style={{
-                      padding: '7px 16px', borderRadius: 7,
-                      border: 'none', background: T.danger, color: 'white',
-                      fontSize: 12.5, fontWeight: 600,
-                      cursor: 'pointer', fontFamily: T.fontSans,
-                    }}
+                    className="py-1.75 px-4 rounded-[7px] border-none bg-[#C0392B] text-white text-[12.5px] font-semibold cursor-pointer font-sans"
                   >
                     Ya, Hapus
                   </button>
@@ -341,37 +253,19 @@ export function EditAccountModal({ account, onSave, onDelete, onClose }: EditAcc
         </div>
 
         {/* Footer */}
-        <div style={{
-          padding: '14px 24px',
-          borderTop: `1px solid ${T.divider}`,
-          background: T.surfaceAlt,
-          display: 'flex', gap: 10,
-        }}>
+        <div className="px-6 py-3.5 border-t border-[#EEF2F0] bg-[#F6F9F7] flex gap-2.5">
           <button
             onClick={onClose}
-            style={{
-              flex: 1, padding: 11, borderRadius: 9,
-              border: `1px solid ${T.border}`,
-              background: T.surface, color: T.text,
-              fontSize: 13.5, fontWeight: 600,
-              cursor: 'pointer', fontFamily: T.fontSans,
-            }}
+            className="flex-1 py-2.75 rounded-[9px] border border-[#E0EAE6] bg-white text-[#1A2420] text-[13.5px] font-semibold cursor-pointer font-sans"
           >
             Batal
           </button>
           <button
             onClick={handleSave}
             disabled={!name.trim()}
-            style={{
-              flex: 2, padding: 11, borderRadius: 9,
-              border: 'none',
-              background: name.trim() ? T.primary : T.borderStrong,
-              color: 'white',
-              fontSize: 13.5, fontWeight: 600,
-              cursor: name.trim() ? 'pointer' : 'not-allowed',
-              fontFamily: T.fontSans,
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            }}
+            className={`flex-2 py-2.75 rounded-[9px] border-none text-white text-[13.5px] font-semibold font-sans flex items-center justify-center gap-1.5 ${
+              name.trim() ? 'bg-[#1D9E75] cursor-pointer' : 'bg-[#CEDAD4] cursor-not-allowed'
+            }`}
           >
             <Check size={14} />
             Simpan Perubahan
