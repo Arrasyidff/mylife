@@ -7,6 +7,7 @@ import { formatRp } from '@/lib/format';
 import { AddTransactionModal } from '@/components/dashboard/add-transaction-modal';
 import { GROUP_CONFIG } from '../constants';
 import { useRekening } from '../hooks/useRekening';
+import { useIsMobile } from '@/lib/hooks/useIsMobile';
 import { AccountDetailCard } from './AccountDetailCard';
 import { AddAccountCard } from './AddAccountCard';
 import { AddAccountModal } from './AddAccountModal';
@@ -33,11 +34,15 @@ export function RekeningPage() {
     handleToggleHide,
   } = useRekening();
 
+  const isMobile = useIsMobile();
+
   const visibleGroupsWithBalance = GROUP_CONFIG.filter(g =>
     visibleAccounts.some(a => (g.types as readonly string[]).includes(a.type))
   );
 
-  const summaryGridCols = `1.6fr ${visibleGroupsWithBalance.map(() => '1fr').join(' ')}`;
+  const summaryGridCols = isMobile
+    ? '1fr'
+    : `1.6fr ${visibleGroupsWithBalance.map(() => '1fr').join(' ')}`;
 
   return (
     <div style={{ fontFamily: T.fontSans }}>
@@ -65,7 +70,11 @@ export function RekeningPage() {
 
       {/* Page header */}
       <div style={{
-        display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        alignItems: isMobile ? 'flex-start' : 'flex-start',
+        justifyContent: 'space-between',
+        gap: isMobile ? 12 : 0,
         marginBottom: 20,
       }}>
         <div>
@@ -81,7 +90,7 @@ export function RekeningPage() {
             )}
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0, width: isMobile ? '100%' : 'auto' }}>
           <Btn kind="ghost" size="sm" icon={Icon.arrowLR(14)} onClick={() => setShowTransferModal(true)}>Transfer</Btn>
           <Btn kind="primary" size="sm" icon={Icon.plus(14)} onClick={() => setShowAddModal(true)}>
             Tambah Rekening
@@ -94,11 +103,11 @@ export function RekeningPage() {
         background: T.surface,
         border: `1px solid ${T.border}`,
         borderRadius: T.radius.lg,
-        padding: '22px 28px',
+        padding: isMobile ? '18px 16px' : '22px 28px',
         marginBottom: 22,
         display: 'grid',
         gridTemplateColumns: summaryGridCols,
-        gap: 28,
+        gap: isMobile ? 12 : 28,
       }}>
         {/* Total */}
         <div>
@@ -163,7 +172,7 @@ export function RekeningPage() {
       </div>
 
       {/* Account grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: 16 }}>
         {accounts.map(a => (
           <AccountDetailCard
             key={a.id}

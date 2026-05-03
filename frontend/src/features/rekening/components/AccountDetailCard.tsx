@@ -5,6 +5,7 @@ import { T } from '@/lib/tokens';
 import { Icon } from '@/components/ui/icon';
 import { transactions } from '@/lib/dashboard-data';
 import { formatRp, formatTxDate } from '@/lib/format';
+import { useIsMobile } from '@/lib/hooks/useIsMobile';
 import type { Account, Transaction } from '../types';
 
 function getAccountTxs(acctId: string): Transaction[] {
@@ -26,6 +27,7 @@ interface AccountDetailCardProps {
 }
 
 export function AccountDetailCard({ acct, isHidden, onEdit, onToggleHide }: AccountDetailCardProps) {
+  const isMobile = useIsMobile();
   const recentTxs = getAccountTxs(acct.id);
   const { income, expense, net } = getAccountStats(acct.id);
   const netColor = net >= 0 ? T.primaryDark : T.danger;
@@ -44,33 +46,38 @@ export function AccountDetailCard({ acct, isHidden, onEdit, onToggleHide }: Acco
         background: isHidden ? T.surfaceAlt : acct.color + '12',
         borderBottom: `1px solid ${isHidden ? T.divider : acct.color + '28'}`,
         padding: '18px 20px',
-        display: 'flex', alignItems: 'flex-start', gap: 14,
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        alignItems: isMobile ? 'flex-start' : 'flex-start',
+        gap: isMobile ? 10 : 14,
       }}>
-        <div style={{
-          width: 46, height: 46, borderRadius: 13,
-          background: isHidden ? T.textMuted + '30' : acct.color, color: 'white',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 12, fontWeight: 700, letterSpacing: 0.4,
-          flexShrink: 0,
-        }}>
-          {acct.glyph}
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 16, fontWeight: 700, color: T.text, display: 'flex', alignItems: 'center', gap: 8 }}>
-            {acct.name}
-            {isHidden && (
-              <span style={{
-                fontSize: 10, fontWeight: 600, color: T.textMuted,
-                background: T.surfaceAlt, border: `1px solid ${T.border}`,
-                borderRadius: 4, padding: '1px 6px', letterSpacing: 0.3,
-              }}>
-                TIDAK DIHITUNG
-              </span>
-            )}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, flex: 1, minWidth: 0 }}>
+          <div style={{
+            width: 46, height: 46, borderRadius: 13,
+            background: isHidden ? T.textMuted + '30' : acct.color, color: 'white',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 12, fontWeight: 700, letterSpacing: 0.4,
+            flexShrink: 0,
+          }}>
+            {acct.glyph}
           </div>
-          <div style={{ fontSize: 12, color: T.textSubtle, marginTop: 2 }}>{acct.subtitle}</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 16, fontWeight: 700, color: T.text, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              {acct.name}
+              {isHidden && (
+                <span style={{
+                  fontSize: 10, fontWeight: 600, color: T.textMuted,
+                  background: T.surfaceAlt, border: `1px solid ${T.border}`,
+                  borderRadius: 4, padding: '1px 6px', letterSpacing: 0.3,
+                }}>
+                  TIDAK DIHITUNG
+                </span>
+              )}
+            </div>
+            <div style={{ fontSize: 12, color: T.textSubtle, marginTop: 2 }}>{acct.subtitle}</div>
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignSelf: isMobile ? 'flex-start' : 'auto' }}>
           <button
             onClick={onToggleHide}
             title={isHidden ? 'Masukkan ke total aset' : 'Keluarkan dari total aset'}
@@ -107,7 +114,7 @@ export function AccountDetailCard({ acct, isHidden, onEdit, onToggleHide }: Acco
           SALDO SAAT INI
         </div>
         <div style={{
-          fontSize: 28, fontWeight: 700, color: T.text,
+          fontSize: isMobile ? 22 : 28, fontWeight: 700, color: T.text,
           letterSpacing: -0.8, fontVariantNumeric: 'tabular-nums',
         }}>
           {formatRp(acct.balance)}
