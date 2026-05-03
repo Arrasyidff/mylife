@@ -20,7 +20,7 @@ export default function LoginPage() {
   return (
     <div className="relative min-h-screen bg-white text-[#1a1a1a] overflow-hidden">
       <header className="absolute top-0 left-0 right-0 z-50 flex justify-between items-center px-4 sm:px-8 py-4 sm:py-6">
-        <div className="text-lg sm:text-xl font-bold tracking-tighter text-[#1a1a1a]">MY<span className="text-green-600">LIFE</span></div>
+        <div className="text-lg sm:text-xl font-bold tracking-tighter text-[#1a1a1a]">MY<span style={{ background: "linear-gradient(135deg, rgb(21, 115, 90) 0%, rgb(29, 158, 117) 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}>LIFE</span></div>
         <button className="text-zinc-400 hover:text-zinc-700 transition-colors duration-200 p-1">
           <HelpCircle size={20} />
         </button>

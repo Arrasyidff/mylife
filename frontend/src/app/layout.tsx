@@ -12,8 +12,11 @@ const poppins = Poppins({
 
 
 export const metadata: Metadata = {
-  title: "Nama Aplikasi",
-  description: "Deskripsi aplikasi",
+  title: {
+    template: "%s | THE M-LINE",
+    default: "THE M-LINE",
+  },
+  description: "Miracle Generation Application",
 };
 
 export const viewport: Viewport = {

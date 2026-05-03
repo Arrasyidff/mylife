@@ -1,6 +1,7 @@
 "use client";
 import { usePathname, useRouter } from "next/navigation";
-import { Menu, Sun, Moon, Search, LogOut } from "lucide-react";
+import Link from "next/link";
+import { Menu, Sun, Moon, LogOut, ChevronRight } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { useAuth } from "@/contexts/auth-context";
 import {
@@ -21,6 +22,24 @@ const pathLabels: Record<string, string> = {
   "/pengaturan":            "Pengaturan",
 };
 
+function buildBreadcrumbs(pathname: string) {
+  const crumbs: { label: string; href: string }[] = [
+    { label: "Beranda", href: "/" },
+  ];
+
+  const segments = pathname.split("/").filter(Boolean);
+  let accumulated = "";
+  for (const segment of segments) {
+    accumulated += `/${segment}`;
+    const label = pathLabels[accumulated];
+    if (label && accumulated !== "/") {
+      crumbs.push({ label, href: accumulated });
+    }
+  }
+
+  return crumbs;
+}
+
 function getCurrentDate() {
   return new Date().toLocaleDateString("id-ID", {
     day: "numeric",
@@ -40,6 +59,7 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
+  const breadcrumbs = buildBreadcrumbs(pathname);
   const pageLabel = pathLabels[pathname] ?? "";
   const initial = user ? user.username.charAt(0).toUpperCase() : "?";
 
@@ -50,7 +70,47 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
   };
 
   return (
-    <header className="sticky top-0 h-16 px-6 flex justify-end items-center bg-white/80 backdrop-blur-xl border-b border-gray-200 z-20">
+    <header className="sticky top-0 h-16 px-4 md:px-6 flex justify-between items-center bg-white/80 backdrop-blur-xl border-b border-gray-200 z-20">
+      <div className="flex items-center gap-3">
+        <button
+          onClick={onMenuToggle}
+          className="md:hidden text-gray-400 hover:text-gray-700 transition-colors p-1"
+          aria-label="Buka menu"
+        >
+          <Menu size={20} />
+        </button>
+
+        {/* Mobile: page label */}
+        {pageLabel && (
+          <span className="text-gray-900 text-xs font-bold uppercase tracking-tighter md:hidden">
+            {pageLabel}
+          </span>
+        )}
+
+        {/* Desktop: breadcrumb */}
+        <nav aria-label="Breadcrumb" className="hidden md:flex items-center gap-1">
+          {breadcrumbs.map((crumb, i) => {
+            const isLast = i === breadcrumbs.length - 1;
+            return (
+              <span key={crumb.href} className="flex items-center gap-1">
+                {i > 0 && <ChevronRight size={12} className="text-gray-300" />}
+                {isLast ? (
+                  <span className="text-gray-900 text-[10px] font-bold uppercase tracking-tighter">
+                    {crumb.label}
+                  </span>
+                ) : (
+                  <Link
+                    href={crumb.href}
+                    className="text-gray-400 hover:text-gray-700 text-[10px] font-bold uppercase tracking-tighter transition-colors"
+                  >
+                    {crumb.label}
+                  </Link>
+                )}
+              </span>
+            );
+          })}
+        </nav>
+      </div>
       <div className="flex items-center gap-5">
         <div className="text-gray-400 text-[10px] uppercase font-bold tracking-widest hidden lg:block">
           {getCurrentDate()}
