@@ -23,7 +23,8 @@
       "Bash(node -e \"const {z} = require\\('zod'\\); const s = z.object\\({page: z.coerce.number\\(\\).int\\(\\).positive\\(\\).catch\\(1\\)}\\); console.log\\(JSON.stringify\\(s.parse\\({page: undefined}\\)\\)\\); console.log\\(JSON.stringify\\(s.parse\\({}\\)\\)\\);\")",
       "Bash(grep -E \"\\\\.\\(ts|js|json\\)$\")",
       "Bash(xargs sed *)",
-      "Bash(psql postgresql://arfafa:@localhost:5432/mylife -c \"\\\\dt\")"
+      "Bash(psql postgresql://arfafa:@localhost:5432/mylife -c \"\\\\dt\")",
+      "Bash(python3 -c ' *)"
     ],
     "additionalDirectories": [
       "/Users/arfafa/projects/personal/mylife"

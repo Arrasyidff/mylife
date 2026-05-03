@@ -4,6 +4,7 @@ import { X, Check } from 'lucide-react';
 import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
 import { useScrollLock } from '@/lib/hooks/useScrollLock';
+import { useIsMobile } from '@/lib/hooks/useIsMobile';
 import { ACCOUNT_TYPES, COLORS, BALANCE_PRESETS } from '../constants';
 import type { Account, AccountType } from '../types';
 
@@ -47,6 +48,7 @@ const inputStyle: React.CSSProperties = {
 
 export function AddAccountModal({ onClose, onAdd }: AddAccountModalProps) {
   useScrollLock();
+  const isMobile = useIsMobile();
   const [name, setName] = useState('');
   const [type, setType] = useState<AccountType>('tabungan');
   const [color, setColor] = useState('#1565C0');
@@ -90,19 +92,35 @@ export function AddAccountModal({ onClose, onAdd }: AddAccountModalProps) {
       />
 
       <div style={{
-        position: 'fixed', top: 0, right: 0, bottom: 0,
-        width: 480,
+        position: 'fixed',
+        ...(isMobile
+          ? {
+              bottom: 0, left: 0, right: 0,
+              maxHeight: '92dvh',
+              borderRadius: '16px 16px 0 0',
+              boxShadow: '0 -8px 40px rgba(20,30,25,0.18)',
+            }
+          : {
+              top: 0, right: 0, bottom: 0,
+              width: 480,
+              boxShadow: '-16px 0 40px rgba(20,30,25,0.18), -1px 0 0 rgba(20,30,25,0.06)',
+            }
+        ),
         background: T.surface,
-        boxShadow: '-16px 0 40px rgba(20,30,25,0.18), -1px 0 0 rgba(20,30,25,0.06)',
         display: 'flex', flexDirection: 'column',
         zIndex: 50,
       }}>
         {/* Header */}
         <div style={{
-          padding: '20px 24px',
+          padding: isMobile ? '12px 20px 16px' : '20px 24px',
           borderBottom: `1px solid ${T.divider}`,
-          display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
         }}>
+          {isMobile && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 10 }}>
+              <div style={{ width: 36, height: 4, borderRadius: 2, background: T.borderStrong }} />
+            </div>
+          )}
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <div>
             <div style={{ fontSize: 11, color: T.primary, fontWeight: 700, letterSpacing: 0.5, marginBottom: 3 }}>
               REKENING BARU
@@ -126,10 +144,11 @@ export function AddAccountModal({ onClose, onAdd }: AddAccountModalProps) {
           >
             <X size={16} />
           </button>
+          </div>
         </div>
 
         {/* Body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '22px 24px' }}>
+        <div style={{ flex: 1, overflowY: 'auto', padding: isMobile ? '18px 20px' : '22px 24px' }}>
 
           {/* Preview card */}
           <div style={{
@@ -255,11 +274,11 @@ export function AddAccountModal({ onClose, onAdd }: AddAccountModalProps) {
                   value={balance.toLocaleString('id-ID')}
                   onChange={handleBalanceInput}
                   style={{
-                    fontSize: 34, fontWeight: 700, letterSpacing: -1,
+                    fontSize: isMobile ? 28 : 34, fontWeight: 700, letterSpacing: -1,
                     color: T.text, fontVariantNumeric: 'tabular-nums',
                     border: 'none', background: 'transparent',
                     outline: 'none', fontFamily: T.fontSans,
-                    textAlign: 'center', width: 200,
+                    textAlign: 'center', width: isMobile ? 160 : 200,
                   }}
                 />
               </div>
@@ -291,7 +310,7 @@ export function AddAccountModal({ onClose, onAdd }: AddAccountModalProps) {
 
         {/* Footer */}
         <div style={{
-          padding: '14px 24px',
+          padding: isMobile ? '12px 20px 24px' : '14px 24px',
           borderTop: `1px solid ${T.divider}`,
           background: T.surfaceAlt,
           display: 'flex', gap: 10,
