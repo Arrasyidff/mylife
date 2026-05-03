@@ -1,52 +1,60 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { can } from "@/lib/permissions";
 import { useRequiredAuth } from "@/contexts/auth-context";
-import { T } from "@/lib/tokens";
-import { Icon } from "@/components/ui/icon";
-import { X, LogOut } from "lucide-react";
+import {
+  LayoutDashboard,
+  ArrowLeftRight,
+  Wallet,
+  Landmark,
+  BarChart3,
+  LogOut,
+  X,
+} from "lucide-react";
 
 type NavItem = {
   id: string;
   label: string;
   href: string;
-  icon: (s?: number) => React.ReactNode;
-  adminOnly?: boolean;
+  icon: React.ComponentType<{ size?: number }>;
 };
+
+type NavSection = {
+  label: string;
+  items: NavItem[];
+};
+
+const navSections: NavSection[] = [
+  {
+    label: "Menu Utama",
+    items: [
+      { id: "home",   label: "Beranda",   href: "/",          icon: LayoutDashboard },
+      { id: "tx",     label: "Transaksi", href: "/transaksi", icon: ArrowLeftRight  },
+      { id: "budget", label: "Anggaran",  href: "/anggaran",  icon: Wallet          },
+    ],
+  },
+  {
+    label: "Finansial",
+    items: [
+      { id: "rekening", label: "Rekening", href: "/rekening", icon: Landmark  },
+      { id: "reports",  label: "Laporan",  href: "/laporan",  icon: BarChart3 },
+    ],
+  },
+];
 
 type SidebarProps = {
   isOpen: boolean;
   onClose: () => void;
 };
 
-const baseNavItems: NavItem[] = [
-  { id: 'home',     label: 'Beranda',    href: '/',          icon: Icon.home     },
-  { id: 'tx',       label: 'Transaksi',  href: '/transaksi', icon: Icon.list     },
-  { id: 'budget',   label: 'Anggaran',   href: '/anggaran',  icon: Icon.budget   },
-  { id: 'rekening', label: 'Rekening',   href: '/rekening',  icon: Icon.rekening },
-  { id: 'reports',  label: 'Laporan',    href: '/laporan',   icon: Icon.reports  },
-];
-
-const adminNavItems: NavItem[] = [
-  // { id: 'settings', label: 'Pengaturan', href: '/pengaturan', icon: Icon.settings, adminOnly: true },
-];
-
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useRequiredAuth();
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
-
-  const navItems = [
-    ...baseNavItems,
-    ...adminNavItems.filter(item => !item.adminOnly || can(user.aksesLevel, 'pengguna', 'lihat')),
-  ];
 
   const isActive = (href: string) =>
-    href === '/' ? pathname === '/' : pathname === href || pathname.startsWith(href + '/');
+    href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(href + "/");
 
-  // Close on route change (mobile)
   useEffect(() => { onClose(); }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const initial = user.username.charAt(0).toUpperCase();
@@ -54,192 +62,89 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <>
-      {/* Mobile overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/40 md:hidden"
+          className="fixed inset-0 z-30 bg-black/30 md:hidden"
           onClick={onClose}
         />
       )}
 
       <aside
-        style={{
-          width: 232,
-          flexShrink: 0,
-          background: T.surface,
-          borderRight: `1px solid ${T.border}`,
-          display: 'flex',
-          flexDirection: 'column',
-          padding: '20px 12px',
-          fontFamily: T.fontSans,
-          height: '100%',
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          bottom: 0,
-          zIndex: 40,
-          transform: isOpen ? 'translateX(0)' : undefined,
-          transition: 'transform 0.3s',
-          boxShadow: '2px 0 16px 0 rgba(0,0,0,0.04)',
-        }}
-        className={!isOpen ? 'max-md:-translate-x-full' : ''}
+        className={[
+          "fixed left-0 top-0 h-full w-64 border-r border-gray-200 bg-white flex flex-col gap-2 p-6 z-40 transition-transform duration-300",
+          !isOpen ? "max-md:-translate-x-full" : "",
+        ].join(" ")}
       >
         {/* Brand */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 6px 20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{
-              width: 34,
-              height: 34,
-              borderRadius: 10,
-              background: `linear-gradient(135deg, ${T.primary}, ${T.primaryDark})`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontWeight: 800,
-              fontSize: 16,
-              flexShrink: 0,
-              boxShadow: `0 3px 10px ${T.primary}50`,
-            }}>
-              M
-            </div>
-            <div>
-              <div style={{ fontSize: 13.5, fontWeight: 700, color: T.text, letterSpacing: -0.3, lineHeight: 1.2 }}>
-                The M-Line
-              </div>
-              <div style={{ fontSize: 10.5, color: T.textSubtle, marginTop: 1 }}>Miracle Generation</div>
+        <div className="mb-8 px-2 flex items-start justify-between">
+          <div>
+            <h1 className="text-gray-900 font-black text-2xl tracking-tighter uppercase">
+              The M-Line
+            </h1>
+            <div className="mt-1 text-gray-400 text-[10px] uppercase font-bold tracking-widest">
+              Miracle Generation
             </div>
           </div>
-          {/* Close button mobile */}
           <button
             onClick={onClose}
-            className="flex md:hidden"
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: T.textMuted,
-              padding: 4,
-              borderRadius: 6,
-            }}
+            className="md:hidden text-gray-400 hover:text-gray-700 transition-colors p-1 mt-1"
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* Section label */}
-        <div style={{
-          padding: '0 10px 6px',
-          fontSize: 10,
-          fontWeight: 600,
-          color: T.textSubtle,
-          letterSpacing: 0.8,
-          textTransform: 'uppercase',
-        }}>
-          Navigasi
-        </div>
-
         {/* Nav */}
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: 1, flex: 1 }}>
-          {navItems.map(item => {
-            const active = isActive(item.href);
-            const hovered = hoveredId === item.id;
-            return (
-              <Link
-                key={item.id}
-                href={item.href}
-                onMouseEnter={() => setHoveredId(item.id)}
-                onMouseLeave={() => setHoveredId(null)}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 10,
-                  padding: '9px 10px 9px 9px',
-                  borderRadius: 9,
-                  fontSize: 13.5,
-                  fontWeight: active ? 600 : 500,
-                  color: active ? T.primaryDark : hovered ? T.text : T.textMuted,
-                  background: active ? T.primaryLight : hovered ? T.surfaceAlt : 'transparent',
-                  textDecoration: 'none',
-                  transition: 'background 0.12s, color 0.12s',
-                  borderLeft: `3px solid ${active ? T.primary : 'transparent'}`,
-                }}
-              >
-                <span style={{
-                  color: active ? T.primary : hovered ? T.textMuted : T.textSubtle,
-                  display: 'inline-flex',
-                  flexShrink: 0,
-                  transition: 'color 0.12s',
-                }}>
-                  {item.icon(17)}
-                </span>
-                {item.label}
-              </Link>
-            );
-          })}
+        <nav className="flex-1 space-y-8 overflow-y-auto">
+          {navSections.map((section) => (
+            <div key={section.label}>
+              <p className="px-4 mb-3 text-gray-400 text-[10px] font-bold uppercase tracking-widest">
+                {section.label}
+              </p>
+              <div className="space-y-1">
+                {section.items.map((item) => {
+                  const active = isActive(item.href);
+                  const Icon = item.icon;
+                  return (
+                    <Link
+                      key={item.id}
+                      href={item.href}
+                      className={[
+                        "px-4 py-2.5 flex items-center gap-3 text-xs uppercase font-bold tracking-tighter rounded-lg transition-all duration-150",
+                        active
+                          ? "bg-gray-100 text-gray-900 border border-gray-200"
+                          : "text-gray-400 hover:bg-gray-50 hover:text-gray-700",
+                      ].join(" ")}
+                    >
+                      <Icon size={16} />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </nav>
 
         {/* User footer */}
-        <div style={{ borderTop: `1px solid ${T.divider}`, paddingTop: 12, marginTop: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '6px 6px', borderRadius: 9 }}>
-            <div style={{
-              width: 32,
-              height: 32,
-              borderRadius: 999,
-              background: `linear-gradient(135deg, ${T.primary}, ${T.primaryDark})`,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: 'white',
-              fontSize: 13,
-              fontWeight: 700,
-              flexShrink: 0,
-              boxShadow: `0 2px 6px ${T.primary}40`,
-            }}>
+        <div className="mt-auto border-t border-gray-200 pt-6 space-y-1">
+          <div className="flex items-center gap-3 px-4 py-2">
+            <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-700 text-xs font-bold flex-shrink-0">
               {initial}
             </div>
-            <div style={{ minWidth: 0, flex: 1 }}>
-              <div style={{
-                fontSize: 12.5,
-                fontWeight: 600,
-                color: T.text,
-                lineHeight: 1.2,
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}>
+            <div className="flex-1 min-w-0">
+              <p className="text-gray-900 text-[10px] font-bold uppercase tracking-tighter truncate">
                 {user.nama}
-              </div>
-              <div style={{ fontSize: 10.5, color: T.textSubtle, marginTop: 2 }}>
-                {roleLabel}
-              </div>
+              </p>
+              <p className="text-gray-400 text-[9px] uppercase font-bold">{roleLabel}</p>
             </div>
-            <button
-              onClick={logout}
-              title="Keluar"
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                color: T.textSubtle,
-                padding: 5,
-                display: 'flex',
-                borderRadius: 6,
-                flexShrink: 0,
-                transition: 'color 0.12s, background 0.12s',
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.color = T.danger;
-                e.currentTarget.style.background = T.dangerLight;
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.color = T.textSubtle;
-                e.currentTarget.style.background = 'transparent';
-              }}
-            >
-              <LogOut size={15} />
-            </button>
           </div>
+          <button
+            onClick={logout}
+            className="w-full text-gray-400 px-4 py-2.5 flex items-center gap-3 text-xs uppercase font-bold tracking-tighter hover:bg-gray-50 hover:text-gray-700 transition-all duration-150 rounded-lg"
+          >
+            <LogOut size={16} />
+            Keluar
+          </button>
         </div>
       </aside>
     </>
