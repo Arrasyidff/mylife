@@ -15,7 +15,9 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
         {/* Content — offset by sidebar width on md+ */}
         <div className="flex flex-col flex-1 min-w-0 md:ml-58">
           <Navbar onMenuToggle={() => setSidebarOpen(prev => !prev)} />
-          <main style={{ flex: 1, padding: 24 }}>{children}</main>
+          <main style={{ flex: 1, padding: 24 }}>
+            {children}
+          </main>
         </div>
       </div>
     </AuthGuard>
