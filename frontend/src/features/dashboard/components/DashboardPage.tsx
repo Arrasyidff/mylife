@@ -47,7 +47,7 @@ export function DashboardPage() {
       )}
 
       {/* Page header */}
-      <div className="flex items-start justify-between mb-5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-5">
         <div>
           <h1 className="m-0 text-xl font-bold text-[#1A2420] tracking-[-0.3px]">Dashboard</h1>
           <div className="text-[12.5px] text-[#A4B8B2] mt-0.75">
@@ -95,7 +95,7 @@ export function DashboardPage() {
       </div>
 
       {/* Hero summary stats */}
-      <div className="flex gap-3.5 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-3.5 mb-6">
         <SummaryStat
           large
           label="TOTAL ASET"
@@ -133,7 +133,7 @@ export function DashboardPage() {
           Kelola →
         </Link>
       </div>
-      <div className="flex gap-3.5 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 mb-6">
         {displayedAccounts.map(a => {
           const lastDate = lastTxByAcct[a.id];
           const lastTx = lastDate ? txList.find(tx => tx.acct === a.id && tx.date === lastDate) : undefined;
@@ -149,7 +149,7 @@ export function DashboardPage() {
       </div>
 
       {/* Two-column: anggaran + transaksi */}
-      <div className="grid grid-cols-2 gap-[18px]">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4.5">
 
         {/* Anggaran */}
         <Surface pad={20}>

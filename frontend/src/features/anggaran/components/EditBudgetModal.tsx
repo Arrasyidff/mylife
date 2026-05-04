@@ -1,6 +1,7 @@
 "use client";
 import { useState } from 'react';
 import { X, Check, Trash2, AlertTriangle } from 'lucide-react';
+import { useScrollLock } from '@/lib/hooks/useScrollLock';
 import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
 import { CatBubble } from '@/components/shared/CatBubble';
@@ -53,6 +54,7 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (val: boolean) => voi
 }
 
 export function EditBudgetModal({ budget, onSave, onDelete, onClose }: EditBudgetModalProps) {
+  useScrollLock();
   const [selectedCat, setSelectedCat]       = useState(budget.cat);
   const [selectedPeriod, setSelectedPeriod] = useState<BudgetPeriod>(budget.period ?? 'monthly');
   const [amount, setAmount]                 = useState(budget.total);
@@ -75,17 +77,17 @@ export function EditBudgetModal({ budget, onSave, onDelete, onClose }: EditBudge
     <>
       <div onClick={onClose} className="fixed inset-0 bg-[rgba(20,30,25,0.35)] backdrop-blur-[2px] z-40" />
 
-      <div className="fixed top-0 right-0 bottom-0 w-[480px] bg-white flex flex-col z-50 shadow-[-16px_0_40px_rgba(20,30,25,0.18),-1px_0_0_rgba(20,30,25,0.06)]">
+      <div className="fixed inset-0 sm:inset-y-0 sm:left-auto sm:right-0 sm:w-120 bg-white flex flex-col overflow-hidden z-50 shadow-[-16px_0_40px_rgba(20,30,25,0.18),-1px_0_0_rgba(20,30,25,0.06)]">
         {/* Header */}
-        <div className="px-6 py-5 border-b border-[#EEF2F0] flex items-start justify-between">
+        <div className="px-5 sm:px-6 py-4 sm:py-5 border-b border-[#EEF2F0] flex items-start justify-between shrink-0">
           <div>
             <div className="text-[11px] text-[#D4860B] font-bold tracking-[0.5px] mb-[3px]">
               EDIT ANGGARAN
             </div>
-            <h2 className="m-0 text-[19px] font-bold tracking-[-0.025rem] text-[#1A2420]">
+            <h2 className="m-0 text-lg sm:text-[19px] font-bold tracking-[-0.025rem] text-[#1A2420]">
               {budget.name}
             </h2>
-            <div className="text-[12.5px] text-[#7D9590] mt-1">
+            <div className="text-xs sm:text-[12.5px] text-[#7D9590] mt-1">
               Perbarui batas dan pengaturan anggaran
             </div>
           </div>
@@ -98,7 +100,7 @@ export function EditBudgetModal({ budget, onSave, onDelete, onClose }: EditBudge
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-[22px]">
+        <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-5">
 
           {/* Preview */}
           <div
@@ -262,7 +264,7 @@ export function EditBudgetModal({ budget, onSave, onDelete, onClose }: EditBudge
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3.5 border-t border-[#EEF2F0] bg-[#F6F9F7] flex gap-2.5">
+        <div className="px-5 sm:px-6 py-3.5 border-t border-[#EEF2F0] bg-[#F6F9F7] flex gap-2.5 shrink-0">
           <button
             onClick={onClose}
             className="flex-1 py-[11px] rounded-[9px] border border-[#E0EAE6] bg-white text-[#1A2420] text-[13.5px] font-semibold cursor-pointer font-sans"
