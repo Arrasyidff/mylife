@@ -1,7 +1,7 @@
 "use client";
 import { Icon } from '@/components/ui/icon';
 import { ProgressBar } from '@/components/ui/progress-bar';
-import { CatBubble } from '@/components/dashboard/cat-bubble';
+import { CatBubble } from '@/components/shared/CatBubble';
 import { formatRp } from '@/lib/format';
 import { PERIOD_LABEL } from '../constants';
 import type { Budget } from '../types';

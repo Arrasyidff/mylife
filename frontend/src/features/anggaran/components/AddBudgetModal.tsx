@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { X, Check, CalendarDays } from 'lucide-react';
 import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
-import { CatBubble } from '@/components/dashboard/cat-bubble';
+import { CatBubble } from '@/components/shared/CatBubble';
 import { CATS, PERIODS, AMOUNT_PRESETS, AMOUNT_WORDS, MONTHLY_INCOME } from '../constants';
 import type { Budget, BudgetPeriod } from '../types';
 

@@ -1,7 +1,7 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
-import { UserBadge } from '@/components/dashboard/user-badge';
+import { UserBadge } from '@/components/shared/UserBadge';
 import type { HWDataItem } from '../types';
 
 function HWTooltip({ active, payload, label }: {

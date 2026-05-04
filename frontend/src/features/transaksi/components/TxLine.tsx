@@ -1,8 +1,8 @@
 import { T } from '@/lib/tokens';
 import { Icon } from '@/components/ui/icon';
 import { Pill } from '@/components/ui/pill';
-import { CatBubble } from '@/components/dashboard/cat-bubble';
-import { UserBadge } from '@/components/dashboard/user-badge';
+import { CatBubble } from '@/components/shared/CatBubble';
+import { UserBadge } from '@/components/shared/UserBadge';
 import { accounts } from '@/lib/dashboard-data';
 import { formatRp, formatTxDate } from '@/lib/format';
 import type { Transaction } from '../types';

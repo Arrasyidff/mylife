@@ -3,7 +3,7 @@ import { CheckCircle, XCircle } from 'lucide-react';
 import { T } from '@/lib/tokens';
 import { Icon } from '@/components/ui/icon';
 import { Btn } from '@/components/ui/btn';
-import { UserBadge } from '@/components/dashboard/user-badge';
+import { UserBadge } from '@/components/shared/UserBadge';
 import { formatRp } from '@/lib/format';
 import { MONTHS_SHORT } from '../constants';
 import { useTransaksi } from '../hooks/useTransaksi';
