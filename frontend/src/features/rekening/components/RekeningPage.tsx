@@ -39,15 +39,15 @@ export function RekeningPage() {
 
   const totalContent = (
     <>
-      <div className="text-[11.5px] font-semibold text-[#7D9590] tracking-[0.3px] mb-2 flex items-center gap-1.5">
+      <div className="text-[0.71875rem] font-semibold text-[#7D9590] tracking-[0.01875rem] mb-2 flex items-center gap-1.5">
         TOTAL ASET
         {hiddenCount > 0 && (
-          <span className="text-[10px] font-semibold text-[#7D9590] bg-[#F6F9F7] border border-[#E0EAE6] rounded-lg py-px px-1.25">
+          <span className="text-[0.625rem] font-semibold text-[#7D9590] bg-[#F6F9F7] border border-[#E0EAE6] rounded-lg py-px px-1.25">
             {hiddenCount} DISEMBUNYIKAN
           </span>
         )}
       </div>
-      <div className="text-[32px] font-bold text-[#1A2420] tracking-[-1px] tabular-nums">
+      <div className="text-[2rem] font-bold text-[#1A2420] tracking-[-0.0625rem] tabular-nums">
         {formatRp(totalBalance)}
       </div>
       <div className={`text-xs font-semibold mt-1.5 flex items-center gap-1 ${monthlyNet >= 0 ? 'text-[#15735A]' : 'text-[#C0392B]'}`}>
@@ -65,16 +65,16 @@ export function RekeningPage() {
     return (
       <div
         key={i}
-        className="rounded-[12px] py-4 px-4.5"
+        className="rounded-[0.75rem] py-4 px-4.5"
         style={{ background: g.tint, border: `1px solid ${g.color}30` }}
       >
-        <div className="text-[11px] font-semibold text-[#7D9590] tracking-[0.3px] mb-1">
+        <div className="text-[0.6875rem] font-semibold text-[#7D9590] tracking-[0.01875rem] mb-1">
           {g.label}
         </div>
-        <div className="text-[19px] font-bold tracking-[-0.4px] tabular-nums" style={{ color: g.color }}>
+        <div className="text-[1.1875rem] font-bold tracking-[-0.025rem] tabular-nums" style={{ color: g.color }}>
           {formatRp(bal)}
         </div>
-        <div className="text-[11.5px] text-[#7D9590] mt-0.75">
+        <div className="text-[0.71875rem] text-[#7D9590] mt-0.75">
           {count} rekening
         </div>
       </div>
@@ -86,7 +86,7 @@ export function RekeningPage() {
       {/* Toast */}
       {toast && (
         <div
-          className="fixed top-5 right-6 bg-white rounded-[10px] py-3 px-4 shadow-[0_4px_20px_rgba(20,30,25,0.12)] flex items-center gap-2.5 z-100 max-w-85"
+          className="fixed top-5 right-6 bg-white rounded-[0.625rem] py-3 px-4 shadow-[0_4px_20px_rgba(20,30,25,0.12)] flex items-center gap-2.5 z-100 max-w-85"
           style={{
             border: `1px solid ${toast.ok ? T.primary : T.danger}44`,
             borderLeft: `4px solid ${toast.ok ? T.primary : T.danger}`,
@@ -97,17 +97,17 @@ export function RekeningPage() {
             ? <CheckCircle size={16} color={T.primary} />
             : <XCircle size={16} color={T.danger} />
           }
-          <span className="text-[13px] font-semibold text-[#1A2420]">{toast.msg}</span>
+          <span className="text-[0.8125rem] font-semibold text-[#1A2420]">{toast.msg}</span>
         </div>
       )}
 
       {/* Page header */}
       <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-0 mb-5">
         <div>
-          <h1 className="m-0 text-xl font-bold text-[#1A2420] tracking-[-0.3px]">
+          <h1 className="m-0 text-xl font-bold text-[#1A2420] tracking-[-0.01875rem]">
             Rekening
           </h1>
-          <div className="text-[12.5px] text-[#A4B8B2] mt-[3px]">
+          <div className="text-[0.78125rem] text-[#A4B8B2] mt-0.75">
             {accounts.length} rekening aktif · April 2026
             {hiddenCount > 0 && (
               <span className="text-[#7D9590] ml-1.5">
@@ -135,7 +135,7 @@ export function RekeningPage() {
       </div>
 
       {/* Summary banner – mobile & tablet (hidden on lg+) */}
-      <div className="bg-white border border-[#E0EAE6] rounded-[12px] mb-5.5 py-4.5 px-4 sm:py-5 sm:px-6 xl:hidden grid grid-cols-3 gap-3">
+      <div className="bg-white border border-[#E0EAE6] rounded-[0.75rem] mb-5.5 py-4.5 px-4 sm:py-5 sm:px-6 xl:hidden grid grid-cols-3 gap-3">
         <div className="col-span-3 pb-4 border-b border-[#E0EAE6]">
           {totalContent}
         </div>
@@ -144,7 +144,7 @@ export function RekeningPage() {
 
       {/* Summary banner – desktop (hidden below lg) */}
       <div
-        className="hidden xl:grid bg-white border border-[#E0EAE6] rounded-[12px] mb-5.5 py-5.5 px-7 gap-7"
+        className="hidden xl:grid bg-white border border-[#E0EAE6] rounded-[0.75rem] mb-5.5 py-5.5 px-7 gap-7"
         style={{ gridTemplateColumns: `1.6fr ${visibleGroupsWithBalance.map(() => '1fr').join(' ')}` }}
       >
         <div>{totalContent}</div>

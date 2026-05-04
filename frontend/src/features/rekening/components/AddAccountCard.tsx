@@ -9,9 +9,9 @@ export function AddAccountCard({ onClick }: AddAccountCardProps) {
   return (
     <button
       onClick={onClick}
-      className="bg-transparent border-[1.5px] border-dashed border-[#CEDAD4] rounded-[12px] cursor-pointer flex flex-col items-center justify-center gap-2.5 min-h-60 text-[#7D9590] font-sans"
+      className="bg-transparent border-[1.5px] border-dashed border-[#CEDAD4] rounded-[0.75rem] cursor-pointer flex flex-col items-center justify-center gap-2.5 min-h-60 text-[#7D9590] font-sans"
     >
-      <div className="w-11.5 h-11.5 rounded-[13px] border-[1.5px] border-dashed border-[#CEDAD4] flex items-center justify-center">
+      <div className="w-11.5 h-11.5 rounded-[0.8125rem] border-[1.5px] border-dashed border-[#CEDAD4] flex items-center justify-center">
         {Icon.plus(20)}
       </div>
       <div className="text-center">

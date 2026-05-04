@@ -40,7 +40,7 @@ export function AccountDetailCard({ acct, isHidden, onEdit, onToggleHide }: Acco
 
   return (
     <div
-      className="bg-white border border-[#E0EAE6] rounded-[12px] overflow-hidden transition-opacity duration-200"
+      className="bg-white border border-[#E0EAE6] rounded-[0.75rem] overflow-hidden transition-opacity duration-200"
       style={{ opacity: isHidden ? 0.55 : 1 }}
     >
       {/* Colored header */}
@@ -53,7 +53,7 @@ export function AccountDetailCard({ acct, isHidden, onEdit, onToggleHide }: Acco
       >
         <div className="flex items-start gap-3.5 flex-1 min-w-0">
           <div
-            className="w-11.5 h-11.5 rounded-[13px] flex items-center justify-center text-xs font-bold tracking-[0.4px] shrink-0 text-white"
+            className="w-11.5 h-11.5 rounded-[0.8125rem] flex items-center justify-center text-xs font-bold tracking-[0.025rem] shrink-0 text-white"
             style={{ background: isHidden ? '#7D959030' : acct.color }}
           >
             {acct.glyph}
@@ -62,7 +62,7 @@ export function AccountDetailCard({ acct, isHidden, onEdit, onToggleHide }: Acco
             <div className="text-base font-bold text-[#1A2420] flex items-center gap-2 flex-wrap">
               {acct.name}
               {isHidden && (
-                <span className="text-[10px] font-semibold text-[#7D9590] bg-[#F6F9F7] border border-[#E0EAE6] rounded-lg py-px px-1.5 tracking-[0.3px]">
+                <span className="text-[0.625rem] font-semibold text-[#7D9590] bg-[#F6F9F7] border border-[#E0EAE6] rounded-lg py-px px-1.5 tracking-[0.01875rem]">
                   TIDAK DIHITUNG
                 </span>
               )}
@@ -74,7 +74,7 @@ export function AccountDetailCard({ acct, isHidden, onEdit, onToggleHide }: Acco
           <button
             onClick={onToggleHide}
             title={isHidden ? 'Masukkan ke total aset' : 'Keluarkan dari total aset'}
-            className={`inline-flex items-center justify-center w-7.5 h-7.5 rounded-[7px] cursor-pointer text-[#7D9590] border ${
+            className={`inline-flex items-center justify-center w-7.5 h-7.5 rounded-[0.4375rem] cursor-pointer text-[#7D9590] border ${
               isHidden ? 'border-[#CEDAD4] bg-[#F6F9F7]' : 'border-[#E0EAE6] bg-white'
             }`}
           >
@@ -82,7 +82,7 @@ export function AccountDetailCard({ acct, isHidden, onEdit, onToggleHide }: Acco
           </button>
           <button
             onClick={onEdit}
-            className="inline-flex items-center gap-1.25 py-1.25 px-2.5 rounded-[7px] border border-[#E0EAE6] bg-white text-[#7D9590] cursor-pointer text-xs font-semibold font-sans"
+            className="inline-flex items-center gap-1.25 py-1.25 px-2.5 rounded-[0.4375rem] border border-[#E0EAE6] bg-white text-[#7D9590] cursor-pointer text-xs font-semibold font-sans"
           >
             {Icon.edit(13)} Edit
           </button>
@@ -91,20 +91,20 @@ export function AccountDetailCard({ acct, isHidden, onEdit, onToggleHide }: Acco
 
       {/* Balance + monthly stats */}
       <div className="px-5 pt-5">
-        <div className="text-[11px] text-[#7D9590] font-semibold tracking-[0.3px] mb-1">
+        <div className="text-[0.6875rem] text-[#7D9590] font-semibold tracking-[0.01875rem] mb-1">
           SALDO SAAT INI
         </div>
-        <div className="text-[22px] sm:text-[28px] font-bold text-[#1A2420] tracking-[-0.8px] tabular-nums">
+        <div className="text-[1.375rem] sm:text-[1.75rem] font-bold text-[#1A2420] tracking-[-0.05rem] tabular-nums">
           {formatRp(acct.balance)}
         </div>
 
         <div className="grid grid-cols-3 gap-2.5 mt-4">
           {stats.map((s, i) => (
-            <div key={i} className={`${s.bgCls} rounded-[8px] py-2.5 px-3`}>
-              <div className={`text-[10px] font-bold tracking-[0.3px] mb-0.75 ${s.fgCls}`}>
+            <div key={i} className={`${s.bgCls} rounded-[0.5rem] py-2.5 px-3`}>
+              <div className={`text-[0.625rem] font-bold tracking-[0.01875rem] mb-0.75 ${s.fgCls}`}>
                 {s.label}
               </div>
-              <div className={`text-[13px] font-bold tabular-nums ${s.fgCls}`}>
+              <div className={`text-[0.8125rem] font-bold tabular-nums ${s.fgCls}`}>
                 {i === 2 && net > 0 ? '+' : ''}{formatRp(s.val)}
               </div>
             </div>
@@ -115,22 +115,22 @@ export function AccountDetailCard({ acct, isHidden, onEdit, onToggleHide }: Acco
       {/* Recent transactions */}
       {recentTxs.length > 0 && (
         <div className="px-5 pt-4">
-          <div className="text-[11px] font-semibold text-[#7D9590] tracking-[0.3px] mb-2">
+          <div className="text-[0.6875rem] font-semibold text-[#7D9590] tracking-[0.01875rem] mb-2">
             TRANSAKSI TERBARU
           </div>
-          <div className="bg-[#F6F9F7] rounded-[8px] border border-[#EEF2F0] overflow-hidden">
+          <div className="bg-[#F6F9F7] rounded-[0.5rem] border border-[#EEF2F0] overflow-hidden">
             {recentTxs.slice(0, 3).map((t, i, arr) => (
               <div
                 key={t.id}
                 className={`flex items-center gap-2.5 py-2.5 px-3.5 ${i < arr.length - 1 ? 'border-b border-[#EEF2F0]' : ''}`}
               >
                 <div className="flex-1 min-w-0">
-                  <div className="text-[12.5px] font-semibold text-[#1A2420] truncate">
+                  <div className="text-[0.78125rem] font-semibold text-[#1A2420] truncate">
                     {t.merch}
                   </div>
-                  <div className="text-[11px] text-[#A4B8B2] mt-px">{formatTxDate(t.date)}</div>
+                  <div className="text-[0.6875rem] text-[#A4B8B2] mt-px">{formatTxDate(t.date)}</div>
                 </div>
-                <div className={`text-[13px] font-bold tabular-nums shrink-0 ${t.amount > 0 ? 'text-[#15735A]' : 'text-[#1A2420]'}`}>
+                <div className={`text-[0.8125rem] font-bold tabular-nums shrink-0 ${t.amount > 0 ? 'text-[#15735A]' : 'text-[#1A2420]'}`}>
                   {t.amount > 0 ? '+' : ''}{formatRp(t.amount)}
                 </div>
               </div>
@@ -143,7 +143,7 @@ export function AccountDetailCard({ acct, isHidden, onEdit, onToggleHide }: Acco
       <div className="px-5 pt-3 pb-4.5">
         <Link
           href="/transaksi"
-          className="block text-center w-full py-2.25 rounded-[8px] border border-[#E0EAE6] bg-[#F6F9F7] text-[#15735A] text-[12.5px] font-semibold no-underline font-sans"
+          className="block text-center w-full py-2.25 rounded-[0.5rem] border border-[#E0EAE6] bg-[#F6F9F7] text-[#15735A] text-[0.78125rem] font-semibold no-underline font-sans"
         >
           Lihat semua transaksi →
         </Link>

@@ -32,34 +32,34 @@ export function AccountCard({ acct, lastTx, lastUpdated }: AccountCardProps) {
       border: `1px solid ${T.border}`,
       borderLeft: `3px solid ${acct.color}`,
       borderRadius: T.radius.lg,
-      padding: '16px 18px',
+      padding: '1rem 1.125rem',
       flex: 1,
       minWidth: 0,
       display: 'flex',
       flexDirection: 'column',
-      gap: 10,
+      gap: '0.625rem',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
         <div style={{
-          width: 30,
-          height: 30,
-          borderRadius: 8,
+          width: '1.875rem',
+          height: '1.875rem',
+          borderRadius: '0.5rem',
           background: acct.color + '18',
           color: acct.color,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          fontSize: 11,
+          fontSize: '0.6875rem',
           fontWeight: 700,
-          letterSpacing: 0.4,
+          letterSpacing: '0.025rem',
           flexShrink: 0,
         }}>
           {acct.glyph}
         </div>
         <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, color: T.text }}>{acct.name}</div>
+          <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: T.text }}>{acct.name}</div>
           <div style={{
-            fontSize: 11,
+            fontSize: '0.6875rem',
             color: T.textSubtle,
             whiteSpace: 'nowrap',
             overflow: 'hidden',
@@ -70,12 +70,12 @@ export function AccountCard({ acct, lastTx, lastUpdated }: AccountCardProps) {
         </div>
       </div>
       <div>
-        <div style={{ fontSize: 11, color: T.textSubtle, marginBottom: 2 }}>Saldo</div>
+        <div style={{ fontSize: '0.6875rem', color: T.textSubtle, marginBottom: '0.125rem' }}>Saldo</div>
         <div style={{
-          fontSize: 19,
+          fontSize: '1.1875rem',
           fontWeight: 700,
           color: T.text,
-          letterSpacing: -0.4,
+          letterSpacing: '-0.025rem',
           fontVariantNumeric: 'tabular-nums',
         }}>
           {formatRp(acct.balance)}
@@ -87,13 +87,13 @@ export function AccountCard({ acct, lastTx, lastUpdated }: AccountCardProps) {
           alignItems: 'center',
           justifyContent: 'space-between',
           borderTop: `1px solid ${T.border}`,
-          paddingTop: 8,
-          marginTop: -2,
+          paddingTop: '0.5rem',
+          marginTop: '-0.125rem',
         }}>
-          <span style={{ fontSize: 11, color: T.textSubtle }}>
+          <span style={{ fontSize: '0.6875rem', color: T.textSubtle }}>
             {relativeTime(lastUpdated)}
           </span>
-          <span style={{ fontSize: 11, fontWeight: 600, color: deltaColor, fontVariantNumeric: 'tabular-nums' }}>
+          <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: deltaColor, fontVariantNumeric: 'tabular-nums' }}>
             {deltaSign}{formatRp(lastTx.amount)}
           </span>
         </div>
