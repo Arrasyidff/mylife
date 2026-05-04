@@ -19,9 +19,9 @@ What already matches target:
 
 What's already been refactored:
 - `features/rekening/` — DONE: types.ts, constants.ts, hooks/useRekening.ts, components/AccountCard, AccountDetailCard, AddAccountCard, AddAccountModal, EditAccountModal, RekeningPage. app/(main)/rekening/page.tsx is now a thin re-export.
+- `features/transaksi/` — DONE: types.ts, constants.ts, hooks/useTransaksi.ts, components/FilterChip, TxLine, TxGroup, EmptyState, TxRow, AddTransactionModal, EditTransactionModal, TransaksiPage. app/(main)/transaksi/page.tsx is now a thin re-export. Old files in components/dashboard/ removed.
 
 What needs to be created/moved:
-- `features/transaksi/` — currently in `components/dashboard/` (tx-row, add-transaction-modal, edit-transaction-modal)
 - `features/anggaran/` — currently in `components/dashboard/` (budget-row, add-budget-modal, edit-budget-modal)
 - `features/auth/store/` — auth context lives at `contexts/auth-context.tsx`, needs to move here
 - `features/auth/services/` — auth service at `lib/services/auth.ts`, move to feature

@@ -5,34 +5,10 @@ import { Icon } from '@/components/ui/icon';
 import { CatBubble } from '@/components/dashboard/cat-bubble';
 import { UserBadge } from '@/components/dashboard/user-badge';
 import { Btn } from '@/components/ui/btn';
-import { accounts, budgets, type Transaction } from '@/lib/dashboard-data';
+import { accounts, budgets } from '@/lib/dashboard-data';
 import { formatRp, toDatetimeLocal, fromDatetimeLocal } from '@/lib/format';
-
-const TX_TYPES = [
-  { id: 'expense',  label: 'Pengeluaran', color: T.danger   },
-  { id: 'income',   label: 'Pemasukan',   color: T.primary  },
-  { id: 'transfer', label: 'Transfer',    color: '#1846A8'  },
-] as const;
-
-type TxTypeId = typeof TX_TYPES[number]['id'];
-
-const EXPENSE_CATS = [
-  { id: 'food',      name: 'Makanan'    },
-  { id: 'transport', name: 'Transport'  },
-  { id: 'shopping',  name: 'Belanja'    },
-  { id: 'bills',     name: 'Tagihan'    },
-  { id: 'health',    name: 'Kesehatan'  },
-  { id: 'home',      name: 'Rumah'      },
-  { id: 'fun',       name: 'Hiburan'    },
-  { id: 'edu',       name: 'Pendidikan' },
-];
-
-const INCOME_CATS = [
-  { id: 'salary', name: 'Gaji'    },
-  { id: 'fun',    name: 'Bonus'   },
-  { id: 'home',   name: 'Sewa'    },
-  { id: 'edu',    name: 'Lainnya' },
-];
+import { TX_TYPES, EXPENSE_CATS, INCOME_CATS } from '../constants';
+import type { Transaction, TxTypeId } from '../types';
 
 interface EditTransactionModalProps {
   tx: Transaction;
@@ -69,15 +45,15 @@ export function EditTransactionModal({ tx, onClose, onSave, onDelete }: EditTran
   const initType = tx.type;
   const initAmt  = Math.abs(tx.amount);
 
-  const [txType,       setTxType]       = useState<TxTypeId>(initType);
-  const [amountRaw,    setAmountRaw]    = useState(String(initAmt));
-  const [merch,        setMerch]        = useState(tx.merch);
-  const [expenseCat,   setExpenseCat]   = useState(initType === 'expense' ? tx.cat : 'food');
-  const [incomeCat,    setIncomeCat]    = useState(initType === 'income'  ? tx.cat : 'salary');
-  const [selectedAcct, setSelectedAcct] = useState(tx.acct);
-  const [dateVal,      setDateVal]      = useState(toDatetimeLocal(tx.date));
-  const [selectedUser, setSelectedUser] = useState<'H' | 'W'>(tx.user);
-  const [note,         setNote]         = useState(tx.note ?? '');
+  const [txType,        setTxType]        = useState<TxTypeId>(initType);
+  const [amountRaw,     setAmountRaw]     = useState(String(initAmt));
+  const [merch,         setMerch]         = useState(tx.merch);
+  const [expenseCat,    setExpenseCat]    = useState(initType === 'expense' ? tx.cat : 'food');
+  const [incomeCat,     setIncomeCat]     = useState(initType === 'income'  ? tx.cat : 'salary');
+  const [selectedAcct,  setSelectedAcct]  = useState(tx.acct);
+  const [dateVal,       setDateVal]       = useState(toDatetimeLocal(tx.date));
+  const [selectedUser,  setSelectedUser]  = useState<'H' | 'W'>(tx.user);
+  const [note,          setNote]          = useState(tx.note ?? '');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const amountNum = Number(amountRaw.replace(/\./g, '') || '0');

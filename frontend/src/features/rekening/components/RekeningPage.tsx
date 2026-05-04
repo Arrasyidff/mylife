@@ -4,7 +4,7 @@ import { T } from '@/lib/tokens';
 import { Icon } from '@/components/ui/icon';
 import { Btn } from '@/components/ui/btn';
 import { formatRp } from '@/lib/format';
-import { AddTransactionModal } from '@/components/dashboard/add-transaction-modal';
+import { AddTransactionModal } from '@/features/transaksi/components/AddTransactionModal';
 import { GROUP_CONFIG } from '../constants';
 import { useRekening } from '../hooks/useRekening';
 import { AccountDetailCard } from './AccountDetailCard';

@@ -1,9 +1,9 @@
-import type { Transaction } from '@/lib/dashboard-data';
+import type { Transaction } from '../types';
 import { accounts } from '@/lib/dashboard-data';
 import { T } from '@/lib/tokens';
 import { formatRp, formatTxDate } from '@/lib/format';
-import { CatBubble } from './cat-bubble';
-import { UserBadge } from './user-badge';
+import { CatBubble } from '@/components/dashboard/cat-bubble';
+import { UserBadge } from '@/components/dashboard/user-badge';
 
 interface TxRowProps {
   t: Transaction;

@@ -6,36 +6,10 @@ import { Icon } from '@/components/ui/icon';
 import { CatBubble } from '@/components/dashboard/cat-bubble';
 import { UserBadge } from '@/components/dashboard/user-badge';
 import { Btn } from '@/components/ui/btn';
-import { accounts, budgets, type Transaction } from '@/lib/dashboard-data';
+import { accounts, budgets } from '@/lib/dashboard-data';
 import { formatRp, nowDatetimeLocal, fromDatetimeLocal } from '@/lib/format';
-
-const TX_TYPES = [
-  { id: 'expense',  label: 'Pengeluaran', color: T.danger  },
-  { id: 'income',   label: 'Pemasukan',   color: T.primary },
-  { id: 'transfer', label: 'Transfer',    color: '#1846A8' },
-] as const;
-
-type TxTypeId = typeof TX_TYPES[number]['id'];
-
-const EXPENSE_CATS = [
-  { id: 'food',      name: 'Makanan'    },
-  { id: 'transport', name: 'Transport'  },
-  { id: 'shopping',  name: 'Belanja'    },
-  { id: 'bills',     name: 'Tagihan'    },
-  { id: 'health',    name: 'Kesehatan'  },
-  { id: 'home',      name: 'Rumah'      },
-  { id: 'fun',       name: 'Hiburan'    },
-  { id: 'edu',       name: 'Pendidikan' },
-];
-
-const INCOME_CATS = [
-  { id: 'salary',   name: 'Gaji'    },
-  { id: 'fun',      name: 'Bonus'   },
-  { id: 'home',     name: 'Sewa'    },
-  { id: 'edu',      name: 'Lainnya' },
-];
-
-const ADMIN_FEE_DEFAULT = 2_500;
+import { TX_TYPES, EXPENSE_CATS, INCOME_CATS, ADMIN_FEE_DEFAULT } from '../constants';
+import type { Transaction, TxTypeId } from '../types';
 
 interface AddTransactionModalProps {
   onClose: () => void;

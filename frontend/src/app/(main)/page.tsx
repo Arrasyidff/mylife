@@ -11,8 +11,8 @@ import { Icon } from '@/components/ui/icon';
 import { AccountCard } from '@/features/rekening/components/AccountCard';
 import { SummaryStat } from '@/components/dashboard/summary-stat';
 import { BudgetRow } from '@/components/dashboard/budget-row';
-import { TxRow } from '@/components/dashboard/tx-row';
-import { AddTransactionModal } from '@/components/dashboard/add-transaction-modal';
+import { TxRow } from '@/features/transaksi/components/TxRow';
+import { AddTransactionModal } from '@/features/transaksi/components/AddTransactionModal';
 import { CheckCircle, XCircle, AlertTriangle, ArrowUp, ArrowDown, ChevronDown } from 'lucide-react';
 
 const MONTH_NAMES = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
