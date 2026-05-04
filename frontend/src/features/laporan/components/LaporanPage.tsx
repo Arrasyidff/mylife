@@ -1,5 +1,4 @@
 "use client";
-import { T } from '@/lib/tokens';
 import { useLaporan } from '../hooks/useLaporan';
 import { PeriodToggle } from './PeriodToggle';
 import { DatePicker } from './DatePicker';
@@ -24,8 +23,8 @@ export function LaporanPage() {
   } = useLaporan();
 
   return (
-    <div style={{ fontFamily: T.fontSans }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 10, marginBottom: 22 }}>
+    <div className="font-sans">
+      <div className="flex items-center justify-end gap-2.5 mb-5.5">
         <PeriodToggle period={period} setPeriod={setPeriod} />
         <DatePicker
           period={period}
@@ -48,7 +47,7 @@ export function LaporanPage() {
         period={period}
       />
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr', gap: 18, marginBottom: 18 }}>
+      <div className="grid grid-cols-[1fr_1.3fr] gap-4.5 mb-4.5">
         <CategoryDonut breakdown={catBreakdown} totalCat={totalCat} />
         <SpenderChart data={hwData} hTotal={hTotal} wTotal={wTotal} />
       </div>

@@ -55,7 +55,7 @@ export function MonthComparisonTable({ rows, viewMonth, gotoMonth }: Props) {
                 </td>
                 <td className={`py-3.5 px-5.5 text-right ${!isLast ? 'border-b border-[#EEF2F0]' : ''}`}>
                   <div className="inline-flex items-center gap-2">
-                    <div className="w-[70px] h-1.5 rounded-[3px] bg-[#E8E9E4] overflow-hidden">
+                    <div className="w-17.5 h-1.5 rounded-[3px] bg-[#E8E9E4] overflow-hidden">
                       <div className="h-full rounded-[3px] bg-[#1D9E75]" style={{ width: `${Math.max(0, Math.min(100, savings))}%` }} />
                     </div>
                     <span className="text-xs font-semibold text-[#1A2420] tabular-nums min-w-7">
@@ -67,11 +67,10 @@ export function MonthComparisonTable({ rows, viewMonth, gotoMonth }: Props) {
                   <button
                     onClick={() => gotoMonth(m)}
                     disabled={isViewing}
-                    className="inline-flex items-center justify-center w-7 h-7 rounded-[7px] border-none transition-[background,color] duration-120"
+                    className={`inline-flex items-center justify-center w-7 h-7 rounded-[7px] border-none transition-[background,color] duration-120 ${isViewing ? 'cursor-default' : 'cursor-pointer'}`}
                     style={{
                       background: isViewing ? T.primaryLight : T.surfaceAlt,
                       color: isViewing ? T.primary : T.textMuted,
-                      cursor: isViewing ? 'default' : 'pointer',
                     }}
                   >
                     {Icon.chev(13, 'right')}
