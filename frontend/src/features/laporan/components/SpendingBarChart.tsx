@@ -1,7 +1,6 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts';
 import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
-import { Surface } from '@/components/ui/surface';
 import { compactRp } from '../hooks/useLaporan';
 import type { Period, ChartBar } from '../types';
 
@@ -14,12 +13,12 @@ function DailyTooltip({ active, payload, label }: {
   const total = payload.reduce((s, p) => s + p.value, 0);
   if (!total) return null;
   return (
-    <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-      <div style={{ fontWeight: 600, color: T.text, marginBottom: 4 }}>{label}</div>
+    <div className="bg-white border border-[#E0EAE6] rounded-lg py-2 px-3 text-xs shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+      <div className="font-semibold text-[#1A2420] mb-1">{label}</div>
       {[...payload].reverse().map((p, i) => p.value > 0 && (
-        <div key={i} style={{ color: p.color, marginBottom: 2 }}>{p.name}: {formatRp(p.value)}</div>
+        <div key={i} className="mb-0.5" style={{ color: p.color }}>{p.name}: {formatRp(p.value)}</div>
       ))}
-      <div style={{ fontWeight: 600, color: T.text, marginTop: 4, borderTop: `1px solid ${T.border}`, paddingTop: 4 }}>Total: {formatRp(total)}</div>
+      <div className="font-semibold text-[#1A2420] mt-1 pt-1 border-t border-[#E0EAE6]">Total: {formatRp(total)}</div>
     </div>
   );
 }
@@ -40,22 +39,22 @@ export function SpendingBarChart({ data, title, periodLabel, avgAmount, maxValue
   }
 
   return (
-    <Surface pad={22} style={{ marginBottom: 18 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 18 }}>
+    <div className="bg-white border border-[#E0EAE6] rounded-xl p-5.5 mb-4.5">
+      <div className="flex items-baseline justify-between mb-4.5">
         <div>
-          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: T.text }}>{title}</h3>
-          <div style={{ fontSize: 12, color: T.textSubtle, marginTop: 3 }}>{periodLabel}</div>
+          <h3 className="m-0 text-[15px] font-bold text-[#1A2420]">{title}</h3>
+          <div className="text-xs text-[#A4B8B2] mt-0.75">{periodLabel}</div>
         </div>
-        <div style={{ display: 'flex', gap: 16, fontSize: 11.5, color: T.textMuted }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ width: 10, height: 10, borderRadius: 2, background: T.primary, display: 'block' }} /> Suami
+        <div className="flex gap-4 text-[11.5px] text-[#7D9590]">
+          <span className="inline-flex items-center gap-1.25">
+            <span className="w-2.5 h-2.5 rounded-xs bg-[#1D9E75] block" /> Suami
           </span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-            <span style={{ width: 10, height: 10, borderRadius: 2, background: '#A82672', display: 'block' }} /> Istri
+          <span className="inline-flex items-center gap-1.25">
+            <span className="w-2.5 h-2.5 rounded-xs bg-[#A82672] block" /> Istri
           </span>
           {avgAmount > 0 && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-              <span style={{ width: 18, height: 0, borderTop: `1.5px dashed ${T.warning}`, display: 'block' }} /> Rata-rata
+            <span className="inline-flex items-center gap-1.25">
+              <span className="w-4.5 h-0 block" style={{ borderTop: `1.5px dashed ${T.warning}` }} /> Rata-rata
             </span>
           )}
         </div>
@@ -74,6 +73,6 @@ export function SpendingBarChart({ data, title, periodLabel, avgAmount, maxValue
           <Bar dataKey="suami" name="Suami" stackId="a" fill={T.primary} opacity={0.85} radius={[3, 3, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
-    </Surface>
+    </div>
   );
 }

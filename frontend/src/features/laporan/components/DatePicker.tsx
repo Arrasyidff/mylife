@@ -1,6 +1,5 @@
 "use client";
 import { useState, useRef, useEffect } from 'react';
-import { T } from '@/lib/tokens';
 import { Icon } from '@/components/ui/icon';
 import { Btn } from '@/components/ui/btn';
 import { TODAY, MONTH_SHORT } from '../constants';
@@ -29,51 +28,46 @@ export function DatePicker({ period, viewMonth, viewYear, btnLabel, setViewMonth
   }, [open]);
 
   return (
-    <div ref={ref} style={{ position: 'relative' }}>
+    <div ref={ref} className="relative">
       <Btn kind="ghost" size="sm" icon={Icon.calendar(14)} onClick={() => setOpen(o => !o)} style={{ userSelect: 'none' }}>
         {btnLabel}
       </Btn>
 
       {open && (
-        <div style={{
-          position: 'absolute', right: 0, top: 'calc(100% + 6px)', zIndex: 200,
-          background: T.surface, border: `1px solid ${T.border}`, borderRadius: 10,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.12)', padding: 14, width: 220,
-        }}>
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            marginBottom: period === 1 ? 12 : 0,
-          }}>
+        <div className="absolute right-0 top-[calc(100%+6px)] z-200 bg-white border border-[#E0EAE6] rounded-[10px] shadow-[0_4px_20px_rgba(0,0,0,0.12)] p-3.5 w-55">
+          <div className={`flex items-center justify-between ${period === 1 ? 'mb-3' : ''}`}>
             <button
               onClick={() => setViewYear(y => y - 1)}
-              style={{ width: 28, height: 28, borderRadius: 7, border: `1px solid ${T.border}`, background: T.surfaceAlt, color: T.text, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              className="w-7 h-7 rounded-[7px] border border-[#E0EAE6] bg-[#F6F9F7] text-[#1A2420] cursor-pointer flex items-center justify-center"
             >
               {Icon.chev(12, 'left')}
             </button>
-            <span style={{ fontWeight: 700, fontSize: 14, color: T.text }}>{viewYear}</span>
+            <span className="font-bold text-sm text-[#1A2420]">{viewYear}</span>
             <button
               onClick={() => setViewYear(y => y + 1)}
-              style={{ width: 28, height: 28, borderRadius: 7, border: `1px solid ${T.border}`, background: T.surfaceAlt, color: T.text, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              className="w-7 h-7 rounded-[7px] border border-[#E0EAE6] bg-[#F6F9F7] text-[#1A2420] cursor-pointer flex items-center justify-center"
             >
               {Icon.chev(12, 'right')}
             </button>
           </div>
 
           {period === 1 && (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 5 }}>
+            <div className="grid grid-cols-3 gap-1.25">
               {MONTH_SHORT.map((m, i) => {
                 const isCurrent = i === TODAY.getMonth() && viewYear === TODAY.getFullYear();
+                const isSelected = i === viewMonth;
                 return (
                   <button
                     key={i}
                     onClick={() => { setViewMonth(i); setOpen(false); }}
-                    style={{
-                      padding: '7px 4px', borderRadius: 7, border: 'none', fontSize: 12.5, fontWeight: 600,
-                      background: i === viewMonth ? T.primaryLight : 'transparent',
-                      color: i === viewMonth ? T.primaryDark : isCurrent ? T.primary : T.text,
-                      cursor: 'pointer', fontFamily: T.fontSans,
-                      outline: isCurrent && i !== viewMonth ? `1.5px solid ${T.primaryLight}` : 'none',
-                    }}
+                    className={[
+                      'py-1.75 px-1 rounded-[7px] border-none text-[12.5px] font-semibold cursor-pointer font-sans',
+                      isSelected
+                        ? 'bg-[#E6F6F0] text-[#15735A]'
+                        : isCurrent
+                        ? 'text-[#1D9E75] [outline:1.5px_solid_#E6F6F0]'
+                        : 'bg-transparent text-[#1A2420]',
+                    ].join(' ')}
                   >
                     {m}
                   </button>

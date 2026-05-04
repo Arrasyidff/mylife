@@ -1,7 +1,6 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
-import { Surface } from '@/components/ui/surface';
 import { UserBadge } from '@/components/dashboard/user-badge';
 import type { HWDataItem } from '../types';
 
@@ -12,10 +11,10 @@ function HWTooltip({ active, payload, label }: {
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 8, padding: '8px 12px', fontSize: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
-      <div style={{ fontWeight: 600, color: T.text, marginBottom: 4 }}>{label}</div>
+    <div className="bg-white border border-[#E0EAE6] rounded-lg py-2 px-3 text-xs shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+      <div className="font-semibold text-[#1A2420] mb-1">{label}</div>
       {payload.map((p, i) => (
-        <div key={i} style={{ color: p.color, marginBottom: 2 }}>{p.name}: {formatRp(p.value)}</div>
+        <div key={i} className="mb-0.5" style={{ color: p.color }}>{p.name}: {formatRp(p.value)}</div>
       ))}
     </div>
   );
@@ -29,28 +28,28 @@ type Props = {
 
 export function SpenderChart({ data, hTotal, wTotal }: Props) {
   return (
-    <Surface pad={22}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 18 }}>
+    <div className="bg-white border border-[#E0EAE6] rounded-xl p-5.5">
+      <div className="flex justify-between items-start mb-4.5">
         <div>
-          <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: T.text }}>Suami vs Istri</h3>
-          <div style={{ fontSize: 12, color: T.textSubtle, marginTop: 3 }}>Pengeluaran berdasarkan kategori</div>
+          <h3 className="m-0 text-[15px] font-bold text-[#1A2420]">Suami vs Istri</h3>
+          <div className="text-xs text-[#A4B8B2] mt-0.75">Pengeluaran berdasarkan kategori</div>
         </div>
-        <div style={{ display: 'flex', gap: 18, alignItems: 'flex-start' }}>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
+        <div className="flex gap-4.5 items-start">
+          <div className="text-right">
+            <div className="flex items-center gap-1.5 justify-end">
               <UserBadge user="H" size={20} />
-              <span style={{ fontSize: 11, color: T.textMuted }}>Suami</span>
+              <span className="text-[11px] text-[#7D9590]">Suami</span>
             </div>
-            <div style={{ fontSize: 16, fontWeight: 700, marginTop: 4, fontVariantNumeric: 'tabular-nums', color: T.text }}>
+            <div className="text-[16px] font-bold mt-1 tabular-nums text-[#1A2420]">
               {formatRp(hTotal)}
             </div>
           </div>
-          <div style={{ textAlign: 'right' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, justifyContent: 'flex-end' }}>
+          <div className="text-right">
+            <div className="flex items-center gap-1.5 justify-end">
               <UserBadge user="W" size={20} />
-              <span style={{ fontSize: 11, color: T.textMuted }}>Istri</span>
+              <span className="text-[11px] text-[#7D9590]">Istri</span>
             </div>
-            <div style={{ fontSize: 16, fontWeight: 700, marginTop: 4, fontVariantNumeric: 'tabular-nums', color: T.text }}>
+            <div className="text-[16px] font-bold mt-1 tabular-nums text-[#1A2420]">
               {formatRp(wTotal)}
             </div>
           </div>
@@ -69,10 +68,10 @@ export function SpenderChart({ data, hTotal, wTotal }: Props) {
           </BarChart>
         </ResponsiveContainer>
       ) : (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, color: T.textSubtle, fontSize: 13 }}>
+        <div className="flex items-center justify-center h-50 text-[#A4B8B2] text-[13px]">
           Tidak ada data untuk periode ini
         </div>
       )}
-    </Surface>
+    </div>
   );
 }

@@ -24,7 +24,8 @@
       "Bash(grep -E \"\\\\.\\(ts|js|json\\)$\")",
       "Bash(xargs sed *)",
       "Bash(psql postgresql://arfafa:@localhost:5432/mylife -c \"\\\\dt\")",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "Bash(xargs cat *)"
     ],
     "additionalDirectories": [
       "/Users/arfafa/projects/personal/mylife"

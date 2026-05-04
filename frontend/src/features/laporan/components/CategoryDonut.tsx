@@ -1,7 +1,5 @@
 import { PieChart, Pie, Cell } from 'recharts';
-import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
-import { Surface } from '@/components/ui/surface';
 import { compactRp } from '../hooks/useLaporan';
 import type { CatBreakdownItem } from '../types';
 
@@ -12,36 +10,36 @@ type Props = {
 
 export function CategoryDonut({ breakdown, totalCat }: Props) {
   return (
-    <Surface pad={22}>
-      <h3 style={{ margin: 0, fontSize: 15, fontWeight: 700, color: T.text }}>Berdasarkan Kategori</h3>
-      <div style={{ fontSize: 12, color: T.textSubtle, marginTop: 3, marginBottom: 16 }}>Total {formatRp(totalCat)}</div>
+    <div className="bg-white border border-[#E0EAE6] rounded-xl p-5.5">
+      <h3 className="m-0 text-[15px] font-bold text-[#1A2420]">Berdasarkan Kategori</h3>
+      <div className="text-xs text-[#A4B8B2] mt-0.75 mb-4">{formatRp(totalCat)}</div>
 
       {breakdown.length > 0 ? (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
-          <div style={{ position: 'relative', width: 150, height: 150, flexShrink: 0 }}>
+        <div className="flex items-center gap-5.5">
+          <div className="relative w-37.5 h-37.5 shrink-0">
             <PieChart width={150} height={150}>
               <Pie data={breakdown} cx={75} cy={75} innerRadius={42} outerRadius={64}
                 dataKey="value" strokeWidth={0} startAngle={90} endAngle={-270} paddingAngle={3} cornerRadius={4}>
                 {breakdown.map((c, i) => <Cell key={i} fill={c.color} opacity={0.92} />)}
               </Pie>
             </PieChart>
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-              <div style={{ fontSize: 10.5, color: T.textMuted, fontWeight: 600, letterSpacing: 0.3 }}>TOTAL</div>
-              <div style={{ fontSize: 13.5, fontWeight: 700, color: T.text, marginTop: 1, fontVariantNumeric: 'tabular-nums' }}>
+            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <div className="text-[10.5px] text-[#7D9590] font-semibold tracking-[0.3px]">TOTAL</div>
+              <div className="text-[13.5px] font-bold text-[#1A2420] mt-px tabular-nums">
                 {compactRp(totalCat)}
               </div>
             </div>
           </div>
 
-          <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 7 }}>
+          <div className="flex-1 min-w-0 flex flex-col gap-1.75">
             {breakdown.map((c, i) => {
               const pct = Math.round((c.value / totalCat) * 100);
               return (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5 }}>
-                  <span style={{ width: 9, height: 9, borderRadius: 2, background: c.color, flexShrink: 0, display: 'block' }} />
-                  <span style={{ flex: 1, color: T.text, fontWeight: 500 }}>{c.name}</span>
-                  <span style={{ color: T.textMuted, fontVariantNumeric: 'tabular-nums', minWidth: 28, textAlign: 'right' }}>{pct}%</span>
-                  <span style={{ color: T.textMuted, fontVariantNumeric: 'tabular-nums', minWidth: 70, textAlign: 'right', fontSize: 11.5 }}>
+                <div key={i} className="flex items-center gap-2 text-[12.5px]">
+                  <span className="w-2.25 h-2.25 rounded-xs shrink-0 block" style={{ background: c.color }} />
+                  <span className="flex-1 text-[#1A2420] font-medium">{c.name}</span>
+                  <span className="text-[#7D9590] tabular-nums min-w-7 text-right">{pct}%</span>
+                  <span className="text-[#7D9590] tabular-nums min-w-17.5 text-right text-[11.5px]">
                     {formatRp(c.value)}
                   </span>
                 </div>
@@ -50,10 +48,10 @@ export function CategoryDonut({ breakdown, totalCat }: Props) {
           </div>
         </div>
       ) : (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 150, color: T.textSubtle, fontSize: 13 }}>
+        <div className="flex items-center justify-center h-37.5 text-[#A4B8B2] text-[13px]">
           Tidak ada data untuk periode ini
         </div>
       )}
-    </Surface>
+    </div>
   );
 }

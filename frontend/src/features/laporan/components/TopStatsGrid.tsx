@@ -1,18 +1,17 @@
-import { T } from '@/lib/tokens';
 import type { StatItem } from '../types';
 
 type Props = { stats: StatItem[] };
 
 export function TopStatsGrid({ stats }: Props) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 22 }}>
+    <div className="grid grid-cols-4 gap-3.5 mb-5.5">
       {stats.map((s, i) => (
-        <div key={i} style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: T.radius.lg, padding: '16px 18px' }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: T.textMuted, letterSpacing: 0.4 }}>{s.label}</div>
-          <div style={{ fontSize: 19, fontWeight: 700, marginTop: 6, color: s.tone, letterSpacing: -0.4, fontVariantNumeric: 'tabular-nums' }}>
+        <div key={i} className="bg-white border border-[#E0EAE6] rounded-xl p-4.5">
+          <div className="text-[11px] font-semibold text-[#7D9590] tracking-[0.025rem]">{s.label}</div>
+          <div className="text-[19px] font-bold mt-1.5 tracking-[-0.025rem] tabular-nums" style={{ color: s.tone }}>
             {s.value}
           </div>
-          <div style={{ fontSize: 11.5, color: T.textSubtle, marginTop: 3 }}>{s.sub}</div>
+          <div className="text-[11.5px] text-[#A4B8B2] mt-0.75">{s.sub}</div>
         </div>
       ))}
     </div>
