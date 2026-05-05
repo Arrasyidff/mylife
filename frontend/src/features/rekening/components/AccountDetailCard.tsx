@@ -98,7 +98,7 @@ export function AccountDetailCard({ acct, isHidden, onEdit, onToggleHide }: Acco
           {formatRp(acct.balance)}
         </div>
 
-        <div className="grid grid-cols-3 gap-2.5 mt-4">
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 mt-4">
           {stats.map((s, i) => (
             <div key={i} className={`${s.bgCls} rounded-[0.5rem] py-2.5 px-3`}>
               <div className={`text-[0.625rem] font-bold tracking-[0.01875rem] mb-0.75 ${s.fgCls}`}>

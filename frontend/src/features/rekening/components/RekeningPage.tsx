@@ -1,16 +1,11 @@
 "use client";
-import { CheckCircle, XCircle } from 'lucide-react';
-import { T } from '@/lib/tokens';
-import { Icon } from '@/components/ui/icon';
-import { Btn } from '@/components/ui/btn';
-import { formatRp } from '@/lib/format';
-import { AddTransactionModal } from '@/features/transaksi/components/AddTransactionModal';
 import { GROUP_CONFIG } from '../constants';
 import { useRekening } from '../hooks/useRekening';
-import { AccountDetailCard } from './AccountDetailCard';
-import { AddAccountCard } from './AddAccountCard';
-import { AddAccountModal } from './AddAccountModal';
-import { EditAccountModal } from './EditAccountModal';
+import { RekeningToast } from './RekeningToast';
+import { RekeningHeader } from './RekeningHeader';
+import { RekeningSummaryBanner } from './RekeningSummaryBanner';
+import { RekeningAccountGrid } from './RekeningAccountGrid';
+import { RekeningModals } from './RekeningModals';
 
 export function RekeningPage() {
   const {
@@ -33,161 +28,48 @@ export function RekeningPage() {
     handleToggleHide,
   } = useRekening();
 
-  const visibleGroupsWithBalance = GROUP_CONFIG.filter(g =>
-    visibleAccounts.some(a => (g.types as readonly string[]).includes(a.type))
+  const visibleGroupsWithBalance = GROUP_CONFIG.filter(group =>
+    visibleAccounts.some(account => (group.types as readonly string[]).includes(account.type))
   );
-
-  const totalContent = (
-    <>
-      <div className="text-[0.71875rem] font-semibold text-[#7D9590] tracking-[0.01875rem] mb-2 flex items-center gap-1.5">
-        TOTAL ASET
-        {hiddenCount > 0 && (
-          <span className="text-[0.625rem] font-semibold text-[#7D9590] bg-[#F6F9F7] border border-[#E0EAE6] rounded-lg py-px px-1.25">
-            {hiddenCount} DISEMBUNYIKAN
-          </span>
-        )}
-      </div>
-      <div className="text-[2rem] font-bold text-[#1A2420] tracking-[-0.0625rem] tabular-nums">
-        {formatRp(totalBalance)}
-      </div>
-      <div className={`text-xs font-semibold mt-1.5 flex items-center gap-1 ${monthlyNet >= 0 ? 'text-[#15735A]' : 'text-[#C0392B]'}`}>
-        {monthlyNet >= 0 ? Icon.arrowUp(12) : Icon.arrowDown(12)}
-        {monthlyNet >= 0 ? '+' : ''}{formatRp(monthlyNet)} bulan ini
-      </div>
-    </>
-  );
-
-  const groupCards = visibleGroupsWithBalance.map((g, i) => {
-    const bal = visibleAccounts
-      .filter(a => (g.types as readonly string[]).includes(a.type))
-      .reduce((s, a) => s + a.balance, 0);
-    const count = visibleAccounts.filter(a => (g.types as readonly string[]).includes(a.type)).length;
-    return (
-      <div
-        key={i}
-        className="rounded-[0.75rem] py-4 px-4.5"
-        style={{ background: g.tint, border: `1px solid ${g.color}30` }}
-      >
-        <div className="text-[0.6875rem] font-semibold text-[#7D9590] tracking-[0.01875rem] mb-1">
-          {g.label}
-        </div>
-        <div className="text-[1.1875rem] font-bold tracking-[-0.025rem] tabular-nums" style={{ color: g.color }}>
-          {formatRp(bal)}
-        </div>
-        <div className="text-[0.71875rem] text-[#7D9590] mt-0.75">
-          {count} rekening
-        </div>
-      </div>
-    );
-  });
 
   return (
     <div className="font-sans">
-      {/* Toast */}
-      {toast && (
-        <div
-          className="fixed top-5 right-6 bg-white rounded-[0.625rem] py-3 px-4 shadow-[0_4px_20px_rgba(20,30,25,0.12)] flex items-center gap-2.5 z-100 max-w-85"
-          style={{
-            border: `1px solid ${toast.ok ? T.primary : T.danger}44`,
-            borderLeft: `4px solid ${toast.ok ? T.primary : T.danger}`,
-            animation: 'slideIn 0.2s ease',
-          }}
-        >
-          {toast.ok
-            ? <CheckCircle size={16} color={T.primary} />
-            : <XCircle size={16} color={T.danger} />
-          }
-          <span className="text-[0.8125rem] font-semibold text-[#1A2420]">{toast.msg}</span>
-        </div>
-      )}
+      {toast && <RekeningToast toast={toast} />}
 
-      {/* Page header */}
-      <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-0 mb-5">
-        <div>
-          <h1 className="m-0 text-xl font-bold text-[#1A2420] tracking-[-0.01875rem]">
-            Rekening
-          </h1>
-          <div className="text-[0.78125rem] text-[#A4B8B2] mt-0.75">
-            {accounts.length} rekening aktif · April 2026
-            {hiddenCount > 0 && (
-              <span className="text-[#7D9590] ml-1.5">
-                · {hiddenCount} tidak dihitung
-              </span>
-            )}
-          </div>
-        </div>
-        <div className="flex gap-2 shrink-0 w-full sm:w-auto">
-          <Btn
-            className="flex-1 sm:flex-none justify-center"
-            kind="ghost" size="sm" icon={Icon.arrowLR(14)}
-            onClick={() => setShowTransferModal(true)}
-          >
-            Transfer
-          </Btn>
-          <Btn
-            className="flex-1 sm:flex-none justify-center"
-            kind="primary" size="sm" icon={Icon.plus(14)}
-            onClick={() => setShowAddModal(true)}
-          >
-            Tambah Rekening
-          </Btn>
-        </div>
-      </div>
+      <RekeningHeader
+        accountCount={accounts.length}
+        hiddenCount={hiddenCount}
+        onTransfer={() => setShowTransferModal(true)}
+        onAddAccount={() => setShowAddModal(true)}
+      />
 
-      {/* Summary banner – mobile & tablet (hidden on lg+) */}
-      <div className="bg-white border border-[#E0EAE6] rounded-[0.75rem] mb-5.5 py-4.5 px-4 sm:py-5 sm:px-6 xl:hidden grid grid-cols-3 gap-3">
-        <div className="col-span-3 pb-4 border-b border-[#E0EAE6]">
-          {totalContent}
-        </div>
-        {groupCards}
-      </div>
+      <RekeningSummaryBanner
+        totalBalance={totalBalance}
+        hiddenCount={hiddenCount}
+        monthlyNet={monthlyNet}
+        visibleAccounts={visibleAccounts}
+        visibleGroupsWithBalance={visibleGroupsWithBalance}
+      />
 
-      {/* Summary banner – desktop (hidden below lg) */}
-      <div
-        className="hidden xl:grid bg-white border border-[#E0EAE6] rounded-[0.75rem] mb-5.5 py-5.5 px-7 gap-7"
-        style={{ gridTemplateColumns: `1.6fr ${visibleGroupsWithBalance.map(() => '1fr').join(' ')}` }}
-      >
-        <div>{totalContent}</div>
-        {groupCards}
-      </div>
+      <RekeningAccountGrid
+        accounts={accounts}
+        onEdit={setEditingAccount}
+        onToggleHide={handleToggleHide}
+        onAddAccount={() => setShowAddModal(true)}
+      />
 
-      {/* Account grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {accounts.map(a => (
-          <AccountDetailCard
-            key={a.id}
-            acct={a}
-            isHidden={!!a.hidden}
-            onEdit={() => setEditingAccount(a)}
-            onToggleHide={() => handleToggleHide(a.id)}
-          />
-        ))}
-        <AddAccountCard onClick={() => setShowAddModal(true)} />
-      </div>
-
-      {showAddModal && (
-        <AddAccountModal
-          onClose={() => setShowAddModal(false)}
-          onAdd={handleAdd}
-        />
-      )}
-
-      {editingAccount && (
-        <EditAccountModal
-          account={editingAccount}
-          onSave={handleSave}
-          onDelete={handleDelete}
-          onClose={() => setEditingAccount(null)}
-        />
-      )}
-
-      {showTransferModal && (
-        <AddTransactionModal
-          initialType="transfer"
-          onClose={() => setShowTransferModal(false)}
-          onSave={handleTransfer}
-        />
-      )}
+      <RekeningModals
+        showAddModal={showAddModal}
+        showTransferModal={showTransferModal}
+        editingAccount={editingAccount}
+        onCloseAddModal={() => setShowAddModal(false)}
+        onCloseTransferModal={() => setShowTransferModal(false)}
+        onCloseEditModal={() => setEditingAccount(null)}
+        onAdd={handleAdd}
+        onSave={handleSave}
+        onDelete={handleDelete}
+        onTransfer={handleTransfer}
+      />
     </div>
   );
 }
