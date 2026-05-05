@@ -35,7 +35,7 @@ export function MonthComparisonTable({ rows, viewMonth, gotoMonth }: Props) {
               const isViewing = m.idx === viewMonth;
               const isToday   = m.idx === TODAY.getMonth();
               const net       = m.income - m.expense;
-              const savings   = Math.round((net / m.income) * 100);
+              const savings   = m.income > 0 ? Math.round((net / m.income) * 100) : 0;
               const isLast    = i === rows.length - 1;
               return (
                 <tr key={i} style={{ background: isViewing ? T.primarySoft : 'transparent' }}>
