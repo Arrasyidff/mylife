@@ -6,12 +6,12 @@ import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
 import { CatBubble } from '@/components/shared/CatBubble';
 import { CATS, PERIODS, AMOUNT_PRESETS } from '../constants';
-import type { Budget, BudgetPeriod } from '../types';
+import type { Budget, BudgetPeriod, UpdateAnggaranInput } from '../types';
 
 interface EditBudgetModalProps {
   budget: Budget;
-  onSave: (budget: Budget) => void;
-  onDelete: (id: string) => void;
+  onSave: (id: string, input: UpdateAnggaranInput) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
   onClose: () => void;
 }
 
@@ -55,22 +55,44 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (val: boolean) => voi
 
 export function EditBudgetModal({ budget, onSave, onDelete, onClose }: EditBudgetModalProps) {
   useScrollLock();
-  const [selectedCat, setSelectedCat]       = useState(budget.cat);
-  const [selectedPeriod, setSelectedPeriod] = useState<BudgetPeriod>(budget.period ?? 'monthly');
+  const [selectedCat, setSelectedCat]       = useState(budget.category);
+  const [selectedPeriod, setSelectedPeriod] = useState<BudgetPeriod>(budget.period ?? 'MONTHLY');
   const [amount, setAmount]                 = useState(budget.total);
-  const [carryOver, setCarryOver]           = useState(budget.carryOver ?? false);
+  const [carryOver, setCarryOver]           = useState(budget.carry_over);
   const [confirmDelete, setConfirmDelete]   = useState(false);
+  const [isSubmitting, setIsSubmitting]     = useState(false);
 
   const catName = CATS.find(c => c.id === selectedCat)?.name ?? selectedCat;
 
-  function handleSave() {
-    onSave({ ...budget, name: catName, cat: selectedCat, total: amount, period: selectedPeriod, carryOver });
-    onClose();
+  async function handleSave() {
+    setIsSubmitting(true);
+    try {
+      const input: UpdateAnggaranInput = {
+        name:       catName,
+        category:   selectedCat,
+        total:      amount,
+        period:     selectedPeriod,
+        carry_over: carryOver,
+      };
+      await onSave(budget.id, input);
+      onClose();
+    } catch {
+      // error shown via toast in hook
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
-  function handleDelete() {
-    onDelete(budget.id);
-    onClose();
+  async function handleDelete() {
+    setIsSubmitting(true);
+    try {
+      await onDelete(budget.id);
+      onClose();
+    } catch {
+      // error shown via toast in hook
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -111,7 +133,7 @@ export function EditBudgetModal({ budget, onSave, onDelete, onClose }: EditBudge
             <div className="flex-1 min-w-0">
               <div className="text-sm font-semibold text-[#1A2420]">{catName}</div>
               <div className="text-[11.5px] text-[#A4B8B2] mt-0.5">
-                {formatRp(budget.used)} terpakai dari {formatRp(amount)}
+                {formatRp(budget.spent)} terpakai dari {formatRp(amount)}
               </div>
             </div>
             <div className="text-[15px] font-bold text-[#15735A] tabular-nums">{formatRp(amount)}</div>
@@ -253,9 +275,10 @@ export function EditBudgetModal({ budget, onSave, onDelete, onClose }: EditBudge
                   </button>
                   <button
                     onClick={handleDelete}
-                    className="py-[7px] px-4 rounded-[7px] border-none bg-[#C0392B] text-white text-[12.5px] font-semibold cursor-pointer font-sans"
+                    disabled={isSubmitting}
+                    className="py-[7px] px-4 rounded-[7px] border-none bg-[#C0392B] text-white text-[12.5px] font-semibold cursor-pointer font-sans disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    Ya, Hapus
+                    {isSubmitting ? 'Menghapus...' : 'Ya, Hapus'}
                   </button>
                 </div>
               </div>
@@ -273,10 +296,11 @@ export function EditBudgetModal({ budget, onSave, onDelete, onClose }: EditBudge
           </button>
           <button
             onClick={handleSave}
-            className="flex-[2] py-[11px] rounded-[9px] border-none bg-[#1D9E75] text-white text-[13.5px] font-semibold cursor-pointer font-sans flex items-center justify-center gap-1.5"
+            disabled={isSubmitting}
+            className="flex-[2] py-[11px] rounded-[9px] border-none bg-[#1D9E75] text-white text-[13.5px] font-semibold cursor-pointer font-sans flex items-center justify-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <Check size={14} />
-            Simpan Perubahan
+            {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
           </button>
         </div>
       </div>

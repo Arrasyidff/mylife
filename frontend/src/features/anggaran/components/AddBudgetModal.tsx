@@ -6,11 +6,11 @@ import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
 import { CatBubble } from '@/components/shared/CatBubble';
 import { CATS, PERIODS, AMOUNT_PRESETS, AMOUNT_WORDS, MONTHLY_INCOME } from '../constants';
-import type { Budget, BudgetPeriod } from '../types';
+import type { BudgetPeriod, CreateAnggaranInput } from '../types';
 
 interface AddBudgetModalProps {
   onClose: () => void;
-  onAdd: (budget: Budget) => void;
+  onAdd: (input: CreateAnggaranInput) => Promise<void>;
   totalExisting: number;
 }
 
@@ -55,27 +55,36 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (val: boolean) => voi
 export function AddBudgetModal({ onClose, onAdd, totalExisting }: AddBudgetModalProps) {
   useScrollLock();
   const [selectedCat, setSelectedCat]       = useState('fun');
-  const [selectedPeriod, setSelectedPeriod] = useState('monthly');
+  const [selectedPeriod, setSelectedPeriod] = useState<BudgetPeriod>('MONTHLY');
   const [amount, setAmount]                 = useState(1_500_000);
   const [notifs, setNotifs]                 = useState({ pct75: true, pct100: true, weekly: false });
   const [carryOver, setCarryOver]           = useState(false);
+  const [isSubmitting, setIsSubmitting]     = useState(false);
 
   const totalAfter = totalExisting + amount;
   const remaining  = MONTHLY_INCOME - totalAfter;
 
-  function handleSave() {
-    const catLabel = CATS.find(c => c.id === selectedCat)?.name ?? selectedCat;
-    const budget: Budget = {
-      id:        `budget-${Date.now()}`,
-      name:      catLabel,
-      used:      0,
-      total:     amount,
-      cat:       selectedCat,
-      period:    selectedPeriod as BudgetPeriod,
-      carryOver,
-    };
-    onAdd(budget);
-    onClose();
+  async function handleSave() {
+    setIsSubmitting(true);
+    try {
+      const catLabel  = CATS.find(c => c.id === selectedCat)?.name ?? selectedCat;
+      const now       = new Date();
+      const startDate = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
+      const input: CreateAnggaranInput = {
+        name:       catLabel,
+        category:   selectedCat,
+        total:      amount,
+        period:     selectedPeriod,
+        carry_over: carryOver,
+        start_date: startDate,
+      };
+      await onAdd(input);
+      onClose();
+    } catch {
+      // error shown via toast in hook
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -179,7 +188,7 @@ export function AddBudgetModal({ onClose, onAdd, totalExisting }: AddBudgetModal
                 return (
                   <button
                     key={p.id}
-                    onClick={() => setSelectedPeriod(p.id)}
+                    onClick={() => setSelectedPeriod(p.id as BudgetPeriod)}
                     className="flex-1 py-3 px-2.5 rounded-[10px] cursor-pointer flex flex-col items-center gap-[3px] font-sans"
                     style={{
                       background: active ? T.primaryLight : T.surfaceAlt,
@@ -277,10 +286,11 @@ export function AddBudgetModal({ onClose, onAdd, totalExisting }: AddBudgetModal
           </button>
           <button
             onClick={handleSave}
-            className="flex-[2] py-[11px] rounded-[9px] border-none bg-[#1D9E75] text-white text-[13.5px] font-semibold cursor-pointer font-sans flex items-center justify-center gap-1.5"
+            disabled={isSubmitting}
+            className="flex-[2] py-[11px] rounded-[9px] border-none bg-[#1D9E75] text-white text-[13.5px] font-semibold cursor-pointer font-sans flex items-center justify-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <Check size={14} />
-            Simpan Anggaran
+            {isSubmitting ? 'Menyimpan...' : 'Simpan Anggaran'}
           </button>
         </div>
       </div>

@@ -1,7 +1,7 @@
 export const PERIOD_LABEL: Record<string, string> = {
-  weekly:  'Mingguan',
-  monthly: 'Bulanan',
-  yearly:  'Tahunan',
+  WEEKLY:  'Mingguan',
+  MONTHLY: 'Bulanan',
+  YEARLY:  'Tahunan',
 };
 
 export const MONTH_NAMES = [
@@ -25,9 +25,9 @@ export const CATS = [
 ];
 
 export const PERIODS = [
-  { id: 'weekly',  label: 'Mingguan', hint: 'Reset tiap Senin'     },
-  { id: 'monthly', label: 'Bulanan',  hint: 'Reset tiap tanggal 1' },
-  { id: 'yearly',  label: 'Tahunan',  hint: 'Reset tiap Januari'   },
+  { id: 'WEEKLY',  label: 'Mingguan', hint: 'Reset tiap Senin'     },
+  { id: 'MONTHLY', label: 'Bulanan',  hint: 'Reset tiap tanggal 1' },
+  { id: 'YEARLY',  label: 'Tahunan',  hint: 'Reset tiap Januari'   },
 ];
 
 export const AMOUNT_PRESETS = [500_000, 1_000_000, 1_500_000, 2_000_000, 3_000_000, 5_000_000];
