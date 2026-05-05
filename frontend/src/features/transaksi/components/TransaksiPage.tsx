@@ -13,15 +13,16 @@ export function TransaksiPage() {
     txList,
     filtered,
     groups,
-    showAdd,      setShowAdd,
-    editTx,       setEditTx,
-    expandedId,   setExpandedId,
-    search,       setSearch,
-    typeFilter,   setTypeFilter,
-    userFilter,   setUserFilter,
-    monthFilter,  setMonthFilter,
+    accounts,
+    showAdd,         setShowAdd,
+    editTx,          setEditTx,
+    expandedId,      setExpandedId,
+    search,          setSearch,
+    typeFilter,      setTypeFilter,
+    userFilter,      setUserFilter,
+    monthFilter,     setMonthFilter,
     showMonthPicker, setShowMonthPicker,
-    pickerYear,   setPickerYear,
+    pickerYear,      setPickerYear,
     toast,
     monthPickerRef,
     monthLabel,
@@ -79,11 +80,16 @@ export function TransaksiPage() {
       />
 
       {showAdd && (
-        <AddTransactionModal onClose={() => setShowAdd(false)} onSave={handleAdd} />
+        <AddTransactionModal
+          accounts={accounts}
+          onClose={() => setShowAdd(false)}
+          onSave={handleAdd}
+        />
       )}
       {editTx && (
         <EditTransactionModal
           tx={editTx}
+          accounts={accounts}
           onClose={() => setEditTx(null)}
           onSave={handleEdit}
           onDelete={handleDelete}

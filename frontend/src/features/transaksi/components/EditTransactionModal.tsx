@@ -5,14 +5,15 @@ import { Icon } from '@/components/ui/icon';
 import { CatBubble } from '@/components/shared/CatBubble';
 import { UserBadge } from '@/components/shared/UserBadge';
 import { Btn } from '@/components/ui/btn';
-import { accounts, budgets } from '@/lib/dashboard-data';
 import { formatRp, toDatetimeLocal, fromDatetimeLocal } from '@/lib/format';
 import { TX_TYPES, EXPENSE_CATS, INCOME_CATS } from '../constants';
+import type { Account } from '@/features/rekening/types';
 import type { Transaction, TxTypeId } from '../types';
 
 interface EditTransactionModalProps {
-  tx: Transaction;
-  onClose: () => void;
+  tx:       Transaction;
+  accounts: Account[];
+  onClose:  () => void;
   onSave: (tx: Transaction) => void;
   onDelete: (id: number) => void;
 }
@@ -41,7 +42,7 @@ function InputRow({ children, style }: { children: React.ReactNode; style?: Reac
   );
 }
 
-export function EditTransactionModal({ tx, onClose, onSave, onDelete }: EditTransactionModalProps) {
+export function EditTransactionModal({ tx, accounts, onClose, onSave, onDelete }: EditTransactionModalProps) {
   const initType = tx.type;
   const initAmt  = Math.abs(tx.amount);
 
@@ -65,10 +66,6 @@ export function EditTransactionModal({ tx, onClose, onSave, onDelete }: EditTran
 
   const cats = txType === 'income' ? INCOME_CATS : EXPENSE_CATS;
 
-  const budget = budgets.find(b => b.cat === selectedCat);
-  const budgetPct = budget ? Math.round((budget.used / budget.total) * 100) : 0;
-  const showBudgetWarning = txType === 'expense' && !!budget && budgetPct >= 75;
-
   const amountColor =
     txType === 'income'   ? T.primaryDark :
     txType === 'transfer' ? '#1846A8'     : T.danger;
@@ -86,11 +83,12 @@ export function EditTransactionModal({ tx, onClose, onSave, onDelete }: EditTran
       user:   selectedUser,
       cat:    selectedCat,
       merch:  merch.trim(),
-      acct:   selectedAcct,
-      amount: sign * amountNum,
-      date:   fromDatetimeLocal(dateVal),
-      type:   txType,
-      note:   note.trim() || undefined,
+      acct:          selectedAcct,
+      to_account_id: txType === 'transfer' ? (tx.to_account_id ?? null) : null,
+      amount:        sign * amountNum,
+      date:          fromDatetimeLocal(dateVal),
+      type:          txType,
+      note:          note.trim() || undefined,
     });
   }
 
@@ -247,24 +245,6 @@ export function EditTransactionModal({ tx, onClose, onSave, onDelete }: EditTran
             </Field>
           )}
 
-          {/* Budget warning */}
-          {showBudgetWarning && budget && (
-            <div style={{
-              display: 'flex', gap: 11, padding: '12px 14px',
-              background: T.warningLight, border: `1px solid #F4D7A0`,
-              borderRadius: 10, marginBottom: 16,
-            }}>
-              <span style={{ color: T.warning, flexShrink: 0, marginTop: 1 }}>{Icon.warn(16)}</span>
-              <div>
-                <div style={{ fontSize: 12.5, fontWeight: 700, color: '#8C5A0E', marginBottom: 2 }}>
-                  Anggaran {budget.name} sudah {budgetPct}% terpakai
-                </div>
-                <div style={{ fontSize: 11.5, color: '#8C5A0E' }}>
-                  {formatRp(budget.used)} dari {formatRp(budget.total)}.
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Account */}
           <Field label="Rekening">

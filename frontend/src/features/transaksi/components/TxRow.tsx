@@ -1,5 +1,4 @@
 import type { Transaction } from '../types';
-import { accounts } from '@/lib/dashboard-data';
 import { T } from '@/lib/tokens';
 import { formatRp, formatTxDate } from '@/lib/format';
 import { CatBubble } from '@/components/shared/CatBubble';
@@ -13,7 +12,7 @@ interface TxRowProps {
 export function TxRow({ t, showAcct = true }: TxRowProps) {
   const isIncome = t.amount > 0;
   const isTransfer = t.type === 'transfer';
-  const acct = accounts.find(a => a.id === t.acct);
+  const acct = t.acct_info;
 
   return (
     <div style={{

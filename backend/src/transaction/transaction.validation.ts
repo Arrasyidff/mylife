@@ -51,6 +51,6 @@ export const TransactionValidation = {
     date_from: z.coerce.date().optional(),
     date_to: z.coerce.date().optional(),
     page: z.coerce.number().int().min(1).optional(),
-    limit: z.coerce.number().int().min(1).max(100).optional(),
+    limit: z.coerce.number().int().min(1).max(500).optional(),
   }),
 };

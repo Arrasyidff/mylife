@@ -2,7 +2,6 @@ import { Icon } from '@/components/ui/icon';
 import { Pill } from '@/components/ui/pill';
 import { CatBubble } from '@/components/shared/CatBubble';
 import { UserBadge } from '@/components/shared/UserBadge';
-import { accounts } from '@/lib/dashboard-data';
 import { formatRp, formatTxDate } from '@/lib/format';
 import type { Transaction } from '../types';
 
@@ -14,7 +13,7 @@ interface TxLineProps {
 }
 
 export function TxLine({ t, expanded, onToggle, onEdit }: TxLineProps) {
-  const acct = accounts.find(a => a.id === t.acct);
+  const acct = t.acct_info;
   const isIncome = t.type === 'income';
 
   const borderColorClass =

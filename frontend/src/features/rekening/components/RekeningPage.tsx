@@ -59,6 +59,7 @@ export function RekeningPage() {
       />
 
       <RekeningModals
+        accounts={accounts}
         showAddModal={showAddModal}
         showTransferModal={showTransferModal}
         editingAccount={editingAccount}

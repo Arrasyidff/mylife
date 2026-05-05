@@ -90,6 +90,7 @@ export function useDashboard() {
 
   return {
     txList,
+    accounts,
     showAdd,
     setShowAdd,
     toast,

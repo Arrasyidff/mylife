@@ -6,15 +6,16 @@ import { Icon } from '@/components/ui/icon';
 import { CatBubble } from '@/components/shared/CatBubble';
 import { UserBadge } from '@/components/shared/UserBadge';
 import { Btn } from '@/components/ui/btn';
-import { accounts, budgets } from '@/lib/dashboard-data';
 import { formatRp, nowDatetimeLocal, fromDatetimeLocal } from '@/lib/format';
 import { TX_TYPES, EXPENSE_CATS, INCOME_CATS, ADMIN_FEE_DEFAULT } from '../constants';
+import type { Account } from '@/features/rekening/types';
 import type { Transaction, TxTypeId } from '../types';
 
 interface AddTransactionModalProps {
-  onClose: () => void;
-  onSave: (txs: Omit<Transaction, 'id'>[]) => void;
-  initialType?: TxTypeId;
+  accounts:      Account[];
+  onClose:       () => void;
+  onSave:        (txs: Omit<Transaction, 'id'>[]) => void;
+  initialType?:  TxTypeId;
 }
 
 function Field({ label, children, hint }: {
@@ -46,7 +47,7 @@ function InputRow({ children, suffix, error }: {
   );
 }
 
-export function AddTransactionModal({ onClose, onSave, initialType }: AddTransactionModalProps) {
+export function AddTransactionModal({ accounts, onClose, onSave, initialType }: AddTransactionModalProps) {
   useScrollLock();
   const [txType,       setTxType]       = useState<TxTypeId>(initialType ?? 'expense');
   const [amountRaw,    setAmountRaw]    = useState('');
@@ -78,10 +79,6 @@ export function AddTransactionModal({ onClose, onSave, initialType }: AddTransac
 
   const cats = txType === 'income' ? INCOME_CATS : EXPENSE_CATS;
 
-  const budget = budgets.find(b => b.cat === selectedCat);
-  const budgetPct = budget ? Math.round((budget.used / budget.total) * 100) : 0;
-  const showBudgetWarning = txType === 'expense' && !!budget && budgetPct >= 75;
-
   const amountColor =
     txType === 'income'   ? T.primaryDark :
     txType === 'transfer' ? '#1846A8'     : T.danger;
@@ -106,14 +103,15 @@ export function AddTransactionModal({ onClose, onSave, initialType }: AddTransac
 
     const sign = txType === 'income' ? 1 : -1;
     const mainTx: Omit<Transaction, 'id'> = {
-      user:   selectedUser,
-      cat:    selectedCat,
-      merch:  autoMerch,
-      acct:   selectedAcct,
-      amount: sign * amountNum,
-      date:   fromDatetimeLocal(dateVal),
-      type:   txType,
-      note:   note.trim() || undefined,
+      user:          selectedUser,
+      cat:           selectedCat,
+      merch:         autoMerch,
+      acct:          selectedAcct,
+      to_account_id: txType === 'transfer' ? toAcctId : null,
+      amount:        sign * amountNum,
+      date:          fromDatetimeLocal(dateVal),
+      type:          txType,
+      note:          note.trim() || undefined,
     };
 
     if (isInterBankTransfer) {
@@ -256,21 +254,6 @@ export function AddTransactionModal({ onClose, onSave, initialType }: AddTransac
             </Field>
           )}
 
-          {/* Budget warning */}
-          {showBudgetWarning && budget && (
-            <div className="flex gap-2.5 px-3.5 py-3 bg-[#FDF1DD] border border-[#F4D7A0] rounded-[10px] mb-4">
-              <span className="text-[#D4860B] shrink-0 mt-0.5">{Icon.warn(16)}</span>
-              <div>
-                <div className="text-[12.5px] font-bold text-[#8C5A0E] mb-0.5">
-                  Anggaran {budget.name} sudah {budgetPct}% terpakai
-                </div>
-                <div className="text-[11.5px] text-[#8C5A0E] leading-[1.4]">
-                  {formatRp(budget.used)} dari {formatRp(budget.total)}.{' '}
-                  {budgetPct >= 100 ? 'Transaksi ini akan menambah selisih.' : 'Mendekati batas anggaran.'}
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Account */}
           {txType === 'transfer' ? (

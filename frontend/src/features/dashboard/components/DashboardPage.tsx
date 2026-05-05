@@ -10,7 +10,7 @@ import { DashboardTransactions } from './DashboardTransactions';
 
 export function DashboardPage() {
   const {
-    txList, showAdd, setShowAdd, toast,
+    txList, accounts, showAdd, setShowAdd, toast,
     selectedMonth, setSelectedMonth,
     showMonthPicker, setShowMonthPicker, monthPickerRef,
     totalAssets, availableMonths, displayedAccounts, lastTxByAcct,
@@ -70,7 +70,11 @@ export function DashboardPage() {
       </div>
 
       {showAdd && (
-        <AddTransactionModal onClose={() => setShowAdd(false)} onSave={handleAdd} />
+        <AddTransactionModal
+          accounts={accounts}
+          onClose={() => setShowAdd(false)}
+          onSave={drafts => handleAdd(drafts.map(draft => ({ ...draft, note: draft.note ?? undefined })))}
+        />
       )}
     </div>
   );

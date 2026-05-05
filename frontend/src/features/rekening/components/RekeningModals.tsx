@@ -4,19 +4,21 @@ import { EditAccountModal } from './EditAccountModal';
 import { AddTransactionModal } from '@/features/transaksi/components/AddTransactionModal';
 
 interface RekeningModalsProps {
-  showAddModal: boolean;
-  showTransferModal: boolean;
-  editingAccount: Account | null;
-  onCloseAddModal: () => void;
+  accounts:             Account[];
+  showAddModal:         boolean;
+  showTransferModal:    boolean;
+  editingAccount:       Account | null;
+  onCloseAddModal:      () => void;
   onCloseTransferModal: () => void;
-  onCloseEditModal: () => void;
-  onAdd: (input: CreateAccountInput) => void;
-  onSave: (accountId: string, input: UpdateAccountInput) => void;
-  onDelete: (id: string) => void;
-  onTransfer: () => void;
+  onCloseEditModal:     () => void;
+  onAdd:                (input: CreateAccountInput) => void;
+  onSave:               (accountId: string, input: UpdateAccountInput) => void;
+  onDelete:             (id: string) => void;
+  onTransfer:           () => void;
 }
 
 export function RekeningModals({
+  accounts,
   showAddModal,
   showTransferModal,
   editingAccount,
@@ -48,6 +50,7 @@ export function RekeningModals({
 
       {showTransferModal && (
         <AddTransactionModal
+          accounts={accounts}
           initialType="transfer"
           onClose={onCloseTransferModal}
           onSave={() => onTransfer()}
