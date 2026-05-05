@@ -171,6 +171,48 @@ src/
 - **Konstanta**: UPPER_SNAKE_CASE → `API_BASE_URL`, `MAX_TODO_LIMIT`
 - **Zod schema**: suffix `Schema` → `loginSchema`, `createTodoSchema`
 
+### 🔤 Aturan Kejelasan Nama
+
+**Semua nama variabel, fungsi, class, parameter, dan props WAJIB ditulis lengkap dan deskriptif. Singkatan satu atau dua huruf DILARANG.**
+
+```ts
+// ✅ Benar — nama jelas dan mudah dibaca
+const todoList = []
+const currentUser = {}
+const isLoading = false
+const errorMessage = ""
+const selectedItem = null
+
+function calculateTotalPrice(itemList) {}
+function handleFormSubmit(formData) {}
+function getUserById(userId) {}
+
+// ❌ Salah — singkatan tidak boleh dipakai
+const tl = []
+const u = {}
+const il = false
+const e = ""
+const s = null
+
+function calc(i) {}
+function handle(fd) {}
+function getU(id) {}  // 'id' boleh karena sudah jelas konteksnya
+```
+
+**Panduan penamaan yang baik:**
+
+| Jenis | ✅ Benar | ❌ Salah |
+|---|---|---|
+| Variabel array | `todoList`, `userList` | `tl`, `ul`, `arr` |
+| Variabel object | `currentUser`, `selectedItem` | `u`, `s`, `obj` |
+| Variabel boolean | `isLoading`, `hasError`, `isVisible` | `il`, `h`, `v` |
+| Variabel string | `errorMessage`, `searchQuery` | `e`, `q`, `str` |
+| Parameter fungsi | `userId`, `formData`, `todoItem` | `id` (ambigu), `d`, `i` |
+| Event handler | `handleButtonClick`, `handleFormSubmit` | `hbc`, `hfs`, `h` |
+| Callback prop | `onItemDelete`, `onFormSubmit` | `onD`, `cb`, `fn` |
+
+> **Pengecualian yang diizinkan**: `id` (sudah universal), `i`/`j` hanya untuk index di dalam loop sederhana, dan singkatan yang sudah jadi standar industri seperti `url`, `api`, `dto`, `ref`, `ctx`.
+
 ### TypeScript
 
 - Gunakan `interface` untuk object shapes, `type` untuk union/alias
