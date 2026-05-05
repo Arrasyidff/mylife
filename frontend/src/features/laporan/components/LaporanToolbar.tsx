@@ -22,16 +22,18 @@ export function LaporanToolbar({
   setViewYear,
 }: Props) {
   return (
-    <div className="flex items-center justify-end gap-2.5 mb-5.5">
+    <div className="flex flex-col gap-2.5 mb-4.5 md:flex-row md:items-center md:justify-end md:mb-5.5">
       <PeriodToggle period={period} setPeriod={setPeriod} />
-      <DatePicker
-        period={period}
-        viewMonth={viewMonth}
-        viewYear={viewYear}
-        btnLabel={btnLabel}
-        setViewMonth={setViewMonth}
-        setViewYear={setViewYear}
-      />
+      <div className="flex justify-end md:block">
+        <DatePicker
+          period={period}
+          viewMonth={viewMonth}
+          viewYear={viewYear}
+          btnLabel={btnLabel}
+          setViewMonth={setViewMonth}
+          setViewYear={setViewYear}
+        />
+      </div>
     </div>
   );
 }
