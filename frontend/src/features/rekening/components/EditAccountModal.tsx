@@ -4,11 +4,11 @@ import { X, Check, Trash2, AlertTriangle } from 'lucide-react';
 import { formatRp } from '@/lib/format';
 import { useScrollLock } from '@/lib/hooks/useScrollLock';
 import { ACCOUNT_TYPES, COLORS } from '../constants';
-import type { Account, AccountType } from '../types';
+import type { Account, AccountType, UpdateAccountInput } from '../types';
 
 interface EditAccountModalProps {
   account: Account;
-  onSave: (account: Account) => void;
+  onSave: (accountId: string, input: UpdateAccountInput) => void;
   onDelete: (id: string) => void;
   onClose: () => void;
 }
@@ -41,7 +41,7 @@ export function EditAccountModal({ account, onSave, onDelete, onClose }: EditAcc
   const [type, setType] = useState<AccountType>(account.type);
   const [color, setColor] = useState(account.color);
   const [balance, setBalance] = useState(account.balance);
-  const [accountNumber, setAccountNumber] = useState('');
+  const [accountNumber, setAccountNumber] = useState(account.account_number ?? '');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const previewGlyph = name ? name.slice(0, 3).toUpperCase() : '···';
@@ -55,16 +55,15 @@ export function EditAccountModal({ account, onSave, onDelete, onClose }: EditAcc
 
   function handleSave() {
     if (!name.trim()) return;
-    onSave({
-      ...account,
+    onSave(account.id, {
       name: name.trim(),
-      subtitle: previewSubtitle || typeLabel,
-      balance,
-      color,
-      glyph: name.slice(0, 3).toUpperCase(),
       type,
+      color,
+      balance,
+      account_number: accountNumber.trim() || null,
+      subtitle: previewSubtitle || typeLabel,
+      glyph: name.slice(0, 3).toUpperCase(),
     });
-    onClose();
   }
 
   function handleDelete() {
@@ -192,7 +191,7 @@ export function EditAccountModal({ account, onSave, onDelete, onClose }: EditAcc
             <input
               value={accountNumber}
               onChange={e => setAccountNumber(e.target.value)}
-              placeholder={account.subtitle}
+              placeholder={account.subtitle ?? undefined}
               className={inputCls}
             />
           </Field>

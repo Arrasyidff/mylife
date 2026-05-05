@@ -5,11 +5,11 @@ import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
 import { useScrollLock } from '@/lib/hooks/useScrollLock';
 import { ACCOUNT_TYPES, COLORS, BALANCE_PRESETS } from '../constants';
-import type { Account, AccountType } from '../types';
+import type { CreateAccountInput, AccountType } from '../types';
 
 interface AddAccountModalProps {
   onClose: () => void;
-  onAdd: (account: Account) => void;
+  onAdd: (input: CreateAccountInput) => void;
 }
 
 function Field({ label, children, hint, optional }: {
@@ -53,17 +53,15 @@ export function AddAccountModal({ onClose, onAdd }: AddAccountModalProps) {
 
   function handleSave() {
     if (!name.trim()) return;
-    const account: Account = {
-      id: `acct-${Date.now()}`,
+    onAdd({
       name: name.trim(),
-      subtitle: previewSubtitle || typeLabel,
-      balance,
-      color,
-      glyph: name.slice(0, 3).toUpperCase(),
       type,
-    };
-    onAdd(account);
-    onClose();
+      color,
+      balance,
+      account_number: accountNumber.trim() || undefined,
+      subtitle: previewSubtitle || typeLabel,
+      glyph: name.slice(0, 3).toUpperCase(),
+    });
   }
 
   return (
