@@ -9,7 +9,7 @@ type Props = {
   viewYear: number;
   btnLabel: string;
   setViewMonth: (month: number) => void;
-  setViewYear: (year: number) => void;
+  setViewYear: (fn: (year: number) => number) => void;
 };
 
 export function LaporanToolbar({

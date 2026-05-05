@@ -29,18 +29,18 @@ type Props = {
 export function SpenderChart({ data, hTotal, wTotal }: Props) {
   return (
     <div className="bg-white border border-app-border rounded-xl p-4 md:p-5.5">
-      <div className="flex flex-wrap items-start justify-between gap-2.5 mb-4 md:mb-4.5">
+      <div className="flex flex-col gap-2.5 mb-4 lg:flex-row lg:items-start lg:justify-between lg:mb-4.5">
         <div>
-          <h3 className="m-0 text-[15px] font-bold text-app-text">Suami vs Istri</h3>
+          <h3 className="m-0 text-[15px] lg:text-[17px] font-bold text-app-text">Suami vs Istri</h3>
           <div className="text-xs text-app-text-subtle mt-0.75">Pengeluaran berdasarkan kategori</div>
         </div>
-        <div className="flex gap-4 md:gap-4.5 items-start">
+        <div className="grid grid-cols-2 w-full gap-2 lg:flex lg:w-auto lg:gap-4.5 lg:items-start">
           <div className="text-right">
             <div className="flex items-center gap-1.5 justify-end">
               <UserBadge user="H" size={20} />
               <span className="text-[11px] text-app-text-muted">Suami</span>
             </div>
-            <div className="text-[15px] md:text-[16px] font-bold mt-1 tabular-nums text-app-text">
+            <div className="text-[15px] lg:text-[17px] font-bold mt-1 tabular-nums text-app-text">
               {formatRp(hTotal)}
             </div>
           </div>
@@ -49,7 +49,7 @@ export function SpenderChart({ data, hTotal, wTotal }: Props) {
               <UserBadge user="W" size={20} />
               <span className="text-[11px] text-app-text-muted">Istri</span>
             </div>
-            <div className="text-[15px] md:text-[16px] font-bold mt-1 tabular-nums text-app-text">
+            <div className="text-[15px] lg:text-[17px] font-bold mt-1 tabular-nums text-app-text">
               {formatRp(wTotal)}
             </div>
           </div>
