@@ -1,11 +1,9 @@
 "use client";
 import { useLaporan } from '../hooks/useLaporan';
-import { PeriodToggle } from './PeriodToggle';
-import { DatePicker } from './DatePicker';
+import { LaporanToolbar } from './LaporanToolbar';
 import { TopStatsGrid } from './TopStatsGrid';
 import { SpendingBarChart } from './SpendingBarChart';
-import { CategoryDonut } from './CategoryDonut';
-import { SpenderChart } from './SpenderChart';
+import { LaporanChartsSection } from './LaporanChartsSection';
 import { MonthComparisonTable } from './MonthComparisonTable';
 
 export function LaporanPage() {
@@ -24,17 +22,15 @@ export function LaporanPage() {
 
   return (
     <div className="font-sans">
-      <div className="flex items-center justify-end gap-2.5 mb-5.5">
-        <PeriodToggle period={period} setPeriod={setPeriod} />
-        <DatePicker
-          period={period}
-          viewMonth={viewMonth}
-          viewYear={viewYear}
-          btnLabel={btnLabel}
-          setViewMonth={setViewMonth}
-          setViewYear={setViewYear}
-        />
-      </div>
+      <LaporanToolbar
+        period={period}
+        setPeriod={setPeriod}
+        viewMonth={viewMonth}
+        viewYear={viewYear}
+        btnLabel={btnLabel}
+        setViewMonth={setViewMonth}
+        setViewYear={setViewYear}
+      />
 
       <TopStatsGrid stats={topStats} />
 
@@ -47,10 +43,13 @@ export function LaporanPage() {
         period={period}
       />
 
-      <div className="grid grid-cols-[1fr_1.3fr] gap-4.5 mb-4.5">
-        <CategoryDonut breakdown={catBreakdown} totalCat={totalCat} />
-        <SpenderChart data={hwData} hTotal={hTotal} wTotal={wTotal} />
-      </div>
+      <LaporanChartsSection
+        catBreakdown={catBreakdown}
+        totalCat={totalCat}
+        hwData={hwData}
+        hTotal={hTotal}
+        wTotal={wTotal}
+      />
 
       {period === 1 && (
         <MonthComparisonTable rows={monthRows} viewMonth={viewMonth} gotoMonth={gotoMonth} />
