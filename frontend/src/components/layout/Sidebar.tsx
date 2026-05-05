@@ -72,7 +72,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       <aside
         className={[
-          "fixed left-0 top-0 h-full w-64 border-r border-gray-200 bg-white flex flex-col gap-2 p-6 z-40 transition-transform duration-300",
+          "fixed left-0 top-0 h-full w-54 border-r border-gray-200 bg-white flex flex-col gap-2 p-6 z-40 transition-transform duration-300",
           !isOpen ? "max-xl:-translate-x-full" : "",
         ].join(" ")}
       >

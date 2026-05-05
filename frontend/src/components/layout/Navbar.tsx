@@ -70,7 +70,7 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
   };
 
   return (
-    <header className="sticky top-0 h-16 px-4 md:px-6 flex justify-between items-center bg-white/80 backdrop-blur-xl border-b border-gray-200 z-20">
+    <header className="sticky top-0 h-16 px-4 md:px-8 flex justify-between items-center bg-white/80 backdrop-blur-xl border-b border-gray-200 z-20">
       <div className="flex items-center gap-3">
         <button
           onClick={onMenuToggle}
