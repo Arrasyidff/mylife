@@ -1,6 +1,6 @@
 import { PieChart, Pie, Cell } from 'recharts';
 import { formatRp } from '@/lib/format';
-import { compactRp } from '../hooks/useLaporan';
+import { compactRp } from '@/lib/format';
 import type { CatBreakdownItem } from '../types';
 
 type Props = {

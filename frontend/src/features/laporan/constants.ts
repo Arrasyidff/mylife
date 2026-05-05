@@ -1,6 +1,4 @@
-import type { MonthRow } from './types';
-
-export const TODAY = new Date(2026, 3, 27);
+export const TODAY = new Date();
 
 export const PERIODS = ['Mingguan', 'Bulanan', 'Tahunan'] as const;
 
@@ -17,8 +15,3 @@ export const CAT_LABEL: Record<string, string> = {
   food: 'Makanan', transport: 'Transportasi', shopping: 'Belanja',
   bills: 'Tagihan', health: 'Kesehatan', home: 'Rumah', fun: 'Hiburan', edu: 'Pendidikan',
 };
-
-export const MONTH_HISTORY: MonthRow[] = [
-  { m: 'Feb 2026', income: 14_200_000, expense: 8_950_000,  idx: 1 },
-  { m: 'Mar 2026', income: 14_500_000, expense: 10_120_000, idx: 2 },
-];

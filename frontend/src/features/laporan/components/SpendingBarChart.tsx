@@ -1,7 +1,7 @@
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts';
 import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
-import { compactRp } from '../hooks/useLaporan';
+import { compactRp } from '@/lib/format';
 import type { Period, ChartBar } from '../types';
 
 function DailyTooltip({ active, payload, label }: {

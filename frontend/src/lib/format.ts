@@ -19,6 +19,12 @@ const _yesterdayStr = _localDateStr(_yest);
 const MONTHS_SHORT = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 const DAYS_ID      = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 
+export function compactRp(amount: number): string {
+  if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1)}jt`;
+  if (amount >= 1_000) return `${Math.round(amount / 1_000)}k`;
+  return `Rp ${amount}`;
+}
+
 export function formatRp(amount: number): string {
   const abs = Math.abs(amount);
   const formatted = 'Rp ' + abs.toLocaleString('id-ID');

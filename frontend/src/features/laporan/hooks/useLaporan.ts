@@ -1,167 +1,215 @@
 "use client";
-import { useState, useMemo } from 'react';
-import { transactions, budgets } from '@/lib/dashboard-data';
+import { useState, useEffect } from 'react';
 import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
-import {
-  TODAY, MONTH_SHORT, MONTH_FULL, DAY_SHORT,
-  CAT_COLORS, CAT_LABEL, MONTH_HISTORY,
-} from '../constants';
+import { MONTH_SHORT, MONTH_FULL, CAT_COLORS, CAT_LABEL } from '../constants';
 import type { Period, MonthRow, StatItem, CatBreakdownItem, HWDataItem, ChartBar } from '../types';
+import {
+  getLaporanSummary,
+  getMonthlyComparison,
+  type ReportSummaryResponse,
+  type MonthComparisonRow,
+  type ReportPeriod,
+} from '../services/laporanService';
 
-function isSameDay(a: Date, b: Date) {
-  return a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+const PERIOD_MAP: Record<Period, ReportPeriod> = {
+  0: 'WEEKLY',
+  1: 'MONTHLY',
+  2: 'YEARLY',
+};
+
+const CHART_TITLES: Record<Period, string> = {
+  0: 'Pengeluaran 7 Hari Terakhir',
+  1: 'Pengeluaran Harian',
+  2: 'Pengeluaran per Bulan',
+};
+
+function buildPeriodLabels(
+  period: Period,
+  viewMonth: number,
+  viewYear: number,
+): { periodLabel: string; btnLabel: string } {
+  const now = new Date();
+
+  if (period === 0) {
+    const start = new Date(now);
+    start.setDate(now.getDate() - 6);
+    const monthName = MONTH_SHORT[now.getMonth()];
+    return {
+      periodLabel: `${start.getDate()}–${now.getDate()} ${monthName} ${now.getFullYear()}`,
+      btnLabel: `${start.getDate()}–${now.getDate()} ${monthName}`,
+    };
+  }
+
+  if (period === 1) {
+    const isCurrentMonth = viewYear === now.getFullYear() && viewMonth === now.getMonth();
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const lastDay = isCurrentMonth ? now.getDate() : daysInMonth;
+    return {
+      periodLabel: `1–${lastDay} ${MONTH_FULL[viewMonth]} ${viewYear}`,
+      btnLabel: `${MONTH_SHORT[viewMonth]} ${viewYear}`,
+    };
+  }
+
+  return {
+    periodLabel: `Januari – Desember ${viewYear}`,
+    btnLabel: `Tahun ${viewYear}`,
+  };
 }
 
-export function compactRp(amount: number): string {
-  if (amount >= 1_000_000) return `${(amount / 1_000_000).toFixed(1)}jt`;
-  if (amount >= 1_000)     return `${Math.round(amount / 1_000)}k`;
-  return `Rp ${amount}`;
+function buildTopStats(summary: ReportSummaryResponse): StatItem[] {
+  const topCategory = summary.top_category
+    ? {
+        name: CAT_LABEL[summary.top_category.category] ?? summary.top_category.category,
+        total: parseFloat(summary.top_category.total),
+      }
+    : null;
+
+  const biggest = summary.biggest_transaction;
+  const biggestDate = biggest ? new Date(biggest.date) : null;
+
+  return [
+    {
+      label: 'KATEGORI TERATAS',
+      value: topCategory?.name ?? '—',
+      sub: topCategory ? formatRp(topCategory.total) : '—',
+      tone: T.text,
+    },
+    {
+      label: 'PENGELUARAN TERBESAR',
+      value: biggest ? formatRp(parseFloat(biggest.amount)) : '—',
+      sub:
+        biggest && biggestDate
+          ? `${biggest.merchant} · ${biggestDate.getDate()} ${MONTH_SHORT[biggestDate.getMonth()]}`
+          : '—',
+      tone: T.danger,
+    },
+    {
+      label: 'RATA-RATA HARIAN',
+      value: formatRp(Math.round(parseFloat(summary.avg_daily_expense))),
+      sub: 'per hari',
+      tone: T.text,
+    },
+    {
+      label: 'HARI TANPA SPENDING',
+      value: `${summary.days_without_spending} hari`,
+      sub: `dari ${summary.total_days} hari`,
+      tone: T.primaryDark,
+    },
+  ];
+}
+
+function mapCatBreakdown(summary: ReportSummaryResponse): CatBreakdownItem[] {
+  return summary.categories.map((categoryStat) => ({
+    name: CAT_LABEL[categoryStat.category] ?? categoryStat.category,
+    value: parseFloat(categoryStat.total),
+    cat: categoryStat.category,
+    color: CAT_COLORS[categoryStat.category] ?? '#888',
+  }));
+}
+
+function mapHwData(summary: ReportSummaryResponse): HWDataItem[] {
+  return summary.categories.slice(0, 5).map((categoryStat) => ({
+    cat: CAT_LABEL[categoryStat.category] ?? categoryStat.category,
+    h: parseFloat(categoryStat.suami),
+    w: parseFloat(categoryStat.istri),
+  }));
+}
+
+function mapMonthRows(rows: MonthComparisonRow[]): MonthRow[] {
+  return rows.map((row) => ({
+    m: row.label,
+    income: parseFloat(row.income),
+    expense: parseFloat(row.expense),
+    idx: row.month - 1,
+  }));
 }
 
 export function useLaporan() {
-  const [period,    setPeriod]    = useState<Period>(1);
-  const [viewMonth, setViewMonth] = useState(TODAY.getMonth());
-  const [viewYear,  setViewYear]  = useState(TODAY.getFullYear());
+  const now = new Date();
+  const [period, setPeriod] = useState<Period>(1);
+  const [viewMonth, setViewMonth] = useState(now.getMonth());
+  const [viewYear, setViewYear] = useState(now.getFullYear());
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const { periodExpenses, periodLabel, btnLabel } = useMemo(() => {
-    const expenses = transactions.filter(t => t.type === 'expense');
+  const [catBreakdown, setCatBreakdown] = useState<CatBreakdownItem[]>([]);
+  const [hwData, setHwData] = useState<HWDataItem[]>([]);
+  const [chartData, setChartData] = useState<ChartBar[]>([]);
+  const [hTotal, setHTotal] = useState(0);
+  const [wTotal, setWTotal] = useState(0);
+  const [topStats, setTopStats] = useState<StatItem[]>([]);
+  const [monthRows, setMonthRows] = useState<MonthRow[]>([]);
 
-    if (period === 0) {
-      const start = new Date(TODAY); start.setDate(TODAY.getDate() - 6); start.setHours(0, 0, 0, 0);
-      const end   = new Date(TODAY); end.setHours(23, 59, 59, 999);
-      return {
-        periodExpenses: expenses.filter(t => { const d = new Date(t.date); return d >= start && d <= end; }),
-        periodLabel: `${start.getDate()}–${TODAY.getDate()} Apr 2026`,
-        btnLabel: `${start.getDate()}–${TODAY.getDate()} Apr`,
-      };
-    }
+  const { periodLabel, btnLabel } = buildPeriodLabels(period, viewMonth, viewYear);
+  const chartTitle = CHART_TITLES[period];
+  const totalCat = catBreakdown.reduce((sum, categoryStat) => sum + categoryStat.value, 0);
+  const maxChart = Math.max(...chartData.map((dataPoint) => dataPoint.suami + dataPoint.istri), 1);
+  const avgAmount = Math.round(
+    chartData.reduce((sum, dataPoint) => sum + dataPoint.suami + dataPoint.istri, 0) /
+      Math.max(chartData.filter((dataPoint) => dataPoint.suami + dataPoint.istri > 0).length, 1),
+  );
 
-    if (period === 1) {
-      const isCurrentMonth = viewYear === TODAY.getFullYear() && viewMonth === TODAY.getMonth();
-      const daysInMonth    = new Date(viewYear, viewMonth + 1, 0).getDate();
-      const lastDay        = isCurrentMonth ? TODAY.getDate() : daysInMonth;
-      return {
-        periodExpenses: expenses.filter(t => {
-          const d = new Date(t.date);
-          return d.getFullYear() === viewYear && d.getMonth() === viewMonth;
-        }),
-        periodLabel: `1–${lastDay} ${MONTH_FULL[viewMonth]} ${viewYear}`,
-        btnLabel: `${MONTH_SHORT[viewMonth]} ${viewYear}`,
-      };
-    }
+  useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    setError(null);
 
-    return {
-      periodExpenses: expenses.filter(t => new Date(t.date).getFullYear() === viewYear),
-      periodLabel: `Januari – Desember ${viewYear}`,
-      btnLabel: `Tahun ${viewYear}`,
+    const summaryParams = {
+      period: PERIOD_MAP[period],
+      ...(period === 1 ? { year: viewYear, month: viewMonth + 1 } : {}),
+      ...(period === 2 ? { year: viewYear } : {}),
+    };
+
+    getLaporanSummary(summaryParams)
+      .then((summary) => {
+        if (cancelled) return;
+
+        setCatBreakdown(mapCatBreakdown(summary));
+        setHwData(mapHwData(summary));
+        setChartData(
+          summary.chart_data.map((dataPoint) => ({
+            key: dataPoint.key,
+            suami: dataPoint.suami,
+            istri: dataPoint.istri,
+          })),
+        );
+        setHTotal(parseFloat(summary.by_recorder.SUAMI));
+        setWTotal(parseFloat(summary.by_recorder.ISTRI));
+        setTopStats(buildTopStats(summary));
+      })
+      .catch((err: Error) => {
+        if (!cancelled) setError(err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
     };
   }, [period, viewMonth, viewYear]);
 
-  const catBreakdown = useMemo((): CatBreakdownItem[] => {
-    if (period === 1 && viewMonth === TODAY.getMonth()) {
-      return budgets.filter(b => b.used > 0).sort((a, b) => b.used - a.used)
-        .map(b => ({ name: b.name, value: b.used, cat: b.cat, color: CAT_COLORS[b.cat] ?? '#888' }));
-    }
-    const map: Record<string, number> = {};
-    for (const tx of periodExpenses) map[tx.cat] = (map[tx.cat] ?? 0) + Math.abs(tx.amount);
-    return Object.entries(map).sort((a, b) => b[1] - a[1])
-      .map(([cat, value]) => ({ name: CAT_LABEL[cat] ?? cat, value, cat, color: CAT_COLORS[cat] ?? '#888' }));
-  }, [period, viewMonth, periodExpenses]);
+  useEffect(() => {
+    if (period !== 1) return;
 
-  const totalCat = catBreakdown.reduce((s, c) => s + c.value, 0);
+    let cancelled = false;
 
-  const hwData = useMemo((): HWDataItem[] => {
-    const map: Record<string, { h: number; w: number }> = {};
-    for (const tx of periodExpenses) {
-      if (!map[tx.cat]) map[tx.cat] = { h: 0, w: 0 };
-      const amt = Math.abs(tx.amount);
-      if (tx.user === 'H') map[tx.cat].h += amt; else map[tx.cat].w += amt;
-    }
-    return Object.entries(map)
-      .map(([cat, v]) => ({ cat: CAT_LABEL[cat] ?? cat, h: v.h, w: v.w }))
-      .sort((a, b) => (b.h + b.w) - (a.h + a.w)).slice(0, 5);
-  }, [periodExpenses]);
-
-  const hTotal = periodExpenses.filter(t => t.user === 'H').reduce((s, t) => s + Math.abs(t.amount), 0);
-  const wTotal = periodExpenses.filter(t => t.user === 'W').reduce((s, t) => s + Math.abs(t.amount), 0);
-
-  const { chartData, chartTitle, avgAmount } = useMemo(() => {
-    if (period === 0) {
-      const start = new Date(TODAY); start.setDate(TODAY.getDate() - 6); start.setHours(0, 0, 0, 0);
-      const data: ChartBar[] = Array.from({ length: 7 }, (_, i) => {
-        const date = new Date(start); date.setDate(start.getDate() + i);
-        const dayTx = periodExpenses.filter(t => isSameDay(new Date(t.date), date));
-        return {
-          key: `${DAY_SHORT[date.getDay()]} ${date.getDate()}`,
-          suami: dayTx.filter(t => t.user === 'H').reduce((s, t) => s + Math.abs(t.amount), 0),
-          istri: dayTx.filter(t => t.user === 'W').reduce((s, t) => s + Math.abs(t.amount), 0),
-        };
+    getMonthlyComparison({ months: 3, year: viewYear, month: viewMonth + 1 })
+      .then((result) => {
+        if (!cancelled) setMonthRows(mapMonthRows(result.months));
+      })
+      .catch(() => {
+        if (!cancelled) setMonthRows([]);
       });
-      const total = data.reduce((s, d) => s + d.suami + d.istri, 0);
-      return { chartData: data, chartTitle: 'Pengeluaran 7 Hari Terakhir', avgAmount: Math.round(total / 7) };
-    }
 
-    if (period === 1) {
-      const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-      const data: ChartBar[] = Array.from({ length: daysInMonth }, (_, i) => {
-        const date  = new Date(viewYear, viewMonth, i + 1);
-        const dayTx = periodExpenses.filter(t => isSameDay(new Date(t.date), date));
-        return {
-          key: String(i + 1),
-          suami: dayTx.filter(t => t.user === 'H').reduce((s, t) => s + Math.abs(t.amount), 0),
-          istri: dayTx.filter(t => t.user === 'W').reduce((s, t) => s + Math.abs(t.amount), 0),
-        };
-      });
-      const divisor = (viewYear === TODAY.getFullYear() && viewMonth === TODAY.getMonth()) ? TODAY.getDate() : daysInMonth;
-      const total   = data.reduce((s, d) => s + d.suami + d.istri, 0);
-      return { chartData: data, chartTitle: 'Pengeluaran Harian', avgAmount: Math.round(total / divisor) };
-    }
+    return () => {
+      cancelled = true;
+    };
+  }, [period, viewMonth, viewYear]);
 
-    const data: ChartBar[] = MONTH_SHORT.map((label, i) => {
-      const monthTx = periodExpenses.filter(t => new Date(t.date).getMonth() === i);
-      return {
-        key: label,
-        suami: monthTx.filter(t => t.user === 'H').reduce((s, t) => s + Math.abs(t.amount), 0),
-        istri: monthTx.filter(t => t.user === 'W').reduce((s, t) => s + Math.abs(t.amount), 0),
-      };
-    });
-    const total = data.reduce((s, d) => s + d.suami + d.istri, 0);
-    return { chartData: data, chartTitle: 'Pengeluaran per Bulan', avgAmount: Math.round(total / 12) };
-  }, [period, viewMonth, viewYear, periodExpenses]);
-
-  const maxChart = Math.max(...chartData.map(d => d.suami + d.istri), 1);
-
-  const topStats = useMemo((): StatItem[] => {
-    const topCat     = catBreakdown[0];
-    const biggestTx  = [...periodExpenses].sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount))[0];
-    const biggestDate = biggestTx ? new Date(biggestTx.date) : null;
-    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
-    const daysRange   = period === 0 ? 7 : period === 1
-      ? ((viewYear === TODAY.getFullYear() && viewMonth === TODAY.getMonth()) ? TODAY.getDate() : daysInMonth)
-      : 365;
-    const spendingDays = new Set(periodExpenses.map(t => t.date.split('T')[0])).size;
-    return [
-      { label: 'KATEGORI TERATAS',    value: topCat?.name ?? '—',       sub: topCat ? formatRp(topCat.value) : '—',   tone: T.text },
-      {
-        label: 'PENGELUARAN TERBESAR', value: biggestTx ? formatRp(Math.abs(biggestTx.amount)) : '—',
-        sub: biggestTx && biggestDate ? `${biggestTx.merch} · ${biggestDate.getDate()} ${MONTH_SHORT[biggestDate.getMonth()]}` : '—',
-        tone: T.danger,
-      },
-      { label: 'RATA-RATA HARIAN',     value: formatRp(avgAmount),        sub: period === 1 && viewMonth === 2 ? '−12% vs Maret' : 'per hari', tone: T.text },
-      { label: 'HARI TANPA SPENDING',  value: `${daysRange - spendingDays} hari`, sub: `dari ${daysRange} hari`, tone: T.primaryDark },
-    ];
-  }, [catBreakdown, periodExpenses, avgAmount, period, viewMonth, viewYear]);
-
-  const monthRows = useMemo((): MonthRow[] => {
-    const aprilIncome  = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
-    const aprilExpense = budgets.reduce((s, b) => s + b.used, 0);
-    return [...MONTH_HISTORY, { m: 'Apr 2026', income: aprilIncome, expense: aprilExpense, idx: 3 }];
-  }, []);
-
-  function gotoMonth(m: MonthRow) {
-    setViewMonth(m.idx);
+  function gotoMonth(monthRow: MonthRow) {
+    setViewMonth(monthRow.idx);
     setPeriod(1);
   }
 
@@ -176,5 +224,7 @@ export function useLaporan() {
     topStats,
     monthRows,
     gotoMonth,
+    isLoading,
+    error,
   };
 }
