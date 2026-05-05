@@ -4,10 +4,10 @@ import { Surface } from '@/components/ui/surface';
 import { Pill } from '@/components/ui/pill';
 import { AlertTriangle } from 'lucide-react';
 import { BudgetRow } from './BudgetRow';
-import type { Budget } from '@/lib/dashboard-data';
+import type { DashboardBudget } from '../types';
 
 interface DashboardBudgetsProps {
-  budgets: Budget[];
+  budgets: DashboardBudget[];
   currentMonth: string;
   currentYear: number;
   totalUsed: number;
@@ -36,7 +36,7 @@ export function DashboardBudgets({
         </div>
       </div>
       <div className="mt-3">
-        {budgets.slice(0, 5).map(b => <BudgetRow key={b.id} b={b} />)}
+        {budgets.slice(0, 5).map(budget => <BudgetRow key={budget.id} budget={budget} />)}
       </div>
       <Link href="/anggaran" className="block text-center mt-3 text-[12.5px] text-[#15735A] font-semibold no-underline">
         Lihat semua anggaran →

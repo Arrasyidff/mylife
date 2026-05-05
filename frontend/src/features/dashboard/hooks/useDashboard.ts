@@ -1,74 +1,115 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { accounts, budgets, transactions, type Transaction } from '@/lib/dashboard-data';
+import type { Account, AccountType } from '@/features/rekening/types';
+import type { Transaction } from '@/features/transaksi/types';
+import { createTransaksi } from '@/features/transaksi/services/transaksiService';
+import { getDashboard } from '../services/dashboardService';
+import type {
+  DashboardApiResponse,
+  DashboardApiAccount,
+  DashboardApiTransaction,
+  DashboardApiBudgetItem,
+  DashboardBudget,
+  Toast,
+  MonthOption,
+} from '../types';
 
-const MONTH_NAMES = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const MONTH_NAMES = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+];
 
-// Mock "today" sesuai data
-const TODAY = new Date(2026, 3, 27);
-const TODAY_PREFIX = `${TODAY.getFullYear()}-${String(TODAY.getMonth() + 1).padStart(2, '0')}`;
+const BACKEND_TO_FRONTEND_ACCOUNT_TYPE: Record<string, AccountType> = {
+  TABUNGAN: 'tabungan',
+  EWALLET: 'ewallet',
+  TUNAI: 'tunai',
+  INVESTASI: 'investasi',
+  KARTU_KREDIT: 'kartukredit',
+};
 
-export type Toast = { msg: string; ok: boolean };
+function mapApiAccount(apiAccount: DashboardApiAccount): Account {
+  return {
+    id: apiAccount.id,
+    name: apiAccount.name,
+    subtitle: apiAccount.subtitle,
+    balance: parseFloat(apiAccount.balance),
+    color: apiAccount.color,
+    glyph: apiAccount.glyph,
+    type: BACKEND_TO_FRONTEND_ACCOUNT_TYPE[apiAccount.type] ?? 'tabungan',
+  };
+}
 
-export type MonthOption = { value: string; label: string };
+function mapApiTransaction(
+  apiTransaction: DashboardApiTransaction,
+  accountInfoMap: Map<string, { name: string; color: string; glyph: string }>,
+): Transaction {
+  const accountInfo = accountInfoMap.get(apiTransaction.account_id);
+  const absoluteAmount = parseFloat(apiTransaction.amount);
+  const signedAmount = apiTransaction.type === 'INCOME' ? absoluteAmount : -absoluteAmount;
+
+  return {
+    id: apiTransaction.id,
+    user: apiTransaction.recorder === 'SUAMI' ? 'H' : 'W',
+    cat: apiTransaction.category,
+    merch: apiTransaction.merchant,
+    acct: apiTransaction.account_id,
+    acct_info: accountInfo ?? { name: apiTransaction.account_name, color: '#7D9590', glyph: '?' },
+    amount: signedAmount,
+    date: apiTransaction.date.substring(0, 19),
+    type: apiTransaction.type === 'EXPENSE' ? 'expense' : apiTransaction.type === 'INCOME' ? 'income' : 'transfer',
+    note: apiTransaction.note,
+  };
+}
+
+function mapApiBudget(apiBudget: DashboardApiBudgetItem): DashboardBudget {
+  return {
+    id: apiBudget.id,
+    name: apiBudget.name,
+    used: parseFloat(apiBudget.spent),
+    total: parseFloat(apiBudget.total),
+    cat: apiBudget.category,
+    period: apiBudget.period,
+  };
+}
+
+export type { Toast, MonthOption };
 
 export function useDashboard() {
-  const [txList, setTxList] = useState<Transaction[]>(transactions);
+  const [dashboardData, setDashboardData] = useState<DashboardApiResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
-  const [selectedMonth, setSelectedMonth] = useState(TODAY_PREFIX);
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const monthPickerRef = useRef<HTMLDivElement>(null);
 
-  const totalAssets = accounts.reduce((s, a) => s + a.balance, 0);
-
-  const availableMonths: MonthOption[] = Array.from(
-    new Set(txList.map(tx => tx.date.slice(0, 7)))
-  ).sort().reverse().map(ym => {
-    const [y, m] = ym.split('-').map(Number);
-    return { value: ym, label: `${MONTH_NAMES[m - 1]} ${y}` };
-  });
-
-  const lastTxByAcct: Record<string, string> = {};
-  txList.forEach(tx => {
-    if (!lastTxByAcct[tx.acct] || tx.date > lastTxByAcct[tx.acct]) {
-      lastTxByAcct[tx.acct] = tx.date;
+  async function loadDashboard() {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await getDashboard();
+      setDashboardData(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal memuat dashboard');
+    } finally {
+      setIsLoading(false);
     }
-  });
+  }
 
-  const tunaiAccounts = accounts.filter(a => a.type === 'tunai');
-  const recentAccounts = accounts
-    .filter(a => a.type !== 'tunai')
-    .sort((a, b) => (lastTxByAcct[b.id] ?? '').localeCompare(lastTxByAcct[a.id] ?? ''))
-    .slice(0, 3);
-  const displayedAccounts = [...recentAccounts, ...tunaiAccounts];
-
-  const monthTxList = txList.filter(tx => tx.date.startsWith(selectedMonth));
-  const monthIncome  = monthTxList.filter(tx => tx.type === 'income').reduce((s, tx) => s + tx.amount, 0);
-  const monthExpense = monthTxList.filter(tx => tx.type === 'expense').reduce((s, tx) => s + Math.abs(tx.amount), 0);
-  const net = monthIncome - monthExpense;
-
-  const [selYear, selMonthIdx] = selectedMonth.split('-').map(Number);
-  const currentMonth = MONTH_NAMES[selMonthIdx - 1];
-  const currentYear  = selYear;
-
-  const isCurrentMonth = selectedMonth === TODAY_PREFIX;
-  const lastDay  = new Date(selYear, selMonthIdx, 0).getDate();
-  const daysLeft = isCurrentMonth ? lastDay - TODAY.getDate() : 0;
-
-  const totalBudget = budgets.reduce((s, b) => s + b.total, 0);
-  const totalUsed   = budgets.reduce((s, b) => s + b.used,  0);
-  const alertCount  = budgets.filter(b => (b.used / b.total) >= 0.75).length;
+  useEffect(() => {
+    loadDashboard();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(null), 2800);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setToast(null), 2800);
+    return () => clearTimeout(timer);
   }, [toast]);
 
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (monthPickerRef.current && !monthPickerRef.current.contains(e.target as Node)) {
+    function handleClickOutside(event: MouseEvent) {
+      if (monthPickerRef.current && !monthPickerRef.current.contains(event.target as Node)) {
         setShowMonthPicker(false);
       }
     }
@@ -76,41 +117,115 @@ export function useDashboard() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showMonthPicker]);
 
-  function handleAdd(data: Omit<Transaction, 'id'>[]) {
-    const txs = data.map((d, i) => ({ ...d, id: Date.now() + i }));
-    setTxList(prev => [...prev, ...txs].sort((a, b) => b.date.localeCompare(a.date)));
-    setShowAdd(false);
-    setToast({
-      msg: txs.length > 1
-        ? `Transfer + biaya admin berhasil dicatat`
-        : `Transaksi "${data[0]?.merch}" berhasil ditambahkan`,
-      ok: true,
-    });
+  const summary = dashboardData?.monthly_summary;
+  const year = summary?.year ?? new Date().getFullYear();
+  const month = summary?.month ?? (new Date().getMonth() + 1);
+  const currentMonth = MONTH_NAMES[month - 1];
+  const currentYear = year;
+  const selectedMonth = `${year}-${String(month).padStart(2, '0')}`;
+
+  const totalAssets = parseFloat(dashboardData?.total_balance ?? '0');
+  const totalAccounts = dashboardData?.total_accounts ?? 0;
+  const monthIncome = parseFloat(summary?.total_income ?? '0');
+  const monthExpense = parseFloat(summary?.total_expense ?? '0');
+  const net = parseFloat(summary?.net ?? '0');
+  const savingsRate = summary?.savings_rate ?? 0;
+
+  const accounts: Account[] = (dashboardData?.accounts ?? []).map(mapApiAccount);
+
+  const accountInfoMap = new Map(
+    accounts.map(account => [account.id, { name: account.name, color: account.color, glyph: account.glyph }]),
+  );
+
+  const recentTransactions: Transaction[] = (dashboardData?.recent_transactions ?? []).map(
+    apiTransaction => mapApiTransaction(apiTransaction, accountInfoMap),
+  );
+
+  const budgets: DashboardBudget[] = (dashboardData?.budget_overview ?? []).map(mapApiBudget);
+  const totalBudget = budgets.reduce((sum, budget) => sum + budget.total, 0);
+  const totalUsed = budgets.reduce((sum, budget) => sum + budget.used, 0);
+  const alertCount = budgets.filter(budget => budget.total > 0 && (budget.used / budget.total) >= 0.75).length;
+
+  const lastTxByAcct: Record<string, string> = {};
+  recentTransactions.forEach(transaction => {
+    if (!lastTxByAcct[transaction.acct] || transaction.date > lastTxByAcct[transaction.acct]) {
+      lastTxByAcct[transaction.acct] = transaction.date;
+    }
+  });
+
+  const tunaiAccounts = accounts.filter(account => account.type === 'tunai');
+  const otherAccounts = accounts
+    .filter(account => account.type !== 'tunai')
+    .sort((accountA, accountB) =>
+      (lastTxByAcct[accountB.id] ?? '').localeCompare(lastTxByAcct[accountA.id] ?? ''),
+    )
+    .slice(0, 3);
+  const displayedAccounts = [...otherAccounts, ...tunaiAccounts];
+
+  const availableMonths: MonthOption[] = [{
+    value: selectedMonth,
+    label: `${currentMonth} ${currentYear}`,
+  }];
+
+  const now = new Date();
+  const lastDayOfMonth = new Date(year, month, 0).getDate();
+  const daysLeft = lastDayOfMonth - now.getDate();
+
+  async function handleAdd(drafts: Omit<Transaction, 'id'>[]) {
+    try {
+      for (const draft of drafts) {
+        await createTransaksi({
+          user: draft.user,
+          cat: draft.cat,
+          merch: draft.merch,
+          acct: draft.acct,
+          to_account_id: draft.to_account_id ?? undefined,
+          amount: Math.abs(draft.amount),
+          date: draft.date,
+          type: draft.type,
+          note: draft.note ?? undefined,
+        });
+      }
+      setShowAdd(false);
+      setToast({
+        msg: drafts.length > 1
+          ? 'Transfer + biaya admin berhasil dicatat'
+          : `Transaksi "${drafts[0]?.merch}" berhasil ditambahkan`,
+        ok: true,
+      });
+      await loadDashboard();
+    } catch (err) {
+      setToast({
+        msg: err instanceof Error ? err.message : 'Gagal menyimpan transaksi',
+        ok: false,
+      });
+    }
   }
 
   return {
-    txList,
+    isLoading,
+    error,
     accounts,
     showAdd,
     setShowAdd,
     toast,
     selectedMonth,
-    setSelectedMonth,
+    setSelectedMonth: (_value: string) => {},
     showMonthPicker,
     setShowMonthPicker,
     monthPickerRef,
     totalAssets,
+    totalAccounts,
     availableMonths,
     displayedAccounts,
-    lastTxByAcct,
     budgets,
-    monthTxList,
+    recentTransactions,
     monthIncome,
     monthExpense,
     net,
+    savingsRate,
     currentMonth,
     currentYear,
-    isCurrentMonth,
     daysLeft,
     totalBudget,
     totalUsed,

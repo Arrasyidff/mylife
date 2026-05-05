@@ -9,7 +9,7 @@ interface AccountCardProps {
 }
 
 function relativeTime(isoDate: string): string {
-  const now = new Date(2026, 3, 27); // mock today
+  const now = new Date();
   const d = new Date(isoDate);
   const diffMs = now.getTime() - d.getTime();
   const diffMin = Math.floor(diffMs / 60_000);

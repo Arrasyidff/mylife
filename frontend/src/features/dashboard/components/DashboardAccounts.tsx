@@ -1,14 +1,12 @@
 import Link from 'next/link';
 import { AccountCard } from '@/features/rekening/components/AccountCard';
-import type { Account, Transaction } from '@/lib/dashboard-data';
+import type { Account } from '@/features/rekening/types';
 
 interface DashboardAccountsProps {
   displayedAccounts: Account[];
-  lastTxByAcct: Record<string, string>;
-  txList: Transaction[];
 }
 
-export function DashboardAccounts({ displayedAccounts, lastTxByAcct, txList }: DashboardAccountsProps) {
+export function DashboardAccounts({ displayedAccounts }: DashboardAccountsProps) {
   return (
     <>
       <div className="flex items-center justify-between mb-3">
@@ -20,18 +18,9 @@ export function DashboardAccounts({ displayedAccounts, lastTxByAcct, txList }: D
         </Link>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 mb-6">
-        {displayedAccounts.map(a => {
-          const lastDate = lastTxByAcct[a.id];
-          const lastTx = lastDate ? txList.find(tx => tx.acct === a.id && tx.date === lastDate) : undefined;
-          return (
-            <AccountCard
-              key={a.id}
-              acct={a}
-              lastTx={lastTx}
-              lastUpdated={lastDate}
-            />
-          );
-        })}
+        {displayedAccounts.map(account => (
+          <AccountCard key={account.id} acct={account} />
+        ))}
       </div>
     </>
   );

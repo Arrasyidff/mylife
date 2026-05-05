@@ -33,6 +33,7 @@ export class DashboardTransactionItem {
   recorder: string;
   category: string;
   merchant: string;
+  account_id: string;
   amount: string;
   date: Date;
   type: string;

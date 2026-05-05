@@ -2,19 +2,19 @@ import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
 import { ArrowUp, ArrowDown } from 'lucide-react';
 import { SummaryStat } from './SummaryStat';
-import type { Transaction } from '@/lib/dashboard-data';
 
 interface DashboardStatsProps {
   totalAssets: number;
+  totalAccounts: number;
   monthIncome: number;
   monthExpense: number;
   net: number;
+  savingsRate: number;
   currentMonth: string;
-  monthTxList: Transaction[];
 }
 
 export function DashboardStats({
-  totalAssets, monthIncome, monthExpense, net, currentMonth, monthTxList,
+  totalAssets, totalAccounts, monthIncome, monthExpense, net, savingsRate, currentMonth,
 }: DashboardStatsProps) {
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-3.5 mb-6">
@@ -23,19 +23,19 @@ export function DashboardStats({
         className="col-span-2 md:col-span-3"
         label="TOTAL ASET"
         value={formatRp(totalAssets)}
-        delta="+ Rp 1.420.000 dari bulan lalu"
+        delta={`${totalAccounts} rekening aktif`}
       />
       <SummaryStat
         label={`Pemasukan ${currentMonth}`}
         value={formatRp(monthIncome)}
-        delta={`${monthTxList.filter(tx => tx.type === 'income').length} transaksi masuk`}
+        delta={savingsRate > 0 ? `Saving rate ${savingsRate}%` : 'bulan ini'}
         deltaTone="up"
         icon={<ArrowUp size={13} color={T.primary} />}
       />
       <SummaryStat
         label={`Pengeluaran ${currentMonth}`}
         value={formatRp(monthExpense)}
-        delta={`${monthTxList.filter(tx => tx.type === 'expense').length} transaksi keluar`}
+        delta="bulan ini"
         deltaTone="down"
         icon={<ArrowDown size={13} color={T.danger} />}
       />

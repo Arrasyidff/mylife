@@ -175,6 +175,7 @@ export class DashboardService {
       recorder: tx.recorder,
       category: tx.category,
       merchant: tx.merchant,
+      account_id: tx.account_id,
       amount: Number(tx.amount).toFixed(2),
       date: tx.date,
       type: tx.type,

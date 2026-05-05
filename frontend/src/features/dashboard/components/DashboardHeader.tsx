@@ -31,7 +31,7 @@ export function DashboardHeader({
         <h1 className="m-0 text-xl font-bold text-[#1A2420] tracking-[-0.3px]">Dashboard</h1>
         <div className="text-[12.5px] text-[#A4B8B2] mt-0.75">
           {isCurrentMonth
-            ? `${new Date(2026, 3, 27).getDate()} ${currentMonth} ${currentYear} · ${daysLeft} hari tersisa bulan ini`
+            ? `${new Date().getDate()} ${currentMonth} ${currentYear} · ${daysLeft} hari tersisa bulan ini`
             : `Menampilkan data ${currentMonth} ${currentYear}`}
         </div>
       </div>
