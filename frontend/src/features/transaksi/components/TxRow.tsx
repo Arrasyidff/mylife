@@ -25,21 +25,29 @@ export function TxRow({ t, showAcct = true }: TxRowProps) {
     }}>
       <CatBubble cat={t.cat} size={36} />
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 13.5, fontWeight: 600, color: T.text }}>{t.merch}</span>
-          <UserBadge user={t.user} size={18} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
+          <span style={{
+            fontSize: 13.5, fontWeight: 600, color: T.text,
+            flex: 1, minWidth: 0,
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+          }}>{t.merch}</span>
+          <span style={{ flexShrink: 0 }}>
+            <UserBadge user={t.user} size={18} />
+          </span>
         </div>
-        <div style={{ fontSize: 11.5, color: T.textSubtle, marginTop: 2, display: 'flex', alignItems: 'center' }}>
+        <div style={{ fontSize: 11.5, color: T.textSubtle, marginTop: 2, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
           {showAcct && acct && (
             <>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
                 <span style={{ width: 6, height: 6, borderRadius: 3, background: acct.color, display: 'inline-block' }} />
                 {acct.name}
               </span>
-              <span style={{ margin: '0 6px' }}>·</span>
+              <span style={{ margin: '0 6px', flexShrink: 0 }}>·</span>
             </>
           )}
-          {formatTxDate(t.date)}
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {formatTxDate(t.date)}
+          </span>
         </div>
       </div>
       <div style={{

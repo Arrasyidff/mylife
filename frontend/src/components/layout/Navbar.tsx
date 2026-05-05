@@ -74,21 +74,21 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
       <div className="flex items-center gap-3">
         <button
           onClick={onMenuToggle}
-          className="md:hidden text-gray-400 hover:text-gray-700 transition-colors p-1"
+          className="xl:hidden text-gray-400 hover:text-gray-700 transition-colors p-1"
           aria-label="Buka menu"
         >
           <Menu size={20} />
         </button>
 
-        {/* Mobile: page label */}
+        {/* Mobile/tablet: page label */}
         {pageLabel && (
-          <span className="text-gray-900 text-xs font-bold uppercase tracking-tighter md:hidden">
+          <span className="text-gray-900 text-xs font-bold uppercase tracking-tighter xl:hidden">
             {pageLabel}
           </span>
         )}
 
         {/* Desktop: breadcrumb */}
-        <nav aria-label="Breadcrumb" className="hidden md:flex items-center gap-1">
+        <nav aria-label="Breadcrumb" className="hidden xl:flex items-center gap-1">
           {breadcrumbs.map((crumb, i) => {
             const isLast = i === breadcrumbs.length - 1;
             return (
@@ -112,7 +112,7 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
         </nav>
       </div>
       <div className="flex items-center gap-5">
-        <div className="text-gray-400 text-[10px] uppercase font-bold tracking-widest hidden lg:block">
+        <div className="text-gray-400 text-[10px] uppercase font-bold tracking-widest hidden xl:block">
           {getCurrentDate()}
         </div>
 
@@ -141,7 +141,7 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
                       {user.aksesLevel}
                     </p>
                   </div>
-                  <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-700 text-xs font-bold flex-shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-700 text-xs font-bold shrink-0">
                     {initial}
                   </div>
                 </PopoverTrigger>

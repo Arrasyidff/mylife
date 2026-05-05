@@ -20,10 +20,10 @@ export function BudgetRow({ b }: BudgetRowProps) {
         <CatBubble cat={b.cat} size={32} />
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[13.5px] font-semibold text-[#1A2420]">{b.name}</span>
-            <span className="text-[12.5px] text-[#7D9590] tabular-nums">
+            <span className="text-[13.5px] font-semibold text-[#1A2420] min-w-0 truncate">{b.name}</span>
+            <span className="text-[12.5px] text-[#7D9590] tabular-nums shrink-0">
               <strong className="text-[#1A2420] font-semibold">{formatRp(b.used)}</strong>
-              <span className="text-[#A4B8B2]"> / {formatRp(b.total)}</span>
+              <span className="text-[#A4B8B2] hidden lg:inline"> / {formatRp(b.total)}</span>
             </span>
           </div>
           <div className="flex items-center justify-between mt-0.75">

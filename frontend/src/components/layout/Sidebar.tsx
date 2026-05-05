@@ -62,9 +62,10 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <>
+      {/* Overlay — hanya mobile/tablet saat sidebar terbuka */}
       {isOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/30 md:hidden"
+          className="fixed inset-0 z-30 bg-black/30 xl:hidden"
           onClick={onClose}
         />
       )}
@@ -72,7 +73,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       <aside
         className={[
           "fixed left-0 top-0 h-full w-64 border-r border-gray-200 bg-white flex flex-col gap-2 p-6 z-40 transition-transform duration-300",
-          !isOpen ? "max-md:-translate-x-full" : "",
+          !isOpen ? "max-xl:-translate-x-full" : "",
         ].join(" ")}
       >
         {/* Brand */}
@@ -87,7 +88,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           </div>
           <button
             onClick={onClose}
-            className="md:hidden text-gray-400 hover:text-gray-700 transition-colors p-1 mt-1"
+            className="xl:hidden text-gray-400 hover:text-gray-700 transition-colors p-1 mt-1"
           >
             <X size={18} />
           </button>
@@ -128,7 +129,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* User footer */}
         <div className="mt-auto border-t border-gray-200 pt-6 space-y-1">
           <div className="flex items-center gap-3 px-4 py-2">
-            <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-700 text-xs font-bold flex-shrink-0">
+            <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-700 text-xs font-bold shrink-0">
               {initial}
             </div>
             <div className="flex-1 min-w-0">

@@ -11,7 +11,7 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
     <AuthGuard>
       <div className="flex min-h-screen bg-white">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-        <div className="flex flex-col flex-1 min-w-0 md:ml-64">
+        <div className="flex flex-col flex-1 min-w-0 xl:ml-64">
           <Navbar onMenuToggle={() => setSidebarOpen(prev => !prev)} />
           <main className="flex-1 p-4 md:p-8">
             {children}

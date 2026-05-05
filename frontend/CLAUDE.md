@@ -185,6 +185,59 @@ src/
 - Props destructuring langsung di parameter fungsi
 - Gunakan `"use client"` hanya jika benar-benar butuh interaktivitas client-side
 
+### 🧩 Aturan Pembuatan Halaman Baru
+
+**Setiap halaman WAJIB dipecah menjadi komponen per section — jangan tulis semua JSX langsung di file `page.tsx`.**
+
+Struktur yang benar:
+```
+features/
+└── <nama-fitur>/
+    └── components/
+        ├── <NamaHalaman>Hero.tsx       # section hero / header halaman
+        ├── <NamaHalaman>Form.tsx       # section form
+        ├── <NamaHalaman>List.tsx       # section list / tabel
+        ├── <NamaHalaman>Filter.tsx     # section filter / search
+        └── <NamaHalaman>Summary.tsx    # section ringkasan / statistik
+```
+
+File `page.tsx` hanya boleh berisi **pemanggilan komponen**, bukan JSX detail:
+
+```tsx
+// ✅ Benar — page.tsx hanya merakit komponen
+import { DashboardHeader } from "@/features/dashboard/components/DashboardHeader"
+import { DashboardStats } from "@/features/dashboard/components/DashboardStats"
+import { DashboardRecentList } from "@/features/dashboard/components/DashboardRecentList"
+
+export default function DashboardPage() {
+  return (
+    <main>
+      <DashboardHeader />
+      <DashboardStats />
+      <DashboardRecentList />
+    </main>
+  )
+}
+
+// ❌ Salah — jangan tulis semua JSX langsung di page.tsx
+export default function DashboardPage() {
+  return (
+    <main>
+      <div className="flex items-center justify-between">
+        <h1>Dashboard</h1>
+        <button>...</button>
+      </div>
+      <div className="grid grid-cols-4">
+        <div>Total Users...</div>
+        {/* puluhan baris JSX lainnya */}
+      </div>
+    </main>
+  )
+}
+```
+
+> **Aturan praktis**: Jika satu section punya lebih dari ~15 baris JSX, ia wajib jadi komponen terpisah.
+
 ### ⚓ Hooks yang Diizinkan
 
 Hanya gunakan hooks berikut. **Hooks di luar daftar ini DILARANG dipakai tanpa konfirmasi terlebih dahulu.**
