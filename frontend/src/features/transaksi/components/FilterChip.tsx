@@ -1,5 +1,3 @@
-import { T } from '@/lib/tokens';
-
 interface FilterChipProps {
   children: React.ReactNode;
   active?: boolean;
@@ -11,25 +9,21 @@ export function FilterChip({ children, active, count, onClick }: FilterChipProps
   return (
     <button
       onClick={onClick}
-      style={{
-        display: 'inline-flex', alignItems: 'center', gap: 6,
-        padding: '7px 12px',
-        background: active ? T.text : T.surface,
-        color: active ? '#fff' : T.text,
-        border: `1px solid ${active ? T.text : T.border}`,
-        borderRadius: 999, cursor: 'pointer',
-        fontSize: 12.5, fontWeight: 600,
-        fontFamily: T.fontSans,
-        transition: 'all 0.12s',
-      }}
+      className={[
+        'inline-flex items-center gap-1.5 px-3 py-1.75',
+        'rounded-full border cursor-pointer',
+        'text-[12.5px] font-semibold transition-all duration-120',
+        active
+          ? 'bg-app-text text-white border-app-text'
+          : 'bg-surface text-app-text border-app-border hover:border-app-border-strong',
+      ].join(' ')}
     >
       {children}
       {count != null && (
-        <span style={{
-          padding: '1px 6px', borderRadius: 999,
-          background: active ? 'rgba(255,255,255,0.2)' : T.surfaceAlt,
-          fontSize: 11, fontWeight: 700,
-        }}>
+        <span className={[
+          'px-1.5 rounded-full text-[11px] font-bold leading-none py-0.5',
+          active ? 'bg-white/20' : 'bg-surface-alt',
+        ].join(' ')}>
           {count}
         </span>
       )}

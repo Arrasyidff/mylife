@@ -1,4 +1,3 @@
-import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
 
 interface TransaksiSummaryProps {
@@ -12,26 +11,22 @@ export function TransaksiSummary({ totalIncome, totalExpense, filteredCount }: T
 
   const diff = totalIncome - totalExpense;
   const items = [
-    { label: 'Pemasukan',   value: totalIncome,  color: T.primaryDark, prefix: '+' },
-    { label: 'Pengeluaran', value: totalExpense,  color: T.danger,      prefix: '-' },
-    { label: 'Selisih',     value: diff,          color: diff >= 0 ? T.primaryDark : T.danger, prefix: diff >= 0 ? '+' : '' },
+    { label: 'Pemasukan',   value: totalIncome,  colorClass: 'text-brand-dark',                             prefix: '+' },
+    { label: 'Pengeluaran', value: totalExpense,  colorClass: 'text-app-danger',                            prefix: '-' },
+    { label: 'Selisih',     value: diff,          colorClass: diff >= 0 ? 'text-brand-dark' : 'text-app-danger', prefix: diff >= 0 ? '+' : '' },
   ];
 
   return (
-    <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+    <div className="grid grid-cols-3 gap-2 md:gap-3 mb-5">
       {items.map(s => (
         <div
           key={s.label}
-          style={{
-            flex: 1, padding: '12px 16px',
-            background: T.surface, border: `1px solid ${T.border}`,
-            borderRadius: T.radius.lg,
-          }}
+          className="bg-surface border border-app-border rounded-xl px-2.5 py-2.5 md:px-4 md:py-3"
         >
-          <div style={{ fontSize: 11, fontWeight: 700, color: T.textMuted, letterSpacing: 0.3, marginBottom: 4 }}>
-            {s.label.toUpperCase()}
+          <div className="text-[10px] md:text-[11px] font-bold text-app-text-muted tracking-[0.3px] uppercase mb-1">
+            {s.label}
           </div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: s.color, fontVariantNumeric: 'tabular-nums' }}>
+          <div className={`text-xs md:text-[15px] font-bold tabular-nums truncate ${s.colorClass}`}>
             {s.prefix}{formatRp(Math.abs(s.value))}
           </div>
         </div>

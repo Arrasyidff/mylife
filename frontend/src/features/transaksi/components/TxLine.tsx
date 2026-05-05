@@ -1,4 +1,3 @@
-import { T } from '@/lib/tokens';
 import { Icon } from '@/components/ui/icon';
 import { Pill } from '@/components/ui/pill';
 import { CatBubble } from '@/components/shared/CatBubble';
@@ -17,34 +16,33 @@ interface TxLineProps {
 export function TxLine({ t, expanded, onToggle, onEdit }: TxLineProps) {
   const acct = accounts.find(a => a.id === t.acct);
   const isIncome = t.type === 'income';
-  const borderColor =
-    t.type === 'income'   ? T.primary  :
-    t.type === 'transfer' ? '#3B82F6'  : T.danger;
-  const amountColor =
-    isIncome              ? T.primaryDark :
-    t.type === 'transfer' ? '#1846A8'     : T.text;
+
+  const borderColorClass =
+    t.type === 'income'   ? 'border-l-brand' :
+    t.type === 'transfer' ? 'border-l-[#3B82F6]' : 'border-l-app-danger';
+
+  const amountColorClass =
+    isIncome              ? 'text-brand-dark' :
+    t.type === 'transfer' ? 'text-app-info'   : 'text-app-text';
 
   return (
     <>
       <div
         onClick={onEdit}
-        style={{
-          display: 'flex', alignItems: 'center', gap: 14,
-          padding: '14px 18px',
-          borderLeft: `3px solid ${borderColor}`,
-          background: T.surface,
-          borderBottom: `1px solid ${T.divider}`,
-          cursor: 'pointer',
-          transition: 'background 0.1s',
-        }}
-        onMouseEnter={e => (e.currentTarget.style.background = T.surfaceAlt)}
-        onMouseLeave={e => (e.currentTarget.style.background = T.surface)}
+        className={[
+          'flex items-center gap-3 md:gap-3.5',
+          'px-3.5 md:px-4.5 py-3 md:py-3.5',
+          'border-l-[3px]', borderColorClass,
+          'bg-surface hover:bg-surface-alt',
+          'border-b border-b-app-divider',
+          'cursor-pointer transition-colors duration-100',
+        ].join(' ')}
       >
         <CatBubble cat={t.cat} size={38} />
 
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 14, fontWeight: 600, color: T.text }}>{t.merch}</span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 overflow-hidden">
+            <span className="text-sm font-semibold text-app-text truncate">{t.merch}</span>
             <Pill
               tone={t.type === 'income' ? 'success' : t.type === 'transfer' ? 'info' : 'danger'}
               size="sm"
@@ -52,47 +50,41 @@ export function TxLine({ t, expanded, onToggle, onEdit }: TxLineProps) {
               {t.type === 'income' ? 'Pemasukan' : t.type === 'transfer' ? 'Transfer' : 'Pengeluaran'}
             </Pill>
           </div>
-          <div style={{
-            fontSize: 12, color: T.textSubtle, marginTop: 3,
-            display: 'flex', alignItems: 'center', gap: 8,
-          }}>
+          <div className="flex items-center gap-2 mt-0.5 text-[12px] text-app-text-subtle overflow-hidden">
             {acct && (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
-                <span style={{ width: 6, height: 6, borderRadius: 3, background: acct.color }} />
+              <span className="inline-flex items-center gap-1 shrink-0">
+                <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: acct.color }} />
                 {acct.name}
               </span>
             )}
-            {acct && <span>·</span>}
-            <span>{formatTxDate(t.date)}</span>
+            {acct && <span className="shrink-0">·</span>}
+            <span className="shrink-0">{formatTxDate(t.date)}</span>
             {t.note && (
               <>
-                <span>·</span>
-                <span style={{ fontStyle: 'italic', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {t.note}
-                </span>
+                <span className="shrink-0 hidden md:block">·</span>
+                <span className="italic truncate hidden md:block">{t.note}</span>
               </>
             )}
           </div>
         </div>
 
-        <UserBadge user={t.user} size={22} />
+        {/* UserBadge: hidden on mobile */}
+        <div className="hidden md:block shrink-0">
+          <UserBadge user={t.user} size={22} />
+        </div>
 
-        <div style={{
-          fontSize: 15, fontWeight: 700,
-          color: amountColor,
-          fontVariantNumeric: 'tabular-nums',
-          minWidth: 130, textAlign: 'right',
-        }}>
+        <div className={[
+          'text-sm md:text-[15px] font-bold tabular-nums whitespace-nowrap text-right shrink-0',
+          'md:min-w-32.5',
+          amountColorClass,
+        ].join(' ')}>
           {isIncome ? '+' : ''}{formatRp(t.amount)}
         </div>
 
         {t.type === 'transfer' && (
           <button
             onClick={e => { e.stopPropagation(); onToggle(); }}
-            style={{
-              border: 'none', background: 'transparent',
-              color: T.textSubtle, cursor: 'pointer', padding: 4, flexShrink: 0,
-            }}
+            className="border-0 bg-transparent text-app-text-subtle cursor-pointer p-1 shrink-0 flex"
           >
             {Icon.chev(16, expanded ? 'up' : 'down')}
           </button>
@@ -100,25 +92,20 @@ export function TxLine({ t, expanded, onToggle, onEdit }: TxLineProps) {
       </div>
 
       {expanded && t.type === 'transfer' && (
-        <div style={{
-          background: T.surfaceAlt,
-          borderLeft: '3px solid #3B82F6',
-          borderBottom: `1px solid ${T.divider}`,
-          padding: '12px 18px 14px 64px',
-        }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: T.textMuted, letterSpacing: 0.3, marginBottom: 8 }}>
+        <div className="bg-surface-alt border-l-[3px] border-l-[#3B82F6] border-b border-b-app-divider px-4.5 pt-3 pb-3.5 pl-16">
+          <div className="text-[11px] font-bold text-app-text-muted tracking-[0.3px] uppercase mb-2">
             3 ENTRI TERHUBUNG
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div className="flex flex-col gap-2">
             {[
-              { label: 'Debit dari Mandiri', amt: -500_000, color: T.danger  },
-              { label: 'Kredit ke GoPay',    amt:  500_000, color: T.primary },
-              { label: 'Biaya Admin',        amt:   -2_500, color: T.warning },
+              { label: 'Debit dari Mandiri', amt: -500_000, colorClass: 'text-app-danger',  dotClass: 'bg-app-danger'  },
+              { label: 'Kredit ke GoPay',    amt:  500_000, colorClass: 'text-brand',        dotClass: 'bg-brand'       },
+              { label: 'Biaya Admin',        amt:   -2_500, colorClass: 'text-app-warning',  dotClass: 'bg-app-warning' },
             ].map((r, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 12.5 }}>
-                <span style={{ width: 8, height: 8, borderRadius: 4, background: r.color, flexShrink: 0 }} />
-                <span style={{ flex: 1, color: T.text }}>{r.label}</span>
-                <span style={{ fontVariantNumeric: 'tabular-nums', fontWeight: 600, color: r.color }}>
+              <div key={i} className="flex items-center gap-2.5 text-[12.5px]">
+                <span className={`w-2 h-2 rounded-full shrink-0 ${r.dotClass}`} />
+                <span className="flex-1 text-app-text">{r.label}</span>
+                <span className={`tabular-nums font-semibold ${r.colorClass}`}>
                   {r.amt > 0 ? '+' : ''}{formatRp(r.amt)}
                 </span>
               </div>

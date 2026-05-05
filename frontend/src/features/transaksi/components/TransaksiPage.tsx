@@ -1,5 +1,4 @@
 "use client";
-import { T } from '@/lib/tokens';
 import { useTransaksi } from '../hooks/useTransaksi';
 import { TransaksiToast } from './TransaksiToast';
 import { TransaksiHeader } from './TransaksiHeader';
@@ -38,7 +37,7 @@ export function TransaksiPage() {
   } = useTransaksi();
 
   return (
-    <div style={{ fontFamily: T.fontSans }}>
+    <div className="font-sans">
       <TransaksiToast toast={toast} />
 
       <TransaksiHeader

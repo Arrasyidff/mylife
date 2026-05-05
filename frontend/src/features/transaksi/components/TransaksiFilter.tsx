@@ -1,5 +1,4 @@
 import type { Dispatch, RefObject, SetStateAction } from 'react';
-import { T } from '@/lib/tokens';
 import { Icon } from '@/components/ui/icon';
 import { Btn } from '@/components/ui/btn';
 import { UserBadge } from '@/components/shared/UserBadge';
@@ -41,38 +40,22 @@ export function TransaksiFilter({
   resetFilters,
 }: TransaksiFilterProps) {
   return (
-    <div style={{
-      background: T.surface,
-      border: `1px solid ${T.border}`,
-      borderRadius: T.radius.lg,
-      padding: 16, marginBottom: 16,
-    }}>
+    <div className="bg-surface border border-app-border rounded-xl p-4 mb-4">
+
       {/* Search + Month picker */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-        <div style={{
-          flex: 1, display: 'flex', alignItems: 'center', gap: 9,
-          padding: '9px 12px',
-          background: T.surfaceAlt, borderRadius: 9,
-          border: `1px solid ${T.border}`,
-        }}>
-          <span style={{ color: T.textSubtle, flexShrink: 0 }}>{Icon.search(16)}</span>
+      <div className="flex items-center gap-2.5 mb-3">
+        <div className="flex-1 flex items-center gap-2.5 px-3 py-[9px] bg-surface-alt rounded-[9px] border border-app-border">
+          <span className="text-app-text-subtle shrink-0">{Icon.search(16)}</span>
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Cari merchant atau catatan…"
-            style={{
-              flex: 1, border: 'none', outline: 'none',
-              background: 'transparent', fontSize: 13, color: T.text,
-              fontFamily: T.fontSans,
-            }}
+            className="flex-1 border-0 outline-none bg-transparent text-[13px] text-app-text font-sans"
           />
           {search && (
             <button
               onClick={() => setSearch('')}
-              style={{
-                border: 'none', background: 'transparent',
-                color: T.textSubtle, cursor: 'pointer', padding: 0, lineHeight: 1,
-              }}
+              className="border-0 bg-transparent text-app-text-subtle cursor-pointer p-0 leading-none flex shrink-0"
             >
               {Icon.close(14)}
             </button>
@@ -80,73 +63,67 @@ export function TransaksiFilter({
         </div>
 
         {/* Month picker */}
-        <div ref={monthPickerRef} style={{ position: 'relative' }}>
+        <div ref={monthPickerRef} className="relative shrink-0">
           <Btn
             kind={monthFilter ? 'soft' : 'ghost'}
             size="sm"
             icon={Icon.calendar(14)}
-            onClick={() => { setShowMonthPicker(v => !v); setPickerYear(monthFilter?.year ?? new Date().getFullYear()); }}
+            onClick={() => {
+              setShowMonthPicker(v => !v);
+              setPickerYear(monthFilter?.year ?? new Date().getFullYear());
+            }}
           >
-            {monthLabel}
-            <span style={{ marginLeft: 2 }}>{Icon.chev(12, showMonthPicker ? 'up' : 'down')}</span>
+            <span className="hidden sm:inline">{monthLabel}</span>
+            <span className="inline sm:hidden">{monthFilter ? `${monthFilter.month}/${monthFilter.year}` : 'Semua'}</span>
+            <span className="ml-0.5">{Icon.chev(12, showMonthPicker ? 'up' : 'down')}</span>
           </Btn>
 
           {showMonthPicker && (
-            <div style={{
-              position: 'absolute', top: 'calc(100% + 6px)', right: 0, zIndex: 120,
-              background: T.surface, border: `1px solid ${T.border}`,
-              borderRadius: T.radius.lg,
-              boxShadow: '0 8px 24px rgba(20,30,25,0.13)',
-              padding: 14, width: 240,
-            }}>
+            <div className="absolute top-full mt-1.5 right-0 z-[120] bg-surface border border-app-border rounded-xl shadow-[0_8px_24px_rgba(20,30,25,0.13)] p-3.5 w-60">
               {/* Year navigation */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+              <div className="flex items-center justify-between mb-2.5">
                 <button
                   onClick={() => setPickerYear(y => y - 1)}
-                  style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: T.textSubtle, padding: 4, display: 'flex' }}
+                  className="border-0 bg-transparent cursor-pointer text-app-text-subtle p-1 flex"
                 >
                   {Icon.chev(16, 'left')}
                 </button>
-                <span style={{ fontWeight: 700, fontSize: 14, color: T.text, fontFamily: T.fontSans }}>{pickerYear}</span>
+                <span className="font-bold text-sm text-app-text">{pickerYear}</span>
                 <button
                   onClick={() => setPickerYear(y => y + 1)}
-                  style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: T.textSubtle, padding: 4, display: 'flex' }}
+                  className="border-0 bg-transparent cursor-pointer text-app-text-subtle p-1 flex"
                 >
                   {Icon.chev(16, 'right')}
                 </button>
               </div>
 
-              {/* All-time option */}
+              {/* All-time */}
               <button
                 onClick={() => { setMonthFilter(null); setShowMonthPicker(false); }}
-                style={{
-                  width: '100%', padding: '7px 10px', marginBottom: 8,
-                  borderRadius: 7, border: `1px solid ${!monthFilter ? T.primary : T.border}`,
-                  background: !monthFilter ? T.primaryLight : T.surfaceAlt,
-                  color: !monthFilter ? T.primaryDark : T.textSubtle,
-                  fontSize: 12.5, fontWeight: 600, cursor: 'pointer',
-                  fontFamily: T.fontSans, textAlign: 'center',
-                }}
+                className={[
+                  'w-full px-2.5 py-[7px] mb-2 rounded-[7px] border cursor-pointer text-[12.5px] font-semibold text-center font-sans',
+                  !monthFilter
+                    ? 'border-brand bg-brand-light text-brand-dark'
+                    : 'border-app-border bg-surface-alt text-app-text-subtle',
+                ].join(' ')}
               >
                 Semua Waktu
               </button>
 
               {/* Month grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 5 }}>
+              <div className="grid grid-cols-3 gap-[5px]">
                 {MONTHS_SHORT.map((m, i) => {
                   const isSelected = monthFilter?.year === pickerYear && monthFilter?.month === (i + 1);
                   return (
                     <button
                       key={i}
                       onClick={() => { setMonthFilter({ year: pickerYear, month: i + 1 }); setShowMonthPicker(false); }}
-                      style={{
-                        padding: '7px 4px', borderRadius: 7,
-                        border: `1px solid ${isSelected ? T.primary : T.border}`,
-                        background: isSelected ? T.primary : T.surface,
-                        color: isSelected ? '#fff' : T.text,
-                        fontSize: 12, fontWeight: 600, cursor: 'pointer',
-                        fontFamily: T.fontSans,
-                      }}
+                      className={[
+                        'px-1 py-[7px] rounded-[7px] border cursor-pointer text-xs font-semibold font-sans',
+                        isSelected
+                          ? 'border-brand bg-brand text-white'
+                          : 'border-app-border bg-surface text-app-text hover:bg-surface-alt',
+                      ].join(' ')}
                     >
                       {m}
                     </button>
@@ -158,8 +135,8 @@ export function TransaksiFilter({
         </div>
       </div>
 
-      {/* Chips: type */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+      {/* Chips: type + user + reset */}
+      <div className="flex flex-wrap gap-2">
         {(['all', 'expense', 'income', 'transfer'] as TypeFilter[]).map(type => (
           <FilterChip
             key={type}
@@ -171,9 +148,8 @@ export function TransaksiFilter({
           </FilterChip>
         ))}
 
-        <span style={{ width: 1, background: T.border, margin: '0 4px', alignSelf: 'stretch' }} />
+        <span className="w-px bg-app-border mx-1 self-stretch" />
 
-        {/* User filter */}
         {(['all', 'H', 'W'] as UserFilter[]).map(u => (
           <FilterChip
             key={u}
@@ -183,7 +159,7 @@ export function TransaksiFilter({
             {u === 'all' ? (
               'Semua Pencatat'
             ) : (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span className="inline-flex items-center gap-1.5">
                 <UserBadge user={u} size={16} />
                 {u === 'H' ? 'Suami' : 'Istri'}
               </span>
@@ -193,16 +169,10 @@ export function TransaksiFilter({
 
         {hasFilters && (
           <>
-            <span style={{ width: 1, background: T.border, margin: '0 4px', alignSelf: 'stretch' }} />
+            <span className="w-px bg-app-border mx-1 self-stretch" />
             <button
               onClick={resetFilters}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 5,
-                padding: '7px 12px', borderRadius: 999,
-                border: `1px solid ${T.border}`, background: T.dangerLight,
-                color: T.danger, cursor: 'pointer',
-                fontSize: 12.5, fontWeight: 600, fontFamily: T.fontSans,
-              }}
+              className="inline-flex items-center gap-1.5 px-3 py-1.75 rounded-full border border-app-border bg-app-danger-light text-app-danger cursor-pointer text-[12.5px] font-semibold font-sans"
             >
               {Icon.close(12)} Reset
             </button>

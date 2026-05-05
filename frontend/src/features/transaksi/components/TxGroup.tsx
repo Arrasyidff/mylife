@@ -1,4 +1,3 @@
-import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
 import { TxLine } from './TxLine';
 import type { Transaction } from '../types';
@@ -13,35 +12,23 @@ interface TxGroupProps {
 
 export function TxGroup({ label, txs, expandedId, onToggle, onEdit }: TxGroupProps) {
   const net = txs.reduce((s, t) => s + t.amount, 0);
-  const netColor  = net >= 0 ? T.primaryDark : T.danger;
-  const netPrefix = net >= 0 ? '+ ' : '− ';
+  const isPositive = net >= 0;
 
   return (
-    <div style={{ marginBottom: 28 }}>
-      <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 4px 10px',
-      }}>
-        <h3 style={{
-          margin: 0, fontSize: 12, fontWeight: 700,
-          color: T.textMuted, letterSpacing: 0.4, textTransform: 'uppercase',
-        }}>
+    <div className="mb-7">
+      <div className="flex items-center justify-between px-1 pb-2.5">
+        <h3 className="m-0 text-[12px] font-bold text-app-text-muted tracking-[0.4px] uppercase">
           {label}
         </h3>
-        <span style={{ fontSize: 12, color: T.textMuted, fontVariantNumeric: 'tabular-nums' }}>
-          <span style={{ color: netColor, fontWeight: 700 }}>
-            {netPrefix}{formatRp(Math.abs(net))}
+        <span className="text-[12px] text-app-text-muted tabular-nums">
+          <span className={`font-bold ${isPositive ? 'text-brand-dark' : 'text-app-danger'}`}>
+            {isPositive ? '+ ' : '− '}{formatRp(Math.abs(net))}
           </span>
-          <span style={{ margin: '0 6px' }}>·</span>
+          <span className="mx-1.5">·</span>
           {txs.length} transaksi
         </span>
       </div>
-      <div style={{
-        background: T.surface,
-        borderRadius: T.radius.lg,
-        border: `1px solid ${T.border}`,
-        overflow: 'hidden',
-      }}>
+      <div className="bg-surface rounded-xl border border-app-border overflow-hidden">
         {txs.map(t => (
           <TxLine
             key={t.id}

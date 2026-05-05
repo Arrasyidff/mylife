@@ -1,4 +1,3 @@
-import { T } from '@/lib/tokens';
 import { Icon } from '@/components/ui/icon';
 
 interface EmptyStateProps {
@@ -8,36 +7,22 @@ interface EmptyStateProps {
 
 export function EmptyState({ hasFilters, onReset }: EmptyStateProps) {
   return (
-    <div style={{
-      textAlign: 'center', padding: '60px 24px',
-      background: T.surface, borderRadius: T.radius.lg,
-      border: `1px solid ${T.border}`,
-    }}>
-      <div style={{
-        width: 48, height: 48, borderRadius: 14,
-        background: T.surfaceAlt, border: `1px solid ${T.border}`,
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        margin: '0 auto 14px', color: T.textSubtle,
-      }}>
+    <div className="text-center py-14 md:py-16 px-6 bg-surface rounded-xl border border-app-border">
+      <div className="w-12 h-12 rounded-[14px] bg-surface-alt border border-app-border flex items-center justify-center mx-auto mb-3.5 text-app-text-subtle">
         {Icon.list(22)}
       </div>
-      <div style={{ fontSize: 15, fontWeight: 700, color: T.text, marginBottom: 6 }}>
+      <p className="text-[15px] font-bold text-app-text mb-1.5">
         {hasFilters ? 'Tidak ada hasil' : 'Belum ada transaksi'}
-      </div>
-      <div style={{ fontSize: 13, color: T.textSubtle, marginBottom: hasFilters ? 20 : 0 }}>
+      </p>
+      <p className={`text-[13px] text-app-text-subtle ${hasFilters ? 'mb-5' : 'mb-0'}`}>
         {hasFilters
           ? 'Coba ubah filter atau kata kunci pencarian.'
           : 'Tambahkan transaksi pertamamu.'}
-      </div>
+      </p>
       {hasFilters && (
         <button
           onClick={onReset}
-          style={{
-            padding: '8px 18px', borderRadius: 999,
-            border: `1px solid ${T.border}`, background: T.surface,
-            cursor: 'pointer', fontSize: 13, fontWeight: 600, color: T.text,
-            fontFamily: T.fontSans,
-          }}
+          className="px-4.5 py-2 rounded-full border border-app-border bg-surface cursor-pointer text-[13px] font-semibold text-app-text hover:bg-surface-alt transition-colors"
         >
           Reset filter
         </button>
