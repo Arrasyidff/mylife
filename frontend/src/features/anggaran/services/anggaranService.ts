@@ -34,12 +34,12 @@ function toBudget(response: BackendBudgetResponse): Budget {
 }
 
 export async function listAnggaran(): Promise<Budget[]> {
-  const result = await api.get<BackendBudgetResponse[]>('/api/budgets');
+  const result = await api.get<BackendBudgetResponse[]>('/budgets');
   return result.map(toBudget);
 }
 
 export async function createAnggaran(input: CreateAnggaranInput): Promise<Budget> {
-  const response = await api.post<BackendBudgetResponse>('/api/budgets', {
+  const response = await api.post<BackendBudgetResponse>('/budgets', {
     name: input.name,
     category: input.category,
     total: input.total,
@@ -59,10 +59,10 @@ export async function updateAnggaran(budgetId: string, input: UpdateAnggaranInpu
   if (input.carry_over !== undefined) body.carry_over = input.carry_over;
   if (input.start_date !== undefined) body.start_date = input.start_date;
 
-  const response = await api.patch<BackendBudgetResponse>(`/api/budgets/${budgetId}`, body);
+  const response = await api.patch<BackendBudgetResponse>(`/budgets/${budgetId}`, body);
   return toBudget(response);
 }
 
 export async function deleteAnggaran(budgetId: string): Promise<void> {
-  await api.delete<string>(`/api/budgets/${budgetId}`);
+  await api.delete<string>(`/budgets/${budgetId}`);
 }

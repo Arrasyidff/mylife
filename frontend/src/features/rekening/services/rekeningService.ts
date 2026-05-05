@@ -59,7 +59,7 @@ export interface AccountListResult {
 }
 
 export async function listAccounts(includeHidden = false): Promise<AccountListResult> {
-  const result = await api.get<BackendAccountListResponse>('/api/accounts', {
+  const result = await api.get<BackendAccountListResponse>('/accounts', {
     params: { include_hidden: includeHidden },
   });
   return {
@@ -69,7 +69,7 @@ export async function listAccounts(includeHidden = false): Promise<AccountListRe
 }
 
 export async function createAccount(input: CreateAccountInput): Promise<Account> {
-  const response = await api.post<BackendAccountResponse>('/api/accounts', {
+  const response = await api.post<BackendAccountResponse>('/accounts', {
     name: input.name,
     subtitle: input.subtitle,
     balance: input.balance,
@@ -93,10 +93,10 @@ export async function updateAccount(accountId: string, input: UpdateAccountInput
   if (input.account_number !== undefined) body.account_number = input.account_number;
   if (input.hidden !== undefined) body.hidden = input.hidden;
 
-  const response = await api.patch<BackendAccountResponse>(`/api/accounts/${accountId}`, body);
+  const response = await api.patch<BackendAccountResponse>(`/accounts/${accountId}`, body);
   return toAccount(response);
 }
 
 export async function deleteAccount(accountId: string): Promise<void> {
-  await api.delete<string>(`/api/accounts/${accountId}`);
+  await api.delete<string>(`/accounts/${accountId}`);
 }
