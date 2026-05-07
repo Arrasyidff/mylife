@@ -48,6 +48,7 @@ export function TransaksiPage() {
         onExport={handleExport}
         exportDisabled={filtered.length === 0}
         onAdd={() => setShowAdd(true)}
+        addDisabled={accounts.length === 0}
       />
 
       <TransaksiFilter
@@ -79,7 +80,7 @@ export function TransaksiPage() {
         resetFilters={resetFilters}
       />
 
-      {showAdd && (
+      {showAdd && accounts.length > 0 && (
         <AddTransactionModal
           accounts={accounts}
           onClose={() => setShowAdd(false)}

@@ -8,9 +8,10 @@ interface TransaksiHeaderProps {
   onExport: () => void;
   exportDisabled: boolean;
   onAdd: () => void;
+  addDisabled?: boolean;
 }
 
-export function TransaksiHeader({ filteredCount, totalCount, monthLabel, onExport, exportDisabled, onAdd }: TransaksiHeaderProps) {
+export function TransaksiHeader({ filteredCount, totalCount, monthLabel, onExport, exportDisabled, onAdd, addDisabled }: TransaksiHeaderProps) {
   return (
     <div className="flex items-start justify-between mb-5">
       <div>
@@ -25,7 +26,7 @@ export function TransaksiHeader({ filteredCount, totalCount, monthLabel, onExpor
         <Btn kind="ghost" size="sm" icon={Icon.download(14)} onClick={onExport} disabled={exportDisabled}>
           Ekspor
         </Btn>
-        <Btn kind="primary" size="sm" icon={Icon.plus(14)} onClick={onAdd}>
+        <Btn kind="primary" size="sm" icon={Icon.plus(14)} onClick={onAdd} disabled={addDisabled}>
           Tambah
         </Btn>
       </div>
