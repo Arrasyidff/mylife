@@ -12,6 +12,7 @@ import { ValidationService } from './validation.service';
     WinstonModule.forRoot({
       transports: [
         new winston.transports.Console({
+          level: 'debug',
           format: winston.format.combine(
             winston.format.timestamp(),
             winston.format.colorize(),
