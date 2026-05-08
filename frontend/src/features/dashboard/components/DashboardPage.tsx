@@ -17,14 +17,13 @@ export function DashboardPage() {
     showAdd,
     setShowAdd,
     toast,
-    selectedMonth,
-    setSelectedMonth,
-    showMonthPicker,
-    setShowMonthPicker,
-    monthPickerRef,
+    viewMonth,
+    viewYear,
+    setViewMonth,
+    setViewYear,
+    isCurrentMonth,
     totalAssets,
     totalAccounts,
-    availableMonths,
     displayedAccounts,
     budgets,
     recentTransactions,
@@ -86,14 +85,12 @@ export function DashboardPage() {
       <DashboardHeader
         currentMonth={currentMonth}
         currentYear={currentYear}
-        isCurrentMonth={true}
+        isCurrentMonth={isCurrentMonth}
         daysLeft={daysLeft}
-        selectedMonth={selectedMonth}
-        setSelectedMonth={setSelectedMonth}
-        showMonthPicker={showMonthPicker}
-        setShowMonthPicker={setShowMonthPicker}
-        monthPickerRef={monthPickerRef}
-        availableMonths={availableMonths}
+        viewMonth={viewMonth}
+        viewYear={viewYear}
+        setViewMonth={setViewMonth}
+        setViewYear={setViewYear}
         onAddClick={() => setShowAdd(true)}
       />
 

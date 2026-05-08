@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import type { Account, AccountType } from '@/features/rekening/types';
 import type { Transaction } from '@/features/transaksi/types';
 import { useAddTransaction } from '@/features/transaksi/hooks/useAddTransaction';
@@ -11,7 +11,6 @@ import type {
   DashboardApiBudgetItem,
   DashboardBudget,
   Toast,
-  MonthOption,
 } from '../types';
 
 const MONTH_NAMES = [
@@ -72,7 +71,7 @@ function mapApiBudget(apiBudget: DashboardApiBudgetItem): DashboardBudget {
   };
 }
 
-export type { Toast, MonthOption };
+export type { Toast };
 
 export function useDashboard() {
   const [dashboardData, setDashboardData] = useState<DashboardApiResponse | null>(null);
@@ -80,14 +79,15 @@ export function useDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [toast, setToast] = useState<Toast | null>(null);
-  const [showMonthPicker, setShowMonthPicker] = useState(false);
-  const monthPickerRef = useRef<HTMLDivElement>(null);
+  const today = new Date();
+  const [viewMonth, setViewMonth] = useState(today.getMonth());
+  const [viewYear, setViewYear] = useState(today.getFullYear());
 
-  async function loadDashboard() {
+  async function loadDashboard(month: number, year: number) {
     try {
       setIsLoading(true);
       setError(null);
-      const data = await getDashboard();
+      const data = await getDashboard(month + 1, year);
       setDashboardData(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal memuat dashboard');
@@ -97,9 +97,9 @@ export function useDashboard() {
   }
 
   useEffect(() => {
-    loadDashboard();
+    loadDashboard(viewMonth, viewYear);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [viewMonth, viewYear]);
 
   useEffect(() => {
     if (!toast) return;
@@ -107,22 +107,10 @@ export function useDashboard() {
     return () => clearTimeout(timer);
   }, [toast]);
 
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (monthPickerRef.current && !monthPickerRef.current.contains(event.target as Node)) {
-        setShowMonthPicker(false);
-      }
-    }
-    if (showMonthPicker) document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showMonthPicker]);
-
   const summary = dashboardData?.monthly_summary;
-  const year = summary?.year ?? new Date().getFullYear();
-  const month = summary?.month ?? (new Date().getMonth() + 1);
-  const currentMonth = MONTH_NAMES[month - 1];
-  const currentYear = year;
-  const selectedMonth = `${year}-${String(month).padStart(2, '0')}`;
+  const currentMonth = MONTH_NAMES[viewMonth];
+  const currentYear = viewYear;
+  const isCurrentMonth = viewMonth === today.getMonth() && viewYear === today.getFullYear();
 
   const totalAssets = parseFloat(dashboardData?.total_balance ?? '0');
   const totalAccounts = dashboardData?.total_accounts ?? 0;
@@ -162,13 +150,8 @@ export function useDashboard() {
     .slice(0, 3);
   const displayedAccounts = [...otherAccounts, ...tunaiAccounts];
 
-  const availableMonths: MonthOption[] = [{
-    value: selectedMonth,
-    label: `${currentMonth} ${currentYear}`,
-  }];
-
   const now = new Date();
-  const lastDayOfMonth = new Date(year, month, 0).getDate();
+  const lastDayOfMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
   const daysLeft = lastDayOfMonth - now.getDate();
 
   function showToast(message: string, isSuccess = true) {
@@ -178,7 +161,7 @@ export function useDashboard() {
   const { handleAdd, isSubmitting } = useAddTransaction({
     onSuccess: async () => {
       setShowAdd(false);
-      await loadDashboard();
+      await loadDashboard(viewMonth, viewYear);
     },
     showToast,
   });
@@ -191,14 +174,13 @@ export function useDashboard() {
     showAdd,
     setShowAdd,
     toast,
-    selectedMonth,
-    setSelectedMonth: (_value: string) => {},
-    showMonthPicker,
-    setShowMonthPicker,
-    monthPickerRef,
+    viewMonth,
+    viewYear,
+    setViewMonth,
+    setViewYear,
+    isCurrentMonth,
     totalAssets,
     totalAccounts,
-    availableMonths,
     displayedAccounts,
     budgets,
     recentTransactions,

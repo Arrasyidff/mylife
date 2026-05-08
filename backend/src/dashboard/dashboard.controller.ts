@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { User } from '../../generated/prisma';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { WebResponse } from '../model/web.model';
@@ -12,8 +12,14 @@ export class DashboardController {
   @Get()
   async summary(
     @CurrentUser() user: Omit<User, 'password'>,
+    @Query('month') month?: string,
+    @Query('year') year?: string,
   ): Promise<WebResponse<DashboardResponse>> {
-    const result = await this.dashboardService.summary(user);
+    const result = await this.dashboardService.summary(
+      user,
+      month ? parseInt(month, 10) : undefined,
+      year ? parseInt(year, 10) : undefined,
+    );
     return { data: result };
   }
 }

@@ -49,12 +49,20 @@ export class DashboardService {
     return { from, to };
   }
 
-  async summary(user: Omit<User, 'password'>): Promise<DashboardResponse> {
+  async summary(
+    user: Omit<User, 'password'>,
+    queryMonth?: number,
+    queryYear?: number,
+  ): Promise<DashboardResponse> {
     const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth(); // 0-indexed
+    const year = queryYear ?? now.getFullYear();
+    const month = queryMonth !== undefined ? queryMonth - 1 : now.getMonth(); // 0-indexed
+    const isCurrentMonth = year === now.getFullYear() && month === now.getMonth();
+
     const monthStart = new Date(year, month, 1, 0, 0, 0, 0);
-    const monthEnd = new Date(year, month, now.getDate(), 23, 59, 59, 999);
+    const monthEnd = isCurrentMonth
+      ? new Date(year, month, now.getDate(), 23, 59, 59, 999)
+      : new Date(year, month + 1, 0, 23, 59, 59, 999);
 
     const [accounts, budgets] = await Promise.all([
       this.prismaService.account.findMany({
@@ -91,7 +99,10 @@ export class DashboardService {
         _sum: { amount: true },
       }),
       this.prismaService.transaction.findMany({
-        where: { account_id: { in: allAccountIds } },
+        where: {
+          account_id: { in: allAccountIds },
+          date: { gte: monthStart, lte: monthEnd },
+        },
         orderBy: [{ date: 'desc' }, { id: 'desc' }],
         take: 5,
         include: { account: { select: { name: true } } },
@@ -188,7 +199,7 @@ export class DashboardService {
       total_accounts: accounts.length,
       monthly_summary: {
         year,
-        month: month + 1,
+        month: month + 1, // convert back to 1-indexed
         total_income: totalIncome.toFixed(2),
         total_expense: totalExpense.toFixed(2),
         net: net.toFixed(2),
