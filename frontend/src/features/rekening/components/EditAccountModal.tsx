@@ -1,9 +1,17 @@
 "use client";
 import { useState } from 'react';
 import { X, Check, Trash2, AlertTriangle } from 'lucide-react';
-import { formatRp } from '@/lib/format';
 import { useScrollLock } from '@/lib/hooks/useScrollLock';
-import { ACCOUNT_TYPES, COLORS } from '../constants';
+import {
+  Field,
+  inputCls,
+  buildPreviewData,
+  parseBalanceInput,
+  AccountPreviewCard,
+  AccountTypeSelector,
+  ColorPicker,
+  ModalLoadingOverlay,
+} from './_AccountModalShared';
 import type { Account, AccountType, UpdateAccountInput } from '../types';
 
 interface EditAccountModalProps {
@@ -14,28 +22,6 @@ interface EditAccountModalProps {
   isSubmitting: boolean;
 }
 
-function Field({ label, children, hint, optional }: {
-  label: string;
-  children: React.ReactNode;
-  hint?: string;
-  optional?: boolean;
-}) {
-  return (
-    <div className="mb-4.5">
-      <div className="flex items-center justify-between mb-2">
-        <div className="text-[0.71875rem] font-semibold text-[#7D9590] tracking-[0.01875rem]">
-          {label.toUpperCase()}
-        </div>
-        {optional && <span className="text-[0.6875rem] text-[#A4B8B2] font-medium">opsional</span>}
-      </div>
-      {children}
-      {hint && <div className="text-[0.71875rem] text-[#A4B8B2] mt-1.5 leading-[1.45]">{hint}</div>}
-    </div>
-  );
-}
-
-const inputCls = "w-full py-2.5 px-3 rounded-[0.5625rem] border border-[#E0EAE6] bg-[#F6F9F7] text-[0.84375rem] text-[#1A2420] font-sans outline-none box-border";
-
 export function EditAccountModal({ account, onSave, onDelete, onClose, isSubmitting }: EditAccountModalProps) {
   useScrollLock();
   const [name, setName] = useState(account.name);
@@ -45,14 +31,7 @@ export function EditAccountModal({ account, onSave, onDelete, onClose, isSubmitt
   const [accountNumber, setAccountNumber] = useState(account.account_number ?? '');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const previewGlyph = name ? name.slice(0, 3).toUpperCase() : '···';
-  const typeLabel = ACCOUNT_TYPES.find(t => t.id === type)?.label ?? '';
-  const previewSubtitle = `${typeLabel}${accountNumber ? ' · ****' + accountNumber.slice(-4) : ''}`;
-
-  function handleBalanceInput(e: React.ChangeEvent<HTMLInputElement>) {
-    const raw = e.target.value.replace(/[^\d]/g, '');
-    setBalance(raw ? parseInt(raw) : 0);
-  }
+  const { previewGlyph, typeLabel, previewSubtitle } = buildPreviewData(name, type, accountNumber);
 
   function handleSave() {
     if (!name.trim()) return;
@@ -80,7 +59,6 @@ export function EditAccountModal({ account, onSave, onDelete, onClose, isSubmitt
       />
 
       <div className="fixed inset-0 sm:inset-y-0 sm:left-auto sm:right-0 sm:w-120 bg-white flex flex-col overflow-hidden z-50 shadow-[-16px_0_40px_rgba(20,30,25,0.18),-1px_0_0_rgba(20,30,25,0.06)]" style={{ isolation: 'isolate' }}>
-        {/* Header */}
         <div className="px-5 sm:px-6 py-4 sm:py-5 border-b border-[#EEF2F0] flex items-start justify-between shrink-0">
           <div>
             <div className="text-[0.6875rem] text-[#D4860B] font-bold tracking-[0.03125rem] mb-0.75">
@@ -101,36 +79,15 @@ export function EditAccountModal({ account, onSave, onDelete, onClose, isSubmitt
           </button>
         </div>
 
-        {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-4.5 sm:py-5.5">
-
-          {/* Preview card */}
-          <div
-            className="rounded-[0.75rem] py-4 px-4.5 mb-5.5 flex items-center gap-3.5"
-            style={{
-              background: color + '14',
-              border: `1px solid ${color}30`,
-              borderLeft: `4px solid ${color}`,
-            }}
-          >
-            <div
-              className="w-10 h-10 rounded-[0.6875rem] flex items-center justify-center text-xs font-bold shrink-0 text-white"
-              style={{ background: color }}
-            >
-              {previewGlyph}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold text-[#1A2420]">
-                {name || 'Nama Rekening'}
-              </div>
-              <div className="text-[0.71875rem] text-[#A4B8B2] mt-0.5">
-                {previewSubtitle || account.subtitle}
-              </div>
-            </div>
-            <div className="tabular-nums font-bold text-[0.9375rem] text-[#1A2420]">
-              {formatRp(balance)}
-            </div>
-          </div>
+          <AccountPreviewCard
+            name={name}
+            color={color}
+            balance={balance}
+            previewGlyph={previewGlyph}
+            previewSubtitle={previewSubtitle}
+            fallbackSubtitle={account.subtitle ?? 'Jenis rekening'}
+          />
 
           <Field label="Nama Rekening">
             <input
@@ -142,50 +99,11 @@ export function EditAccountModal({ account, onSave, onDelete, onClose, isSubmitt
           </Field>
 
           <Field label="Jenis Rekening">
-            <div className="flex flex-col gap-1.5">
-              {ACCOUNT_TYPES.map(t => {
-                const active = t.id === type;
-                return (
-                  <button
-                    key={t.id}
-                    onClick={() => setType(t.id)}
-                    className={`flex items-center gap-3 py-2.75 px-3.5 rounded-[0.5625rem] border cursor-pointer font-sans text-left ${
-                      active ? 'bg-[#E6F6F0] border-[#1D9E75]' : 'bg-[#F6F9F7] border-[#E0EAE6]'
-                    }`}
-                  >
-                    <div className="flex-1">
-                      <div className={`text-[0.8125rem] font-semibold ${active ? 'text-[#15735A]' : 'text-[#1A2420]'}`}>
-                        {t.label}
-                      </div>
-                      <div className="text-[0.71875rem] text-[#A4B8B2]">{t.hint}</div>
-                    </div>
-                    {active && (
-                      <div className="w-4.5 h-4.5 rounded-full bg-[#1D9E75] text-white flex items-center justify-center">
-                        <Check size={10} strokeWidth={3} />
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
+            <AccountTypeSelector selectedType={type} onSelect={setType} />
           </Field>
 
           <Field label="Warna Label">
-            <div className="flex flex-wrap gap-2">
-              {COLORS.map(c => (
-                <button
-                  key={c}
-                  onClick={() => setColor(c)}
-                  className="w-8 h-8 rounded-[0.5625rem] cursor-pointer outline-none flex items-center justify-center transition-[border-color] duration-100"
-                  style={{
-                    background: c,
-                    border: color === c ? `3px solid #1A2420` : '3px solid transparent',
-                  }}
-                >
-                  {color === c && <Check size={14} color="white" strokeWidth={3} />}
-                </button>
-              ))}
-            </div>
+            <ColorPicker selectedColor={color} onSelect={setColor} />
           </Field>
 
           <Field label="Nomor Rekening / ID" optional>
@@ -204,14 +122,13 @@ export function EditAccountModal({ account, onSave, onDelete, onClose, isSubmitt
                 <input
                   type="text"
                   value={balance.toLocaleString('id-ID')}
-                  onChange={handleBalanceInput}
+                  onChange={e => setBalance(parseBalanceInput(e.target.value))}
                   className="text-[2.125rem] font-bold tracking-[-0.0625rem] text-[#1A2420] tabular-nums border-none bg-transparent outline-none font-sans text-center w-50"
                 />
               </div>
             </div>
           </Field>
 
-          {/* Danger zone */}
           <div className="py-4 px-4.5 bg-[#FDEEEE] rounded-[0.625rem] border border-[#C0392B22]">
             <div className="text-xs font-semibold text-[#C0392B] mb-2.5">
               Zona Bahaya
@@ -252,7 +169,6 @@ export function EditAccountModal({ account, onSave, onDelete, onClose, isSubmitt
           </div>
         </div>
 
-        {/* Footer */}
         <div className="px-5 sm:px-6 py-3.5 border-t border-[#EEF2F0] bg-[#F6F9F7] flex gap-2.5 shrink-0">
           <button
             onClick={onClose}
@@ -273,15 +189,7 @@ export function EditAccountModal({ account, onSave, onDelete, onClose, isSubmitt
           </button>
         </div>
 
-        {/* Loading overlay */}
-        {isSubmitting && (
-          <div className="absolute inset-0 bg-white/75 backdrop-blur-[2px] z-10 flex items-center justify-center">
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-10 h-10 rounded-full border-[3px] border-app-border border-t-brand animate-spin" />
-              <div className="text-[0.875rem] font-semibold text-app-text">Menyimpan...</div>
-            </div>
-          </div>
-        )}
+        {isSubmitting && <ModalLoadingOverlay />}
       </div>
     </>
   );
