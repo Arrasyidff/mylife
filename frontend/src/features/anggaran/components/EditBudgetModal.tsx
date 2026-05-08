@@ -13,6 +13,7 @@ interface EditBudgetModalProps {
   onSave: (id: string, input: UpdateAnggaranInput) => Promise<void>;
   onDelete: (id: string) => Promise<void>;
   onClose: () => void;
+  isSubmitting: boolean;
 }
 
 function Field({ label, children, hint, optional }: {
@@ -53,19 +54,17 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (val: boolean) => voi
   );
 }
 
-export function EditBudgetModal({ budget, onSave, onDelete, onClose }: EditBudgetModalProps) {
+export function EditBudgetModal({ budget, onSave, onDelete, onClose, isSubmitting }: EditBudgetModalProps) {
   useScrollLock();
   const [selectedCat, setSelectedCat]       = useState(budget.category);
   const [selectedPeriod, setSelectedPeriod] = useState<BudgetPeriod>(budget.period ?? 'MONTHLY');
   const [amount, setAmount]                 = useState(budget.total);
   const [carryOver, setCarryOver]           = useState(budget.carry_over);
   const [confirmDelete, setConfirmDelete]   = useState(false);
-  const [isSubmitting, setIsSubmitting]     = useState(false);
 
   const catName = CATS.find(c => c.id === selectedCat)?.name ?? selectedCat;
 
   async function handleSave() {
-    setIsSubmitting(true);
     try {
       const input: UpdateAnggaranInput = {
         name:       catName,
@@ -78,28 +77,26 @@ export function EditBudgetModal({ budget, onSave, onDelete, onClose }: EditBudge
       onClose();
     } catch {
       // error shown via toast in hook
-    } finally {
-      setIsSubmitting(false);
     }
   }
 
   async function handleDelete() {
-    setIsSubmitting(true);
     try {
       await onDelete(budget.id);
       onClose();
     } catch {
       // error shown via toast in hook
-    } finally {
-      setIsSubmitting(false);
     }
   }
 
   return (
     <>
-      <div onClick={onClose} className="fixed inset-0 bg-[rgba(20,30,25,0.35)] backdrop-blur-[2px] z-40" />
+      <div
+        onClick={!isSubmitting ? onClose : undefined}
+        className="fixed inset-0 bg-[rgba(20,30,25,0.35)] backdrop-blur-[2px] z-40"
+      />
 
-      <div className="fixed inset-0 sm:inset-y-0 sm:left-auto sm:right-0 sm:w-120 bg-white flex flex-col overflow-hidden z-50 shadow-[-16px_0_40px_rgba(20,30,25,0.18),-1px_0_0_rgba(20,30,25,0.06)]">
+      <div className="fixed inset-0 sm:inset-y-0 sm:left-auto sm:right-0 sm:w-120 bg-white flex flex-col overflow-hidden z-50 shadow-[-16px_0_40px_rgba(20,30,25,0.18),-1px_0_0_rgba(20,30,25,0.06)]" style={{ isolation: 'isolate' }}>
         {/* Header */}
         <div className="px-5 sm:px-6 py-4 sm:py-5 border-b border-[#EEF2F0] flex items-start justify-between shrink-0">
           <div>
@@ -278,7 +275,7 @@ export function EditBudgetModal({ budget, onSave, onDelete, onClose }: EditBudge
                     disabled={isSubmitting}
                     className="py-[7px] px-4 rounded-[7px] border-none bg-[#C0392B] text-white text-[12.5px] font-semibold cursor-pointer font-sans disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    {isSubmitting ? 'Menghapus...' : 'Ya, Hapus'}
+                    Ya, Hapus
                   </button>
                 </div>
               </div>
@@ -290,7 +287,8 @@ export function EditBudgetModal({ budget, onSave, onDelete, onClose }: EditBudge
         <div className="px-5 sm:px-6 py-3.5 border-t border-[#EEF2F0] bg-[#F6F9F7] flex gap-2.5 shrink-0">
           <button
             onClick={onClose}
-            className="flex-1 py-[11px] rounded-[9px] border border-[#E0EAE6] bg-white text-[#1A2420] text-[13.5px] font-semibold cursor-pointer font-sans"
+            disabled={isSubmitting}
+            className="flex-1 py-[11px] rounded-[9px] border border-[#E0EAE6] bg-white text-[#1A2420] text-[13.5px] font-semibold cursor-pointer font-sans disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Batal
           </button>
@@ -300,9 +298,19 @@ export function EditBudgetModal({ budget, onSave, onDelete, onClose }: EditBudge
             className="flex-[2] py-[11px] rounded-[9px] border-none bg-[#1D9E75] text-white text-[13.5px] font-semibold cursor-pointer font-sans flex items-center justify-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <Check size={14} />
-            {isSubmitting ? 'Menyimpan...' : 'Simpan Perubahan'}
+            Simpan Perubahan
           </button>
         </div>
+
+        {/* Loading overlay */}
+        {isSubmitting && (
+          <div className="absolute inset-0 bg-white/75 backdrop-blur-[2px] z-10 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-10 h-10 rounded-full border-[3px] border-app-border border-t-brand animate-spin" />
+              <div className="text-[0.875rem] font-semibold text-app-text">Memproses...</div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

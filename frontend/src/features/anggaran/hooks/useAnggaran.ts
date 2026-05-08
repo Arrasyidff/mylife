@@ -7,6 +7,7 @@ import { listAnggaran, createAnggaran, updateAnggaran, deleteAnggaran } from '..
 export function useAnggaran() {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
@@ -72,37 +73,52 @@ export function useAnggaran() {
   }
 
   async function handleAdd(input: CreateAnggaranInput): Promise<void> {
+    setIsSubmitting(true);
     try {
-      await createAnggaran(input);
-      await loadBudgets();
+      await Promise.all([
+        createAnggaran(input).then(() => loadBudgets()),
+        new Promise<void>(resolve => setTimeout(resolve, 500)),
+      ]);
       showToast(`Anggaran "${input.name}" berhasil ditambahkan`);
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Gagal menambah anggaran', false);
       throw error;
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
   async function handleSave(id: string, input: UpdateAnggaranInput): Promise<void> {
     const budgetName = budgets.find(budget => budget.id === id)?.name ?? '';
+    setIsSubmitting(true);
     try {
-      await updateAnggaran(id, input);
-      await loadBudgets();
+      await Promise.all([
+        updateAnggaran(id, input).then(() => loadBudgets()),
+        new Promise<void>(resolve => setTimeout(resolve, 500)),
+      ]);
       showToast(`Anggaran "${budgetName}" berhasil diperbarui`);
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Gagal memperbarui anggaran', false);
       throw error;
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
   async function handleDelete(id: string): Promise<void> {
     const budgetName = budgets.find(budget => budget.id === id)?.name ?? '';
+    setIsSubmitting(true);
     try {
-      await deleteAnggaran(id);
-      await loadBudgets();
+      await Promise.all([
+        deleteAnggaran(id).then(() => loadBudgets()),
+        new Promise<void>(resolve => setTimeout(resolve, 500)),
+      ]);
       showToast(`Anggaran "${budgetName}" telah dihapus`, false);
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Gagal menghapus anggaran', false);
       throw error;
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -118,6 +134,7 @@ export function useAnggaran() {
 
   return {
     isLoading,
+    isSubmitting,
     visibleBudgets,
     totalBudget,
     totalUsed,

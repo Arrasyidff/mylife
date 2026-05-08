@@ -9,6 +9,7 @@ import { AnggaranBudgetGrid } from './AnggaranBudgetGrid';
 
 export function AnggaranPage() {
   const {
+    isSubmitting,
     visibleBudgets,
     totalBudget,
     totalUsed,
@@ -73,6 +74,7 @@ export function AnggaranPage() {
           onClose={() => setShowModal(false)}
           onAdd={handleAdd}
           totalExisting={totalBudget}
+          isSubmitting={isSubmitting}
         />
       )}
 
@@ -82,6 +84,7 @@ export function AnggaranPage() {
           onSave={handleSave}
           onDelete={handleDelete}
           onClose={() => setEditingBudget(null)}
+          isSubmitting={isSubmitting}
         />
       )}
     </div>
