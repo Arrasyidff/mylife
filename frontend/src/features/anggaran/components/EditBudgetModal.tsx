@@ -1,13 +1,21 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Check, Trash2, AlertTriangle } from 'lucide-react';
 import { useScrollLock } from '@/lib/hooks/useScrollLock';
 import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
 import { CatBubble } from '@/components/shared/CatBubble';
-import { CATS, PERIODS, AMOUNT_PRESETS } from '../constants';
+import { CATS } from '../constants';
 import { updateAnggaranSchema } from '../schemas/anggaran.schema';
 import type { Budget, BudgetPeriod, UpdateAnggaranInput } from '../types';
+import {
+  Field,
+  ModalLoadingOverlay,
+  CategorySelector,
+  AmountPresets,
+  PeriodSelector,
+  CarryOverField,
+} from './_BudgetModalShared';
 
 interface EditBudgetModalProps {
   budget: Budget;
@@ -17,65 +25,37 @@ interface EditBudgetModalProps {
   isSubmitting: boolean;
 }
 
-function Field({ label, children, hint, optional, error }: {
-  label: string;
-  children: React.ReactNode;
-  hint?: string;
-  optional?: boolean;
-  error?: string;
-}) {
-  return (
-    <div className="mb-[18px]">
-      <div className="flex items-center justify-between mb-2">
-        <div className="text-[11.5px] font-semibold text-[#7D9590] tracking-[0.3px]">
-          {label.toUpperCase()}
-        </div>
-        {optional && <span className="text-[11px] text-[#A4B8B2] font-medium">opsional</span>}
-      </div>
-      {children}
-      {error && <div className="text-[11.5px] text-app-danger mt-1.5 leading-[1.45]">{error}</div>}
-      {!error && hint && <div className="text-[11.5px] text-app-text-subtle mt-1.5 leading-[1.45]">{hint}</div>}
-    </div>
-  );
-}
-
-function Toggle({ on, onChange }: { on: boolean; onChange: (val: boolean) => void }) {
-  return (
-    <button
-      onClick={() => onChange(!on)}
-      className="relative shrink-0 border-none cursor-pointer transition-colors duration-150"
-      style={{
-        width: 32, height: 18, borderRadius: 9,
-        background: on ? T.primary : '#D6D8D0',
-      }}
-    >
-      <span
-        className="absolute top-[2px] w-3.5 h-3.5 rounded-full bg-white shadow-[0_1px_2px_rgba(0,0,0,0.18)] block transition-[left] duration-150"
-        style={{ left: on ? 16 : 2 }}
-      />
-    </button>
-  );
-}
-
 export function EditBudgetModal({ budget, onSave, onDelete, onClose, isSubmitting }: EditBudgetModalProps) {
   useScrollLock();
-  const [selectedCat, setSelectedCat]       = useState(budget.category);
+  const [selectedCat, setSelectedCat] = useState(budget.category);
   const [selectedPeriod, setSelectedPeriod] = useState<BudgetPeriod>(budget.period ?? 'MONTHLY');
-  const [amount, setAmount]                 = useState(budget.total);
-  const [carryOver, setCarryOver]           = useState(budget.carry_over);
-  const [confirmDelete, setConfirmDelete]   = useState(false);
+  const [amount, setAmount] = useState(budget.total);
+  const [carryOver, setCarryOver] = useState(budget.carry_over);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [isClosing, setIsClosing] = useState(false);
 
-  const catName = CATS.find(c => c.id === selectedCat)?.name ?? selectedCat;
+  useEffect(() => {
+    if (!isClosing) return;
+    const timer = setTimeout(onClose, 300);
+    return () => clearTimeout(timer);
+  }, [isClosing, onClose]);
+
+  function handleClose() {
+    if (isSubmitting) return;
+    setIsClosing(true);
+  }
+
+  const catName = CATS.find(category => category.id === selectedCat)?.name ?? selectedCat;
 
   async function handleSave() {
     setValidationErrors({});
 
     const parseResult = updateAnggaranSchema.safeParse({
-      name:       catName,
-      category:   selectedCat,
-      total:      amount,
-      period:     selectedPeriod,
+      name: catName,
+      category: selectedCat,
+      total: amount,
+      period: selectedPeriod,
       carry_over: carryOver,
     });
 
@@ -91,7 +71,7 @@ export function EditBudgetModal({ budget, onSave, onDelete, onClose, isSubmittin
 
     try {
       await onSave(budget.id, parseResult.data as UpdateAnggaranInput);
-      onClose();
+      setIsClosing(true);
     } catch {
       // error shown via toast in hook
     }
@@ -100,7 +80,7 @@ export function EditBudgetModal({ budget, onSave, onDelete, onClose, isSubmittin
   async function handleDelete() {
     try {
       await onDelete(budget.id);
-      onClose();
+      setIsClosing(true);
     } catch {
       // error shown via toast in hook
     }
@@ -109,180 +89,104 @@ export function EditBudgetModal({ budget, onSave, onDelete, onClose, isSubmittin
   return (
     <>
       <div
-        onClick={!isSubmitting ? onClose : undefined}
-        className="fixed inset-0 bg-[rgba(20,30,25,0.35)] backdrop-blur-[2px] z-40"
+        onClick={handleClose}
+        className={`fixed inset-0 bg-[rgba(20,30,25,0.35)] backdrop-blur-[2px] z-40 ${isClosing ? 'animate-out fade-out fill-mode-forwards duration-300' : 'animate-in fade-in duration-200'}`}
       />
 
-      <div className="fixed inset-0 sm:inset-y-0 sm:left-auto sm:right-0 sm:w-120 bg-white flex flex-col overflow-hidden z-50 shadow-[-16px_0_40px_rgba(20,30,25,0.18),-1px_0_0_rgba(20,30,25,0.06)]" style={{ isolation: 'isolate' }}>
-        {/* Header */}
-        <div className="px-5 sm:px-6 py-4 sm:py-5 border-b border-[#EEF2F0] flex items-start justify-between shrink-0">
+      <div
+        className={`fixed inset-0 sm:inset-y-0 sm:left-auto sm:right-0 sm:w-120 bg-white flex flex-col overflow-hidden z-50 shadow-[-16px_0_40px_rgba(20,30,25,0.18),-1px_0_0_rgba(20,30,25,0.06)] ${isClosing ? 'animate-out slide-out-to-bottom sm:slide-out-to-right sm:[--tw-exit-translate-y:0] fill-mode-forwards duration-300 ease-in' : 'animate-in slide-in-from-bottom sm:slide-in-from-right sm:[--tw-enter-translate-y:0] duration-300 ease-out'}`}
+        style={{ isolation: 'isolate' }}
+      >
+        <div className="px-5 sm:px-6 py-4 sm:py-5 border-b border-app-divider flex items-start justify-between shrink-0">
           <div>
-            <div className="text-[11px] text-[#D4860B] font-bold tracking-[0.5px] mb-[3px]">
+            <div className="text-[11px] text-app-warning font-bold tracking-[0.5px] mb-0.75">
               EDIT ANGGARAN
             </div>
-            <h2 className="m-0 text-lg sm:text-[19px] font-bold tracking-[-0.025rem] text-[#1A2420]">
+            <h2 className="m-0 text-lg sm:text-[19px] font-bold tracking-[-0.025rem] text-app-text">
               {budget.name}
             </h2>
-            <div className="text-xs sm:text-[12.5px] text-[#7D9590] mt-1">
+            <div className="text-xs sm:text-[12.5px] text-app-text-muted mt-1">
               Perbarui batas dan pengaturan anggaran
             </div>
           </div>
           <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-[8px] border-none bg-[#F6F9F7] cursor-pointer text-[#7D9590] flex items-center justify-center shrink-0"
+            onClick={handleClose}
+            className="w-8 h-8 rounded-[8px] border-none bg-surface-alt cursor-pointer text-app-text-muted flex items-center justify-center shrink-0"
           >
             <X size={16} />
           </button>
         </div>
 
-        {/* Body */}
         <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-5">
-
-          {/* Preview */}
           <div
-            className="bg-[#F0FAF6] rounded-[12px] py-3.5 px-[18px] mb-[22px] flex items-center gap-3.5"
+            className="bg-brand-soft rounded-[12px] py-3.5 px-4.5 mb-5.5 flex items-center gap-3.5"
             style={{ border: `1px solid ${T.primary}30`, borderLeft: `4px solid ${T.primary}` }}
           >
             <CatBubble cat={selectedCat} size={38} />
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold text-[#1A2420]">{catName}</div>
-              <div className="text-[11.5px] text-[#A4B8B2] mt-0.5">
+              <div className="text-sm font-semibold text-app-text">{catName}</div>
+              <div className="text-[11.5px] text-app-text-subtle mt-0.5">
                 {formatRp(budget.spent)} terpakai dari {formatRp(amount)}
               </div>
             </div>
-            <div className="text-[15px] font-bold text-[#15735A] tabular-nums">{formatRp(amount)}</div>
+            <div className="text-[15px] font-bold text-brand-dark tabular-nums">{formatRp(amount)}</div>
           </div>
 
-          {/* Category */}
           <Field label="Kategori" error={validationErrors.category}>
-            <div className="grid grid-cols-4 gap-2">
-              {CATS.map(c => {
-                const active = c.id === selectedCat;
-                return (
-                  <button
-                    key={c.id}
-                    onClick={() => setSelectedCat(c.id)}
-                    className="flex flex-col items-center gap-1.5 py-[11px] px-1 rounded-[10px] cursor-pointer font-sans relative"
-                    style={{
-                      background: active ? T.primaryLight : T.surfaceAlt,
-                      border:     `1px solid ${active ? T.primary : T.border}`,
-                    }}
-                  >
-                    {active && (
-                      <span className="absolute top-[5px] right-[5px] w-3.5 h-3.5 rounded-full bg-[#1D9E75] text-white flex items-center justify-center">
-                        <Check size={9} strokeWidth={3} />
-                      </span>
-                    )}
-                    <CatBubble cat={c.id} size={32} />
-                    <span className="text-[11px] font-semibold" style={{ color: active ? T.primaryDark : T.textMuted }}>
-                      {c.name}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+            <CategorySelector selectedCat={selectedCat} onSelect={setSelectedCat} />
           </Field>
 
-          {/* Amount */}
           <Field label="Batas Anggaran" error={validationErrors.total}>
             <div
-              className="rounded-[12px] py-[18px] px-[18px] pb-4 text-center mb-2.5"
+              className="rounded-[12px] py-4.5 px-4.5 pb-4 text-center mb-2.5"
               style={{
                 background: validationErrors.total ? '#FFF5F5' : '#F0FAF6',
                 border: `1.5px solid ${validationErrors.total ? '#C0392B' : '#1D9E75'}`,
               }}
             >
               <div className="inline-flex items-baseline gap-2">
-                <span className="text-[18px] font-semibold" style={{ color: validationErrors.total ? '#C0392B' : '#15735A' }}>Rp</span>
+                <span
+                  className="text-[18px] font-semibold"
+                  style={{ color: validationErrors.total ? '#C0392B' : '#15735A' }}
+                >
+                  Rp
+                </span>
                 <input
                   type="text"
                   value={amount === 0 ? '' : amount.toLocaleString('id-ID')}
-                  onChange={e => {
-                    const raw = e.target.value.replace(/[^\d]/g, '');
-                    setAmount(raw ? parseInt(raw, 10) : 0);
+                  onChange={event => {
+                    const digits = event.target.value.replace(/[^\d]/g, '');
+                    setAmount(digits ? parseInt(digits, 10) : 0);
                     if (validationErrors.total) setValidationErrors(prev => ({ ...prev, total: '' }));
                   }}
                   placeholder="0"
-                  className="text-[34px] font-bold tracking-[-0.0625rem] text-[#1A2420] tabular-nums border-none bg-transparent outline-none font-sans text-center w-[200px]"
+                  className="text-[34px] font-bold tracking-[-0.0625rem] text-app-text tabular-nums border-none bg-transparent outline-none font-sans text-center w-50"
                 />
               </div>
             </div>
-            <div className="flex flex-wrap gap-1.5">
-              {AMOUNT_PRESETS.map(p => {
-                const active = p === amount;
-                return (
-                  <button
-                    key={p}
-                    onClick={() => setAmount(p)}
-                    className="px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer font-sans tabular-nums"
-                    style={{
-                      background: active ? T.primary : T.surface,
-                      color:      active ? 'white'   : T.textMuted,
-                      border:     `1px solid ${active ? T.primary : T.border}`,
-                    }}
-                  >
-                    Rp {p.toLocaleString('id-ID')}
-                  </button>
-                );
-              })}
-            </div>
+            <AmountPresets amount={amount} onSelect={setAmount} />
           </Field>
 
-          {/* Period */}
           <Field label="Periode" error={validationErrors.period}>
-            <div className="flex gap-2">
-              {PERIODS.map(p => {
-                const active = p.id === selectedPeriod;
-                return (
-                  <button
-                    key={p.id}
-                    onClick={() => setSelectedPeriod(p.id as BudgetPeriod)}
-                    className="flex-1 py-3 px-2.5 rounded-[10px] cursor-pointer flex flex-col items-center gap-[3px] font-sans"
-                    style={{
-                      background: active ? T.primaryLight : T.surfaceAlt,
-                      border:     `1px solid ${active ? T.primary : T.border}`,
-                    }}
-                  >
-                    <span className="text-[13px] font-semibold" style={{ color: active ? T.primaryDark : T.text }}>
-                      {p.label}
-                    </span>
-                    <span className="text-[10.5px] text-[#A4B8B2]">{p.hint}</span>
-                  </button>
-                );
-              })}
-            </div>
+            <PeriodSelector selectedPeriod={selectedPeriod} onSelect={setSelectedPeriod} />
           </Field>
 
-          {/* Carry over */}
-          <Field label="Lanjut ke Periode Berikutnya" optional>
-            <div className="flex items-start gap-3 py-3 px-3.5 bg-[#F6F9F7] border border-[#E0EAE6] rounded-[10px]">
-              <div className="mt-0.5">
-                <Toggle on={carryOver} onChange={setCarryOver} />
-              </div>
-              <div className="flex-1">
-                <div className="text-[13px] font-semibold text-[#1A2420]">Sisa anggaran dilanjutkan</div>
-                <div className="text-[11.5px] text-[#A4B8B2] mt-0.5 leading-[1.45]">
-                  Jika tidak terpakai, sisa akan ditambahkan ke periode berikutnya.
-                </div>
-              </div>
-            </div>
-          </Field>
+          <CarryOverField carryOver={carryOver} onToggle={setCarryOver} />
 
-          {/* Danger zone */}
-          <div className="py-4 px-[18px] bg-[#FDEEEE] rounded-[10px] border border-[#C0392B22]">
-            <div className="text-xs font-semibold text-[#C0392B] mb-2.5">Zona Bahaya</div>
+          <div className="py-4 px-4.5 bg-app-danger-light rounded-[10px] border border-[#C0392B22]">
+            <div className="text-xs font-semibold text-app-danger mb-2.5">Zona Bahaya</div>
             {!confirmDelete ? (
               <button
                 onClick={() => setConfirmDelete(true)}
-                className="flex items-center gap-1.5 py-2 px-3.5 rounded-[7px] border border-[#C0392B44] bg-white text-[#C0392B] text-[12.5px] font-semibold cursor-pointer font-sans"
+                className="flex items-center gap-1.5 py-2 px-3.5 rounded-[7px] border border-[#C0392B44] bg-white text-app-danger text-[12.5px] font-semibold cursor-pointer font-sans"
               >
                 <Trash2 size={13} />
                 Hapus Anggaran Ini
               </button>
             ) : (
               <div>
-                <div className="flex items-start gap-[7px] text-[12.5px] text-[#C0392B] mb-3 leading-[1.5]">
-                  <AlertTriangle size={14} className="shrink-0 mt-[1px]" />
+                <div className="flex items-start gap-1.75 text-[12.5px] text-app-danger mb-3 leading-normal">
+                  <AlertTriangle size={14} className="shrink-0 mt-px" />
                   <span>
                     Yakin hapus anggaran <strong>{budget.name}</strong>?
                     Tindakan ini tidak dapat dibatalkan.
@@ -291,14 +195,14 @@ export function EditBudgetModal({ budget, onSave, onDelete, onClose, isSubmittin
                 <div className="flex gap-2">
                   <button
                     onClick={() => setConfirmDelete(false)}
-                    className="py-[7px] px-4 rounded-[7px] border border-[#E0EAE6] bg-white text-[#1A2420] text-[12.5px] font-semibold cursor-pointer font-sans"
+                    className="py-1.75 px-4 rounded-[7px] border border-app-border bg-white text-app-text text-[12.5px] font-semibold cursor-pointer font-sans"
                   >
                     Batal
                   </button>
                   <button
                     onClick={handleDelete}
                     disabled={isSubmitting}
-                    className="py-[7px] px-4 rounded-[7px] border-none bg-[#C0392B] text-white text-[12.5px] font-semibold cursor-pointer font-sans disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="py-1.75 px-4 rounded-[7px] border-none bg-app-danger text-white text-[12.5px] font-semibold cursor-pointer font-sans disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     Ya, Hapus
                   </button>
@@ -308,34 +212,25 @@ export function EditBudgetModal({ budget, onSave, onDelete, onClose, isSubmittin
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="px-5 sm:px-6 py-3.5 border-t border-[#EEF2F0] bg-[#F6F9F7] flex gap-2.5 shrink-0">
+        <div className="px-5 sm:px-6 py-3.5 border-t border-app-divider bg-surface-alt flex gap-2.5 shrink-0">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             disabled={isSubmitting}
-            className="flex-1 py-[11px] rounded-[9px] border border-[#E0EAE6] bg-white text-[#1A2420] text-[13.5px] font-semibold cursor-pointer font-sans disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 py-2.75 rounded-[9px] border border-app-border bg-white text-app-text text-[13.5px] font-semibold cursor-pointer font-sans disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Batal
           </button>
           <button
             onClick={handleSave}
             disabled={isSubmitting}
-            className="flex-[2] py-[11px] rounded-[9px] border-none bg-[#1D9E75] text-white text-[13.5px] font-semibold cursor-pointer font-sans flex items-center justify-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="flex-2 py-2.75 rounded-[9px] border-none bg-brand text-white text-[13.5px] font-semibold cursor-pointer font-sans flex items-center justify-center gap-1.5 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <Check size={14} />
             Simpan Perubahan
           </button>
         </div>
 
-        {/* Loading overlay */}
-        {isSubmitting && (
-          <div className="absolute inset-0 bg-white/75 backdrop-blur-[2px] z-10 flex items-center justify-center">
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-10 h-10 rounded-full border-[3px] border-app-border border-t-brand animate-spin" />
-              <div className="text-[0.875rem] font-semibold text-app-text">Memproses...</div>
-            </div>
-          </div>
-        )}
+        {isSubmitting && <ModalLoadingOverlay />}
       </div>
     </>
   );

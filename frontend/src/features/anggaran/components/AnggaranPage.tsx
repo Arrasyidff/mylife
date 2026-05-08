@@ -1,7 +1,6 @@
 "use client";
 import { useAnggaran } from '../hooks/useAnggaran';
-import { AddBudgetModal } from './AddBudgetModal';
-import { EditBudgetModal } from './EditBudgetModal';
+import { AnggaranModals } from './AnggaranModals';
 import { AnggaranToast } from './AnggaranToast';
 import { AnggaranHeader } from './AnggaranHeader';
 import { AnggaranSummary } from './AnggaranSummary';
@@ -69,24 +68,17 @@ export function AnggaranPage() {
         onAddBudget={() => setShowModal(true)}
       />
 
-      {showModal && (
-        <AddBudgetModal
-          onClose={() => setShowModal(false)}
-          onAdd={handleAdd}
-          totalExisting={totalBudget}
-          isSubmitting={isSubmitting}
-        />
-      )}
-
-      {editingBudget && (
-        <EditBudgetModal
-          budget={editingBudget}
-          onSave={handleSave}
-          onDelete={handleDelete}
-          onClose={() => setEditingBudget(null)}
-          isSubmitting={isSubmitting}
-        />
-      )}
+      <AnggaranModals
+        showAddModal={showModal}
+        editingBudget={editingBudget}
+        totalBudget={totalBudget}
+        isSubmitting={isSubmitting}
+        onCloseAddModal={() => setShowModal(false)}
+        onCloseEditModal={() => setEditingBudget(null)}
+        onAdd={handleAdd}
+        onSave={handleSave}
+        onDelete={handleDelete}
+      />
     </div>
   );
 }
