@@ -13,6 +13,7 @@ type Toast = { msg: string; ok: boolean };
 export function useRekening() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showTransferModal, setShowTransferModal] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
@@ -43,19 +44,29 @@ export function useRekening() {
   }, []);
 
   async function handleAdd(input: CreateAccountInput) {
+    setIsSubmitting(true);
     try {
-      const newAccount = await createAccount(input);
+      const [newAccount] = await Promise.all([
+        createAccount(input),
+        new Promise<void>(resolve => setTimeout(resolve, 500)),
+      ]);
       setAccounts(prev => [...prev, newAccount]);
       setShowAddModal(false);
       showToast(`Rekening "${newAccount.name}" berhasil ditambahkan`);
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Gagal menambah rekening', false);
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
   async function handleSave(accountId: string, input: UpdateAccountInput) {
+    setIsSubmitting(true);
     try {
-      const updatedAccount = await updateAccount(accountId, input);
+      const [updatedAccount] = await Promise.all([
+        updateAccount(accountId, input),
+        new Promise<void>(resolve => setTimeout(resolve, 500)),
+      ]);
       setAccounts(prev =>
         prev.map(account => (account.id === updatedAccount.id ? updatedAccount : account))
       );
@@ -63,6 +74,8 @@ export function useRekening() {
       showToast(`Rekening "${updatedAccount.name}" berhasil diperbarui`);
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Gagal memperbarui rekening', false);
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -103,6 +116,7 @@ export function useRekening() {
   return {
     accounts,
     isLoading,
+    isSubmitting,
     visibleAccounts,
     totalBalance,
     hiddenCount,

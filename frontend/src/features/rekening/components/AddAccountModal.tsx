@@ -10,6 +10,7 @@ import type { CreateAccountInput, AccountType } from '../types';
 interface AddAccountModalProps {
   onClose: () => void;
   onAdd: (input: CreateAccountInput) => void;
+  isSubmitting: boolean;
 }
 
 function Field({ label, children, hint, optional }: {
@@ -34,7 +35,7 @@ function Field({ label, children, hint, optional }: {
 
 const inputCls = "w-full py-2.5 px-3 rounded-[0.5625rem] border border-[#E0EAE6] bg-[#F6F9F7] text-[0.84375rem] text-[#1A2420] font-sans outline-none box-border";
 
-export function AddAccountModal({ onClose, onAdd }: AddAccountModalProps) {
+export function AddAccountModal({ onClose, onAdd, isSubmitting }: AddAccountModalProps) {
   useScrollLock();
   const [name, setName] = useState('');
   const [type, setType] = useState<AccountType>('tabungan');
@@ -67,11 +68,11 @@ export function AddAccountModal({ onClose, onAdd }: AddAccountModalProps) {
   return (
     <>
       <div
-        onClick={onClose}
+        onClick={!isSubmitting ? onClose : undefined}
         className="fixed inset-0 bg-[rgba(20,30,25,0.35)] backdrop-blur-[2px] z-40"
       />
 
-      <div className="fixed inset-0 sm:inset-y-0 sm:left-auto sm:right-0 sm:w-120 bg-white flex flex-col overflow-hidden z-50 shadow-[-16px_0_40px_rgba(20,30,25,0.18),-1px_0_0_rgba(20,30,25,0.06)]">
+      <div className="fixed inset-0 sm:inset-y-0 sm:left-auto sm:right-0 sm:w-120 bg-white flex flex-col overflow-hidden z-50 shadow-[-16px_0_40px_rgba(20,30,25,0.18),-1px_0_0_rgba(20,30,25,0.06)]" style={{ isolation: 'isolate' }}>
         {/* Header */}
         <div className="px-5 sm:px-6 py-4 sm:py-5 border-b border-[#EEF2F0] flex items-start justify-between shrink-0">
           <div>
@@ -224,21 +225,32 @@ export function AddAccountModal({ onClose, onAdd }: AddAccountModalProps) {
         <div className="px-5 sm:px-6 py-3.5 border-t border-[#EEF2F0] bg-[#F6F9F7] flex gap-2.5 shrink-0">
           <button
             onClick={onClose}
-            className="flex-1 py-2.75 rounded-[0.5625rem] border border-[#E0EAE6] bg-white text-[#1A2420] text-[0.84375rem] font-semibold cursor-pointer font-sans"
+            disabled={isSubmitting}
+            className="flex-1 py-2.75 rounded-[0.5625rem] border border-[#E0EAE6] bg-white text-[#1A2420] text-[0.84375rem] font-semibold cursor-pointer font-sans disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Batal
           </button>
           <button
             onClick={handleSave}
-            disabled={!name.trim()}
+            disabled={!name.trim() || isSubmitting}
             className={`flex-2 py-2.75 rounded-[0.5625rem] border-none text-white text-[0.84375rem] font-semibold font-sans flex items-center justify-center gap-1.5 ${
-              name.trim() ? 'bg-[#1D9E75] cursor-pointer' : 'bg-[#CEDAD4] cursor-not-allowed'
+              name.trim() && !isSubmitting ? 'bg-brand cursor-pointer' : 'bg-app-border-strong cursor-not-allowed'
             }`}
           >
             <Check size={14} />
             Simpan Rekening
           </button>
         </div>
+
+        {/* Loading overlay */}
+        {isSubmitting && (
+          <div className="absolute inset-0 bg-white/75 backdrop-blur-[2px] z-10 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-10 h-10 rounded-full border-[3px] border-app-border border-t-brand animate-spin" />
+              <div className="text-[0.875rem] font-semibold text-app-text">Menyimpan...</div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

@@ -18,6 +18,7 @@ export function RekeningPage() {
     showTransferModal,
     editingAccount,
     toast,
+    isSubmitting,
     setShowAddModal,
     setShowTransferModal,
     setEditingAccount,
@@ -63,6 +64,7 @@ export function RekeningPage() {
         showAddModal={showAddModal}
         showTransferModal={showTransferModal}
         editingAccount={editingAccount}
+        isSubmitting={isSubmitting}
         onCloseAddModal={() => setShowAddModal(false)}
         onCloseTransferModal={() => setShowTransferModal(false)}
         onCloseEditModal={() => setEditingAccount(null)}

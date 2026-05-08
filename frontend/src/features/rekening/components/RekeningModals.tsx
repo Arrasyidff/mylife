@@ -8,6 +8,7 @@ interface RekeningModalsProps {
   showAddModal:         boolean;
   showTransferModal:    boolean;
   editingAccount:       Account | null;
+  isSubmitting:         boolean;
   onCloseAddModal:      () => void;
   onCloseTransferModal: () => void;
   onCloseEditModal:     () => void;
@@ -22,6 +23,7 @@ export function RekeningModals({
   showAddModal,
   showTransferModal,
   editingAccount,
+  isSubmitting,
   onCloseAddModal,
   onCloseTransferModal,
   onCloseEditModal,
@@ -36,6 +38,7 @@ export function RekeningModals({
         <AddAccountModal
           onClose={onCloseAddModal}
           onAdd={onAdd}
+          isSubmitting={isSubmitting}
         />
       )}
 
@@ -45,6 +48,7 @@ export function RekeningModals({
           onSave={onSave}
           onDelete={onDelete}
           onClose={onCloseEditModal}
+          isSubmitting={isSubmitting}
         />
       )}
 
