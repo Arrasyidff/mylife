@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useScrollLock } from '@/lib/hooks/useScrollLock';
 import { T } from '@/lib/tokens';
 import { Icon } from '@/components/ui/icon';
@@ -62,6 +62,18 @@ export function AddTransactionModal({ accounts, onClose, onSave, initialType, is
   const [note,         setNote]         = useState('');
   const [adminFeeRaw,  setAdminFeeRaw]  = useState(String(ADMIN_FEE_DEFAULT));
   const [errors,       setErrors]       = useState<{ amount?: string; merch?: string; toAcct?: string }>({});
+  const [isClosing,    setIsClosing]    = useState(false);
+
+  useEffect(() => {
+    if (!isClosing) return;
+    const timer = setTimeout(onClose, 300);
+    return () => clearTimeout(timer);
+  }, [isClosing, onClose]);
+
+  function handleClose() {
+    if (isSubmitting) return;
+    setIsClosing(true);
+  }
 
   const amountNum = Number(amountRaw.replace(/\./g, '') || '0');
   const amountDisplay = amountNum > 0 ? amountNum.toLocaleString('id-ID') : '';
@@ -136,12 +148,12 @@ export function AddTransactionModal({ accounts, onClose, onSave, initialType, is
     <>
       {/* Backdrop */}
       <div
-        onClick={!isSubmitting ? onClose : undefined}
-        className="fixed inset-0 bg-[rgba(20,30,25,0.4)] backdrop-blur-[2px] z-40"
+        onClick={handleClose}
+        className={`fixed inset-0 bg-[rgba(20,30,25,0.4)] backdrop-blur-[2px] z-40 ${isClosing ? 'animate-out fade-out fill-mode-forwards duration-300' : 'animate-in fade-in duration-200'}`}
       />
 
       {/* Panel — full-screen on mobile, right drawer on sm+ */}
-      <div className="fixed inset-0 sm:inset-y-0 sm:left-auto sm:right-0 sm:w-[480px] bg-white flex flex-col overflow-hidden z-50 shadow-[-16px_0_40px_rgba(20,30,25,0.18),-1px_0_0_rgba(20,30,25,0.06)]" style={{ isolation: 'isolate' }}>
+      <div className={`fixed inset-0 sm:inset-y-0 sm:left-auto sm:right-0 sm:w-120 bg-white flex flex-col overflow-hidden z-50 shadow-[-16px_0_40px_rgba(20,30,25,0.18),-1px_0_0_rgba(20,30,25,0.06)] ${isClosing ? 'animate-out slide-out-to-bottom sm:slide-out-to-right sm:[--tw-exit-translate-y:0] fill-mode-forwards duration-300 ease-in' : 'animate-in slide-in-from-bottom sm:slide-in-from-right sm:[--tw-enter-translate-y:0] duration-300 ease-out'}`} style={{ isolation: 'isolate' }}>
 
         {/* Header */}
         <div className="px-5 sm:px-6 py-4 sm:py-5 border-b border-[#EEF2F0] flex items-start justify-between shrink-0">
@@ -157,7 +169,7 @@ export function AddTransactionModal({ accounts, onClose, onSave, initialType, is
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="w-8 h-8 rounded-lg border-none bg-[#F6F9F7] cursor-pointer text-[#7D9590] flex items-center justify-center shrink-0 mt-0.5"
           >
             {Icon.close(16)}
@@ -415,7 +427,7 @@ export function AddTransactionModal({ accounts, onClose, onSave, initialType, is
 
         {/* Footer */}
         <div className="px-5 sm:px-6 py-3.5 border-t border-[#EEF2F0] flex gap-2.5 bg-[#F6F9F7] shrink-0">
-          <Btn kind="ghost" onClick={onClose} disabled={isSubmitting} style={{ flex: 1, justifyContent: 'center', padding: '10px' }}>
+          <Btn kind="ghost" onClick={handleClose} disabled={isSubmitting} style={{ flex: 1, justifyContent: 'center', padding: '10px' }}>
             Batal
           </Btn>
           <Btn

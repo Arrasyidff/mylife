@@ -1,5 +1,5 @@
 "use client";
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Check, Trash2, AlertTriangle } from 'lucide-react';
 import { useScrollLock } from '@/lib/hooks/useScrollLock';
 import {
@@ -33,6 +33,18 @@ export function EditAccountModal({ account, onSave, onDelete, onClose, isSubmitt
   const [accountNumber, setAccountNumber] = useState(account.account_number ?? '');
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [isClosing, setIsClosing] = useState(false);
+
+  useEffect(() => {
+    if (!isClosing) return;
+    const timer = setTimeout(onClose, 300);
+    return () => clearTimeout(timer);
+  }, [isClosing, onClose]);
+
+  function handleClose() {
+    if (isSubmitting) return;
+    setIsClosing(true);
+  }
 
   const { previewGlyph, typeLabel, previewSubtitle } = buildPreviewData(name, type, accountNumber);
 
@@ -73,11 +85,11 @@ export function EditAccountModal({ account, onSave, onDelete, onClose, isSubmitt
   return (
     <>
       <div
-        onClick={!isSubmitting ? onClose : undefined}
-        className="fixed inset-0 bg-[rgba(20,30,25,0.35)] backdrop-blur-[2px] z-40"
+        onClick={handleClose}
+        className={`fixed inset-0 bg-[rgba(20,30,25,0.35)] backdrop-blur-[2px] z-40 ${isClosing ? 'animate-out fade-out fill-mode-forwards duration-300' : 'animate-in fade-in duration-200'}`}
       />
 
-      <div className="fixed inset-0 sm:inset-y-0 sm:left-auto sm:right-0 sm:w-120 bg-white flex flex-col overflow-hidden z-50 shadow-[-16px_0_40px_rgba(20,30,25,0.18),-1px_0_0_rgba(20,30,25,0.06)]" style={{ isolation: 'isolate' }}>
+      <div className={`fixed inset-0 sm:inset-y-0 sm:left-auto sm:right-0 sm:w-120 bg-white flex flex-col overflow-hidden z-50 shadow-[-16px_0_40px_rgba(20,30,25,0.18),-1px_0_0_rgba(20,30,25,0.06)] ${isClosing ? 'animate-out slide-out-to-bottom sm:slide-out-to-right sm:[--tw-exit-translate-y:0] fill-mode-forwards duration-300 ease-in' : 'animate-in slide-in-from-bottom sm:slide-in-from-right sm:[--tw-enter-translate-y:0] duration-300 ease-out'}`} style={{ isolation: 'isolate' }}>
         <div className="px-5 sm:px-6 py-4 sm:py-5 border-b border-app-divider flex items-start justify-between shrink-0">
           <div>
             <div className="text-[0.6875rem] text-app-warning font-bold tracking-[0.03125rem] mb-0.75">
@@ -91,7 +103,7 @@ export function EditAccountModal({ account, onSave, onDelete, onClose, isSubmitt
             </div>
           </div>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="w-8 h-8 rounded-[0.5rem] border-none bg-surface-alt cursor-pointer text-app-text-muted flex items-center justify-center shrink-0"
           >
             <X size={16} />
@@ -191,7 +203,7 @@ export function EditAccountModal({ account, onSave, onDelete, onClose, isSubmitt
 
         <div className="px-5 sm:px-6 py-3.5 border-t border-app-divider bg-surface-alt flex gap-2.5 shrink-0">
           <button
-            onClick={onClose}
+            onClick={handleClose}
             disabled={isSubmitting}
             className="flex-1 py-2.75 rounded-[0.5625rem] border border-app-border bg-white text-app-text text-[0.84375rem] font-semibold cursor-pointer font-sans disabled:opacity-50 disabled:cursor-not-allowed"
           >
