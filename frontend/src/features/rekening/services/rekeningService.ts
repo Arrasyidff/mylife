@@ -76,7 +76,7 @@ export async function createAccount(input: CreateAccountInput): Promise<Account>
     color: input.color,
     glyph: input.glyph,
     type: FRONTEND_TO_BACKEND_TYPE[input.type],
-    account_number: input.account_number ?? null,
+    account_number: input.account_number,
     hidden: false,
   });
   return toAccount(response);

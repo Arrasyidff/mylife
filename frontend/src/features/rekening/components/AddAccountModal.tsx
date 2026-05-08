@@ -6,6 +6,7 @@ import { BALANCE_PRESETS } from '../constants';
 import {
   Field,
   inputCls,
+  inputErrorCls,
   buildPreviewData,
   parseBalanceInput,
   AccountPreviewCard,
@@ -13,6 +14,7 @@ import {
   ColorPicker,
   ModalLoadingOverlay,
 } from './_AccountModalShared';
+import { createAccountSchema } from '../schemas/rekening.schema';
 import type { CreateAccountInput, AccountType } from '../types';
 
 interface AddAccountModalProps {
@@ -28,20 +30,34 @@ export function AddAccountModal({ onClose, onAdd, isSubmitting }: AddAccountModa
   const [color, setColor] = useState('#1565C0');
   const [balance, setBalance] = useState(0);
   const [accountNumber, setAccountNumber] = useState('');
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const { previewGlyph, typeLabel, previewSubtitle } = buildPreviewData(name, type, accountNumber);
 
   function handleSave() {
-    if (!name.trim()) return;
-    onAdd({
+    const input = {
       name: name.trim(),
       type,
       color,
       balance,
       account_number: accountNumber.trim() || undefined,
       subtitle: previewSubtitle || typeLabel,
-      glyph: name.slice(0, 3).toUpperCase(),
-    });
+      glyph: name.slice(0, 3).toUpperCase() || '···',
+    };
+
+    const result = createAccountSchema.safeParse(input);
+    if (!result.success) {
+      const errors: Record<string, string> = {};
+      for (const issue of result.error.issues) {
+        const field = String(issue.path[0]);
+        if (!errors[field]) errors[field] = issue.message;
+      }
+      setFieldErrors(errors);
+      return;
+    }
+
+    setFieldErrors({});
+    onAdd(result.data);
   }
 
   return (
@@ -82,12 +98,12 @@ export function AddAccountModal({ onClose, onAdd, isSubmitting }: AddAccountModa
             fallbackSubtitle="Jenis rekening"
           />
 
-          <Field label="Nama Rekening">
+          <Field label="Nama Rekening" error={fieldErrors.name}>
             <input
               value={name}
-              onChange={e => setName(e.target.value)}
+              onChange={e => { setName(e.target.value); setFieldErrors(prev => ({ ...prev, name: '' })); }}
               placeholder="cth: BCA Utama, GoPay, Dompet Harian…"
-              className={inputCls}
+              className={fieldErrors.name ? inputErrorCls : inputCls}
             />
           </Field>
 
@@ -99,16 +115,17 @@ export function AddAccountModal({ onClose, onAdd, isSubmitting }: AddAccountModa
             <ColorPicker selectedColor={color} onSelect={setColor} />
           </Field>
 
-          <Field label="Nomor Rekening / ID" optional>
+          <Field label="Nomor Rekening / ID" optional error={fieldErrors.account_number}>
             <input
-              value={accountNumber}
-              onChange={e => setAccountNumber(e.target.value)}
-              placeholder="cth: 1234567890 atau 0812-3456-7890"
-              className={inputCls}
+              value={type === 'tunai' ? '' : accountNumber}
+              onChange={e => { setAccountNumber(e.target.value); setFieldErrors(prev => ({ ...prev, account_number: '' })); }}
+              placeholder={type === 'tunai' ? 'Tidak tersedia untuk tunai' : 'cth: 1234567890 atau 0812-3456-7890'}
+              disabled={type === 'tunai'}
+              className={fieldErrors.account_number ? inputErrorCls : `${inputCls} disabled:opacity-50 disabled:cursor-not-allowed`}
             />
           </Field>
 
-          <Field label="Saldo Awal" hint="Masukkan saldo saat ini agar total aset akurat.">
+          <Field label="Saldo Awal" hint="Masukkan saldo saat ini agar total aset akurat." error={fieldErrors.balance}>
             <div className="bg-[#F0FAF6] border-[1.5px] border-[#1D9E75] rounded-[0.75rem] py-4 px-4.5 text-center mb-2.5">
               <div className="inline-flex items-baseline gap-2">
                 <span className="text-[1.0625rem] text-[#15735A] font-semibold">Rp</span>
@@ -149,9 +166,9 @@ export function AddAccountModal({ onClose, onAdd, isSubmitting }: AddAccountModa
           </button>
           <button
             onClick={handleSave}
-            disabled={!name.trim() || isSubmitting}
+            disabled={isSubmitting}
             className={`flex-2 py-2.75 rounded-[0.5625rem] border-none text-white text-[0.84375rem] font-semibold font-sans flex items-center justify-center gap-1.5 ${
-              name.trim() && !isSubmitting ? 'bg-brand cursor-pointer' : 'bg-app-border-strong cursor-not-allowed'
+              !isSubmitting ? 'bg-brand cursor-pointer' : 'bg-app-border-strong cursor-not-allowed'
             }`}
           >
             <Check size={14} />

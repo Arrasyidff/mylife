@@ -4,11 +4,12 @@ import { ACCOUNT_TYPES, COLORS } from '../constants';
 import type { AccountType } from '../types';
 import { formatRp } from '@/lib/format';
 
-export function Field({ label, children, hint, optional }: {
+export function Field({ label, children, hint, optional, error }: {
   label: string;
   children: React.ReactNode;
   hint?: string;
   optional?: boolean;
+  error?: string;
 }) {
   return (
     <div className="mb-4.5">
@@ -19,12 +20,16 @@ export function Field({ label, children, hint, optional }: {
         {optional && <span className="text-[0.6875rem] text-[#A4B8B2] font-medium">opsional</span>}
       </div>
       {children}
-      {hint && <div className="text-[0.71875rem] text-[#A4B8B2] mt-1.5 leading-[1.45]">{hint}</div>}
+      {error
+        ? <div className="text-[0.71875rem] text-app-danger mt-1.5 leading-[1.45]">{error}</div>
+        : hint && <div className="text-[0.71875rem] text-app-text-subtle mt-1.5 leading-[1.45]">{hint}</div>
+      }
     </div>
   );
 }
 
 export const inputCls = "w-full py-2.5 px-3 rounded-[0.5625rem] border border-[#E0EAE6] bg-[#F6F9F7] text-[0.84375rem] text-[#1A2420] font-sans outline-none box-border";
+export const inputErrorCls = "w-full py-2.5 px-3 rounded-[0.5625rem] border border-[#C0392B] bg-[#FFF8F8] text-[0.84375rem] text-[#1A2420] font-sans outline-none box-border";
 
 export function buildPreviewData(name: string, type: AccountType, accountNumber: string) {
   const previewGlyph = name ? name.slice(0, 3).toUpperCase() : '···';

@@ -43,7 +43,7 @@ export class AccountService {
         user_id: user.id,
         ...(includeHidden ? {} : { hidden: false }),
       },
-      orderBy: [{ type: 'asc' }, { name: 'asc' }],
+      orderBy: [{ hidden: 'asc' }, { type: 'asc' }, { name: 'asc' }],
     });
 
     const visibleAccounts = accounts.filter((a) => !a.hidden);
