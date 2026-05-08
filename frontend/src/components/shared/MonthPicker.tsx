@@ -12,9 +12,12 @@ interface MonthPickerProps {
   btnLabel: string;
   setViewMonth: (month: number) => void;
   setViewYear: (fn: (year: number) => number) => void;
+  isActive?: boolean;
+  isMonthSelected?: boolean;
+  onClear?: () => void;
 }
 
-export function MonthPicker({ viewMonth, viewYear, btnLabel, setViewMonth, setViewYear }: MonthPickerProps) {
+export function MonthPicker({ viewMonth, viewYear, btnLabel, setViewMonth, setViewYear, isActive, isMonthSelected = true, onClear }: MonthPickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -29,12 +32,12 @@ export function MonthPicker({ viewMonth, viewYear, btnLabel, setViewMonth, setVi
 
   return (
     <div ref={containerRef} className="relative">
-      <Btn kind="ghost" size="sm" icon={Icon.calendar(14)} onClick={() => setIsOpen(open => !open)} style={{ userSelect: 'none' }}>
+      <Btn kind={isActive ? 'soft' : 'ghost'} size="sm" icon={Icon.calendar(14)} onClick={() => setIsOpen(open => !open)} style={{ userSelect: 'none' }}>
         {btnLabel}
       </Btn>
 
       {isOpen && (
-        <div className="absolute left-0 sm:left-auto sm:right-0 top-[calc(100%+6px)] z-200 bg-white border border-app-border rounded-[10px] shadow-[0_4px_20px_rgba(0,0,0,0.12)] p-3.5 w-55">
+        <div className="absolute right-0 top-[calc(100%+6px)] z-200 bg-white border border-app-border rounded-[10px] shadow-[0_4px_20px_rgba(0,0,0,0.12)] p-3.5 w-55">
           <div className="flex items-center justify-between mb-3">
             <button
               onClick={() => setViewYear(year => year - 1)}
@@ -51,10 +54,24 @@ export function MonthPicker({ viewMonth, viewYear, btnLabel, setViewMonth, setVi
             </button>
           </div>
 
+          {onClear && (
+            <button
+              onClick={() => { onClear(); setIsOpen(false); }}
+              className={[
+                'w-full px-2.5 py-1.75 mb-2 rounded-[7px] border cursor-pointer text-[12.5px] font-semibold text-center font-sans',
+                !isMonthSelected
+                  ? 'border-brand bg-brand-light text-brand-dark'
+                  : 'border-app-border bg-surface-alt text-app-text-subtle',
+              ].join(' ')}
+            >
+              Semua Waktu
+            </button>
+          )}
+
           <div className="grid grid-cols-3 gap-1.25">
             {MONTH_SHORT.map((monthName, index) => {
               const isCurrent = index === TODAY.getMonth() && viewYear === TODAY.getFullYear();
-              const isSelected = index === viewMonth;
+              const isSelected = isMonthSelected && index === viewMonth;
               return (
                 <button
                   key={index}

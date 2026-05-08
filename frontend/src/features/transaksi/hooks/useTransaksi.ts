@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { listAccounts } from '@/features/rekening/services/rekeningService';
 import { listTransaksi, updateTransaksi, deleteTransaksi } from '../services/transaksiService';
 import { useAddTransaction } from './useAddTransaction';
@@ -22,28 +22,14 @@ export function useTransaksi() {
   const [typeFilter,         setTypeFilter]         = useState<TypeFilter>('all');
   const [userFilter,         setUserFilter]         = useState<UserFilter>('all');
   const [monthFilter,        setMonthFilter]        = useState<MonthFilter>({ year: now.getFullYear(), month: now.getMonth() + 1 });
-  const [showMonthPicker,    setShowMonthPicker]    = useState(false);
   const [pickerYear,         setPickerYear]         = useState(now.getFullYear());
   const [toast,              setToast]              = useState<Toast | null>(null);
-
-  const monthPickerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(null), 2800);
     return () => clearTimeout(timer);
   }, [toast]);
-
-  useEffect(() => {
-    if (!showMonthPicker) return;
-    function handleClickOutside(event: MouseEvent) {
-      if (monthPickerRef.current && !monthPickerRef.current.contains(event.target as Node)) {
-        setShowMonthPicker(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showMonthPicker]);
 
   useEffect(() => {
     loadAccounts();
@@ -234,10 +220,8 @@ export function useTransaksi() {
     typeFilter,      setTypeFilter,
     userFilter,      setUserFilter,
     monthFilter,     setMonthFilter,
-    showMonthPicker, setShowMonthPicker,
     pickerYear,      setPickerYear,
     toast,
-    monthPickerRef,
     monthLabel,
     hasFilters,
     totalIncome,

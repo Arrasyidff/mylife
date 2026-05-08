@@ -1,8 +1,7 @@
-import type { Dispatch, RefObject, SetStateAction } from 'react';
+import type { Dispatch, SetStateAction } from 'react';
 import { Icon } from '@/components/ui/icon';
-import { Btn } from '@/components/ui/btn';
+import { MonthPicker } from '@/components/shared/MonthPicker';
 import { UserBadge } from '@/components/shared/UserBadge';
-import { MONTHS_SHORT } from '../constants';
 import { FilterChip } from './FilterChip';
 import type { TypeFilter, UserFilter, MonthFilter } from '../types';
 
@@ -15,11 +14,8 @@ interface TransaksiFilterProps {
   setUserFilter: Dispatch<SetStateAction<UserFilter>>;
   monthFilter: MonthFilter;
   setMonthFilter: Dispatch<SetStateAction<MonthFilter>>;
-  showMonthPicker: boolean;
-  setShowMonthPicker: Dispatch<SetStateAction<boolean>>;
   pickerYear: number;
   setPickerYear: Dispatch<SetStateAction<number>>;
-  monthPickerRef: RefObject<HTMLDivElement | null>;
   monthLabel: string;
   hasFilters: boolean;
   typeCounts: Record<TypeFilter, number>;
@@ -31,9 +27,7 @@ export function TransaksiFilter({
   typeFilter, setTypeFilter,
   userFilter, setUserFilter,
   monthFilter, setMonthFilter,
-  showMonthPicker, setShowMonthPicker,
   pickerYear, setPickerYear,
-  monthPickerRef,
   monthLabel,
   hasFilters,
   typeCounts,
@@ -62,76 +56,17 @@ export function TransaksiFilter({
           )}
         </div>
 
-        {/* Month picker */}
-        <div ref={monthPickerRef} className="relative shrink-0">
-          <Btn
-            kind={monthFilter ? 'soft' : 'ghost'}
-            size="sm"
-            icon={Icon.calendar(14)}
-            onClick={() => {
-              setShowMonthPicker(v => !v);
-              setPickerYear(monthFilter?.year ?? new Date().getFullYear());
-            }}
-          >
-            <span className="hidden sm:inline">{monthLabel}</span>
-            <span className="inline sm:hidden">{monthFilter ? `${monthFilter.month}/${monthFilter.year}` : 'Semua'}</span>
-            <span className="ml-0.5">{Icon.chev(12, showMonthPicker ? 'up' : 'down')}</span>
-          </Btn>
-
-          {showMonthPicker && (
-            <div className="absolute top-full mt-1.5 right-0 z-[120] bg-surface border border-app-border rounded-xl shadow-[0_8px_24px_rgba(20,30,25,0.13)] p-3.5 w-60">
-              {/* Year navigation */}
-              <div className="flex items-center justify-between mb-2.5">
-                <button
-                  onClick={() => setPickerYear(y => y - 1)}
-                  className="border-0 bg-transparent cursor-pointer text-app-text-subtle p-1 flex"
-                >
-                  {Icon.chev(16, 'left')}
-                </button>
-                <span className="font-bold text-sm text-app-text">{pickerYear}</span>
-                <button
-                  onClick={() => setPickerYear(y => y + 1)}
-                  className="border-0 bg-transparent cursor-pointer text-app-text-subtle p-1 flex"
-                >
-                  {Icon.chev(16, 'right')}
-                </button>
-              </div>
-
-              {/* All-time */}
-              <button
-                onClick={() => { setMonthFilter(null); setShowMonthPicker(false); }}
-                className={[
-                  'w-full px-2.5 py-[7px] mb-2 rounded-[7px] border cursor-pointer text-[12.5px] font-semibold text-center font-sans',
-                  !monthFilter
-                    ? 'border-brand bg-brand-light text-brand-dark'
-                    : 'border-app-border bg-surface-alt text-app-text-subtle',
-                ].join(' ')}
-              >
-                Semua Waktu
-              </button>
-
-              {/* Month grid */}
-              <div className="grid grid-cols-3 gap-[5px]">
-                {MONTHS_SHORT.map((m, i) => {
-                  const isSelected = monthFilter?.year === pickerYear && monthFilter?.month === (i + 1);
-                  return (
-                    <button
-                      key={i}
-                      onClick={() => { setMonthFilter({ year: pickerYear, month: i + 1 }); setShowMonthPicker(false); }}
-                      className={[
-                        'px-1 py-[7px] rounded-[7px] border cursor-pointer text-xs font-semibold font-sans',
-                        isSelected
-                          ? 'border-brand bg-brand text-white'
-                          : 'border-app-border bg-surface text-app-text hover:bg-surface-alt',
-                      ].join(' ')}
-                    >
-                      {m}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+        <div className="shrink-0">
+          <MonthPicker
+            viewMonth={(monthFilter?.month ?? new Date().getMonth() + 1) - 1}
+            viewYear={pickerYear}
+            btnLabel={monthLabel}
+            isActive={monthFilter !== null}
+            isMonthSelected={monthFilter !== null}
+            setViewMonth={(month) => setMonthFilter({ year: pickerYear, month: month + 1 })}
+            setViewYear={setPickerYear}
+            onClear={() => setMonthFilter(null)}
+          />
         </div>
       </div>
 

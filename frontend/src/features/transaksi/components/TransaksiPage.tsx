@@ -22,10 +22,8 @@ export function TransaksiPage() {
     typeFilter,      setTypeFilter,
     userFilter,      setUserFilter,
     monthFilter,     setMonthFilter,
-    showMonthPicker, setShowMonthPicker,
     pickerYear,      setPickerYear,
     toast,
-    monthPickerRef,
     monthLabel,
     hasFilters,
     totalIncome,
@@ -53,13 +51,11 @@ export function TransaksiPage() {
       />
 
       <TransaksiFilter
-        search={search}                   setSearch={setSearch}
-        typeFilter={typeFilter}           setTypeFilter={setTypeFilter}
-        userFilter={userFilter}           setUserFilter={setUserFilter}
-        monthFilter={monthFilter}         setMonthFilter={setMonthFilter}
-        showMonthPicker={showMonthPicker} setShowMonthPicker={setShowMonthPicker}
-        pickerYear={pickerYear}           setPickerYear={setPickerYear}
-        monthPickerRef={monthPickerRef}
+        search={search}           setSearch={setSearch}
+        typeFilter={typeFilter}   setTypeFilter={setTypeFilter}
+        userFilter={userFilter}   setUserFilter={setUserFilter}
+        monthFilter={monthFilter} setMonthFilter={setMonthFilter}
+        pickerYear={pickerYear}   setPickerYear={setPickerYear}
         monthLabel={monthLabel}
         hasFilters={hasFilters}
         typeCounts={typeCounts}
