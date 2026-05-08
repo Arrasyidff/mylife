@@ -37,14 +37,14 @@ export function TransaksiFilter({
     <div className="bg-surface border border-app-border rounded-xl p-4 mb-4">
 
       {/* Search + Month picker */}
-      <div className="flex items-center gap-2.5 mb-3">
-        <div className="flex-1 flex items-center gap-2.5 px-3 py-[9px] bg-surface-alt rounded-[9px] border border-app-border">
+      <div className="grid grid-cols-1 gap-2 mb-3 md:flex md:items-center md:gap-2.5">
+        <div className="flex items-center gap-2.5 px-3 py-2.25 bg-surface-alt rounded-[9px] border border-app-border min-w-0">
           <span className="text-app-text-subtle shrink-0">{Icon.search(16)}</span>
           <input
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Cari merchant atau catatan…"
-            className="flex-1 border-0 outline-none bg-transparent text-[13px] text-app-text font-sans"
+            className="flex-1 border-0 outline-none bg-transparent text-[13px] text-app-text font-sans min-w-0"
           />
           {search && (
             <button
