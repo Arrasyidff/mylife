@@ -49,15 +49,18 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     body: body !== undefined ? (JSON.stringify(body) as BodyInit) : undefined,
   });
 
+  const json = await response.json();
+
   if (response.status === 401) {
+    if (json.errors) {
+      throw new Error(Array.isArray(json.errors) ? json.errors.join(", ") : String(json.errors));
+    }
     setAuthToken(null);
     if (typeof window !== "undefined") {
       window.location.replace("/login");
     }
     throw new Error("Sesi berakhir. Silakan login kembali.");
   }
-
-  const json = await response.json();
 
   if (json.errors) {
     throw new Error(Array.isArray(json.errors) ? json.errors.join(", ") : String(json.errors));

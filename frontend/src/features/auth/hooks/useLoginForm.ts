@@ -31,7 +31,9 @@ export function useLoginForm() {
       await login(username, password);
       router.replace("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login gagal. Periksa kembali kredensial Anda.");
+      const errorMessage = err instanceof Error ? err.message : "";
+      const isNotFound = errorMessage === "Data tidak ditemukan";
+      setError(isNotFound ? "Username atau password salah" : errorMessage || "Login gagal. Periksa kembali kredensial Anda.");
     } finally {
       setSubmitting(false);
     }
