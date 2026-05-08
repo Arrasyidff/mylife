@@ -6,6 +6,7 @@ import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
 import { CatBubble } from '@/components/shared/CatBubble';
 import { CATS, PERIODS, AMOUNT_PRESETS, AMOUNT_WORDS, MONTHLY_INCOME } from '../constants';
+import { createAnggaranSchema } from '../schemas/anggaran.schema';
 import type { BudgetPeriod, CreateAnggaranInput } from '../types';
 
 interface AddBudgetModalProps {
@@ -15,11 +16,12 @@ interface AddBudgetModalProps {
   isSubmitting: boolean;
 }
 
-function Field({ label, children, hint, optional }: {
+function Field({ label, children, hint, optional, error }: {
   label: string;
   children: React.ReactNode;
   hint?: string;
   optional?: boolean;
+  error?: string;
 }) {
   return (
     <div className="mb-[18px]">
@@ -30,7 +32,8 @@ function Field({ label, children, hint, optional }: {
         {optional && <span className="text-[11px] text-[#A4B8B2] font-medium">opsional</span>}
       </div>
       {children}
-      {hint && <div className="text-[11.5px] text-[#A4B8B2] mt-1.5 leading-[1.45]">{hint}</div>}
+      {error && <div className="text-[11.5px] text-app-danger mt-1.5 leading-[1.45]">{error}</div>}
+      {!error && hint && <div className="text-[11.5px] text-app-text-subtle mt-1.5 leading-[1.45]">{hint}</div>}
     </div>
   );
 }
@@ -60,24 +63,39 @@ export function AddBudgetModal({ onClose, onAdd, totalExisting, isSubmitting }: 
   const [amount, setAmount]                 = useState(1_500_000);
   const [notifs, setNotifs]                 = useState({ pct75: true, pct100: true, weekly: false });
   const [carryOver, setCarryOver]           = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   const totalAfter = totalExisting + amount;
   const remaining  = MONTHLY_INCOME - totalAfter;
 
   async function handleSave() {
+    setValidationErrors({});
+
+    const catLabel  = CATS.find(c => c.id === selectedCat)?.name ?? selectedCat;
+    const now       = new Date();
+    const startDate = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
+
+    const parseResult = createAnggaranSchema.safeParse({
+      name:       catLabel,
+      category:   selectedCat,
+      total:      amount,
+      period:     selectedPeriod,
+      carry_over: carryOver,
+      start_date: startDate,
+    });
+
+    if (!parseResult.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of parseResult.error.issues) {
+        const fieldKey = issue.path[0] as string;
+        if (!fieldErrors[fieldKey]) fieldErrors[fieldKey] = issue.message;
+      }
+      setValidationErrors(fieldErrors);
+      return;
+    }
+
     try {
-      const catLabel  = CATS.find(c => c.id === selectedCat)?.name ?? selectedCat;
-      const now       = new Date();
-      const startDate = new Date(now.getFullYear(), now.getMonth() + 1, 1).toISOString();
-      const input: CreateAnggaranInput = {
-        name:       catLabel,
-        category:   selectedCat,
-        total:      amount,
-        period:     selectedPeriod,
-        carry_over: carryOver,
-        start_date: startDate,
-      };
-      await onAdd(input);
+      await onAdd(parseResult.data as CreateAnggaranInput);
       onClose();
     } catch {
       // error shown via toast in hook
@@ -117,7 +135,7 @@ export function AddBudgetModal({ onClose, onAdd, totalExisting, isSubmitting }: 
         <div className="flex-1 overflow-y-auto px-5 sm:px-6 py-5">
 
           {/* Category */}
-          <Field label="Kategori">
+          <Field label="Kategori" error={validationErrors.category}>
             <div className="grid grid-cols-4 gap-2">
               {CATS.map(c => {
                 const active = c.id === selectedCat;
@@ -147,7 +165,7 @@ export function AddBudgetModal({ onClose, onAdd, totalExisting, isSubmitting }: 
           </Field>
 
           {/* Amount */}
-          <Field label="Batas Anggaran">
+          <Field label="Batas Anggaran" error={validationErrors.total}>
             <div className="bg-[#F0FAF6] border-[1.5px] border-[#1D9E75] rounded-[12px] py-[18px] px-[18px] pb-4 text-center mb-2.5">
               <div className="inline-flex items-baseline gap-2">
                 <span className="text-[18px] text-[#15735A] font-semibold">Rp</span>
@@ -181,7 +199,7 @@ export function AddBudgetModal({ onClose, onAdd, totalExisting, isSubmitting }: 
           </Field>
 
           {/* Period */}
-          <Field label="Periode">
+          <Field label="Periode" error={validationErrors.period}>
             <div className="flex gap-2">
               {PERIODS.map(p => {
                 const active = p.id === selectedPeriod;
@@ -206,7 +224,7 @@ export function AddBudgetModal({ onClose, onAdd, totalExisting, isSubmitting }: 
           </Field>
 
           {/* Start date */}
-          <Field label="Mulai Berlaku">
+          <Field label="Mulai Berlaku" error={validationErrors.start_date}>
             <div className="flex items-center bg-[#F6F9F7] border border-[#E0EAE6] rounded-[9px] py-2.5 px-3 text-[13.5px]">
               <span className="flex-1 font-medium text-[#1A2420]">1 Mei 2026</span>
               <CalendarDays size={15} color={T.textSubtle} />

@@ -6,6 +6,7 @@ import { T } from '@/lib/tokens';
 import { formatRp } from '@/lib/format';
 import { CatBubble } from '@/components/shared/CatBubble';
 import { CATS, PERIODS, AMOUNT_PRESETS } from '../constants';
+import { updateAnggaranSchema } from '../schemas/anggaran.schema';
 import type { Budget, BudgetPeriod, UpdateAnggaranInput } from '../types';
 
 interface EditBudgetModalProps {
@@ -16,11 +17,12 @@ interface EditBudgetModalProps {
   isSubmitting: boolean;
 }
 
-function Field({ label, children, hint, optional }: {
+function Field({ label, children, hint, optional, error }: {
   label: string;
   children: React.ReactNode;
   hint?: string;
   optional?: boolean;
+  error?: string;
 }) {
   return (
     <div className="mb-[18px]">
@@ -31,7 +33,8 @@ function Field({ label, children, hint, optional }: {
         {optional && <span className="text-[11px] text-[#A4B8B2] font-medium">opsional</span>}
       </div>
       {children}
-      {hint && <div className="text-[11.5px] text-[#A4B8B2] mt-1.5 leading-[1.45]">{hint}</div>}
+      {error && <div className="text-[11.5px] text-app-danger mt-1.5 leading-[1.45]">{error}</div>}
+      {!error && hint && <div className="text-[11.5px] text-app-text-subtle mt-1.5 leading-[1.45]">{hint}</div>}
     </div>
   );
 }
@@ -61,19 +64,33 @@ export function EditBudgetModal({ budget, onSave, onDelete, onClose, isSubmittin
   const [amount, setAmount]                 = useState(budget.total);
   const [carryOver, setCarryOver]           = useState(budget.carry_over);
   const [confirmDelete, setConfirmDelete]   = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
   const catName = CATS.find(c => c.id === selectedCat)?.name ?? selectedCat;
 
   async function handleSave() {
+    setValidationErrors({});
+
+    const parseResult = updateAnggaranSchema.safeParse({
+      name:       catName,
+      category:   selectedCat,
+      total:      amount,
+      period:     selectedPeriod,
+      carry_over: carryOver,
+    });
+
+    if (!parseResult.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of parseResult.error.issues) {
+        const fieldKey = issue.path[0] as string;
+        if (!fieldErrors[fieldKey]) fieldErrors[fieldKey] = issue.message;
+      }
+      setValidationErrors(fieldErrors);
+      return;
+    }
+
     try {
-      const input: UpdateAnggaranInput = {
-        name:       catName,
-        category:   selectedCat,
-        total:      amount,
-        period:     selectedPeriod,
-        carry_over: carryOver,
-      };
-      await onSave(budget.id, input);
+      await onSave(budget.id, parseResult.data as UpdateAnggaranInput);
       onClose();
     } catch {
       // error shown via toast in hook
@@ -137,7 +154,7 @@ export function EditBudgetModal({ budget, onSave, onDelete, onClose, isSubmittin
           </div>
 
           {/* Category */}
-          <Field label="Kategori">
+          <Field label="Kategori" error={validationErrors.category}>
             <div className="grid grid-cols-4 gap-2">
               {CATS.map(c => {
                 const active = c.id === selectedCat;
@@ -167,17 +184,25 @@ export function EditBudgetModal({ budget, onSave, onDelete, onClose, isSubmittin
           </Field>
 
           {/* Amount */}
-          <Field label="Batas Anggaran">
-            <div className="bg-[#F0FAF6] border-[1.5px] border-[#1D9E75] rounded-[12px] py-[18px] px-[18px] pb-4 text-center mb-2.5">
+          <Field label="Batas Anggaran" error={validationErrors.total}>
+            <div
+              className="rounded-[12px] py-[18px] px-[18px] pb-4 text-center mb-2.5"
+              style={{
+                background: validationErrors.total ? '#FFF5F5' : '#F0FAF6',
+                border: `1.5px solid ${validationErrors.total ? '#C0392B' : '#1D9E75'}`,
+              }}
+            >
               <div className="inline-flex items-baseline gap-2">
-                <span className="text-[18px] text-[#15735A] font-semibold">Rp</span>
+                <span className="text-[18px] font-semibold" style={{ color: validationErrors.total ? '#C0392B' : '#15735A' }}>Rp</span>
                 <input
                   type="text"
-                  value={amount.toLocaleString('id-ID')}
+                  value={amount === 0 ? '' : amount.toLocaleString('id-ID')}
                   onChange={e => {
                     const raw = e.target.value.replace(/[^\d]/g, '');
-                    setAmount(raw ? parseInt(raw) : 0);
+                    setAmount(raw ? parseInt(raw, 10) : 0);
+                    if (validationErrors.total) setValidationErrors(prev => ({ ...prev, total: '' }));
                   }}
+                  placeholder="0"
                   className="text-[34px] font-bold tracking-[-0.0625rem] text-[#1A2420] tabular-nums border-none bg-transparent outline-none font-sans text-center w-[200px]"
                 />
               </div>
@@ -204,7 +229,7 @@ export function EditBudgetModal({ budget, onSave, onDelete, onClose, isSubmittin
           </Field>
 
           {/* Period */}
-          <Field label="Periode">
+          <Field label="Periode" error={validationErrors.period}>
             <div className="flex gap-2">
               {PERIODS.map(p => {
                 const active = p.id === selectedPeriod;
