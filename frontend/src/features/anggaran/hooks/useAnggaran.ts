@@ -11,17 +11,15 @@ export function useAnggaran() {
   const [showModal, setShowModal] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const [toast, setToast] = useState<Toast | null>(null);
-  const [monthOffset, setMonthOffset] = useState(0);
+  const [viewMonth, setViewMonth] = useState(BASE.getMonth());
+  const [viewYear, setViewYear] = useState(BASE.getFullYear());
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
 
-  const currentDate  = new Date(BASE.getFullYear(), BASE.getMonth() + monthOffset);
-  const prevDate     = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1);
-  const nextDate     = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1);
-  const currentLabel = `${MONTH_NAMES[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
-  const prevLabel    = MONTH_NAMES[prevDate.getMonth()];
-  const nextLabel    = MONTH_NAMES[nextDate.getMonth()];
+  const currentDate  = new Date(viewYear, viewMonth);
+  const btnLabel     = `${MONTH_NAMES[viewMonth]} ${viewYear}`;
 
-  const displayBudgets = monthOffset === 0
+  const isViewingCurrentMonth = viewYear === TODAY.getFullYear() && viewMonth === TODAY.getMonth();
+  const displayBudgets = isViewingCurrentMonth
     ? budgets
     : budgets.map(budget => ({ ...budget, spent: 0, remaining: budget.total }));
 
@@ -122,13 +120,13 @@ export function useAnggaran() {
     }
   }
 
-  function handleMonthPrev() {
-    setMonthOffset(offset => offset - 1);
+  function handleSetViewMonth(month: number) {
+    setViewMonth(month);
     setStatusFilter('all');
   }
 
-  function handleMonthNext() {
-    setMonthOffset(offset => offset + 1);
+  function handleSetViewYear(fn: (year: number) => number) {
+    setViewYear(fn);
     setStatusFilter('all');
   }
 
@@ -148,16 +146,16 @@ export function useAnggaran() {
     toast,
     statusFilter,
     currentDate,
-    currentLabel,
-    prevLabel,
-    nextLabel,
+    viewMonth,
+    viewYear,
+    btnLabel,
     setShowModal,
     setEditingBudget,
     setStatusFilter,
     handleAdd,
     handleSave,
     handleDelete,
-    handleMonthPrev,
-    handleMonthNext,
+    handleSetViewMonth,
+    handleSetViewYear,
   };
 }

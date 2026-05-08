@@ -22,17 +22,17 @@ export function AnggaranPage() {
     toast,
     statusFilter,
     currentDate,
-    currentLabel,
-    prevLabel,
-    nextLabel,
+    viewMonth,
+    viewYear,
+    btnLabel,
     setShowModal,
     setEditingBudget,
     setStatusFilter,
     handleAdd,
     handleSave,
     handleDelete,
-    handleMonthPrev,
-    handleMonthNext,
+    handleSetViewMonth,
+    handleSetViewYear,
   } = useAnggaran();
 
   return (
@@ -40,11 +40,11 @@ export function AnggaranPage() {
       {toast && <AnggaranToast toast={toast} />}
 
       <AnggaranHeader
-        prevLabel={prevLabel}
-        currentLabel={currentLabel}
-        nextLabel={nextLabel}
-        onMonthPrev={handleMonthPrev}
-        onMonthNext={handleMonthNext}
+        viewMonth={viewMonth}
+        viewYear={viewYear}
+        btnLabel={btnLabel}
+        setViewMonth={handleSetViewMonth}
+        setViewYear={handleSetViewYear}
         onAddBudget={() => setShowModal(true)}
       />
 

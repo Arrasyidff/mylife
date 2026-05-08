@@ -1,22 +1,23 @@
 import { Icon } from '@/components/ui/icon';
 import { Btn } from '@/components/ui/btn';
+import { MonthPicker } from '@/components/shared/MonthPicker';
 
 interface AnggaranHeaderProps {
-  prevLabel: string;
-  currentLabel: string;
-  nextLabel: string;
-  onMonthPrev: () => void;
-  onMonthNext: () => void;
+  viewMonth: number;
+  viewYear: number;
+  btnLabel: string;
   onAddBudget: () => void;
+  setViewMonth: (month: number) => void;
+  setViewYear: (fn: (year: number) => number) => void;
 }
 
 export function AnggaranHeader({
-  prevLabel,
-  currentLabel,
-  nextLabel,
-  onMonthPrev,
-  onMonthNext,
+  viewMonth,
+  viewYear,
+  btnLabel,
   onAddBudget,
+  setViewMonth,
+  setViewYear,
 }: AnggaranHeaderProps) {
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-5">
@@ -28,25 +29,13 @@ export function AnggaranHeader({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex items-center gap-1.5">
-          <Btn kind="ghost" size="sm" icon={Icon.chev(14, 'left')} onClick={onMonthPrev}>
-            {prevLabel}
-          </Btn>
-          <Btn
-            kind="ghost"
-            size="sm"
-            style={{
-              background: 'var(--color-brand-light)',
-              color: 'var(--color-brand-dark)',
-              borderColor: '#C7E6D8',
-            }}
-          >
-            {currentLabel}
-          </Btn>
-          <Btn kind="ghost" size="sm" onClick={onMonthNext}>
-            {nextLabel} {Icon.chev(14, 'right')}
-          </Btn>
-        </div>
+        <MonthPicker
+          viewMonth={viewMonth}
+          viewYear={viewYear}
+          btnLabel={btnLabel}
+          setViewMonth={setViewMonth}
+          setViewYear={setViewYear}
+        />
 
         <span className="w-px bg-app-border h-6" />
 
