@@ -1,21 +1,23 @@
 import type { Account, CreateAccountInput, UpdateAccountInput } from '../types';
+import type { Transaction } from '@/features/transaksi/types';
 import { AddAccountModal } from './AddAccountModal';
 import { EditAccountModal } from './EditAccountModal';
 import { AddTransactionModal } from '@/features/transaksi/components/AddTransactionModal';
 
 interface RekeningModalsProps {
-  accounts:             Account[];
-  showAddModal:         boolean;
-  showTransferModal:    boolean;
-  editingAccount:       Account | null;
-  isSubmitting:         boolean;
-  onCloseAddModal:      () => void;
-  onCloseTransferModal: () => void;
-  onCloseEditModal:     () => void;
-  onAdd:                (input: CreateAccountInput) => void;
-  onSave:               (accountId: string, input: UpdateAccountInput) => void;
-  onDelete:             (id: string) => void;
-  onTransfer:           () => void;
+  accounts:              Account[];
+  showAddModal:          boolean;
+  showTransferModal:     boolean;
+  editingAccount:        Account | null;
+  isSubmitting:          boolean;
+  isTransferSubmitting:  boolean;
+  onCloseAddModal:       () => void;
+  onCloseTransferModal:  () => void;
+  onCloseEditModal:      () => void;
+  onAdd:                 (input: CreateAccountInput) => void;
+  onSave:                (accountId: string, input: UpdateAccountInput) => void;
+  onDelete:              (id: string) => void;
+  onTransferSave:        (drafts: Omit<Transaction, 'id'>[]) => void;
 }
 
 export function RekeningModals({
@@ -24,13 +26,14 @@ export function RekeningModals({
   showTransferModal,
   editingAccount,
   isSubmitting,
+  isTransferSubmitting,
   onCloseAddModal,
   onCloseTransferModal,
   onCloseEditModal,
   onAdd,
   onSave,
   onDelete,
-  onTransfer,
+  onTransferSave,
 }: RekeningModalsProps) {
   return (
     <>
@@ -57,7 +60,8 @@ export function RekeningModals({
           accounts={accounts}
           initialType="transfer"
           onClose={onCloseTransferModal}
-          onSave={() => onTransfer()}
+          onSave={onTransferSave}
+          isSubmitting={isTransferSubmitting}
         />
       )}
     </>

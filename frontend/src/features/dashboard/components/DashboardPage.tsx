@@ -11,6 +11,7 @@ import { DashboardTransactions } from './DashboardTransactions';
 export function DashboardPage() {
   const {
     isLoading,
+    isSubmitting,
     error,
     accounts,
     showAdd,
@@ -129,6 +130,7 @@ export function DashboardPage() {
           accounts={accounts}
           onClose={() => setShowAdd(false)}
           onSave={handleAdd}
+          isSubmitting={isSubmitting}
         />
       )}
     </div>

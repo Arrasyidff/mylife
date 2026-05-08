@@ -7,6 +7,7 @@ import {
   updateAccount,
   deleteAccount,
 } from '../services/rekeningService';
+import { useAddTransaction } from '@/features/transaksi/hooks/useAddTransaction';
 
 type Toast = { msg: string; ok: boolean };
 
@@ -29,19 +30,20 @@ export function useRekening() {
     return () => clearTimeout(toastTimer);
   }, [toast]);
 
-  useEffect(() => {
-    async function fetchAccounts() {
-      try {
-        const { accounts: fetchedAccounts } = await listAccounts(true);
-        setAccounts(fetchedAccounts);
-      } catch {
-        showToast('Gagal memuat rekening', false);
-      } finally {
-        setIsLoading(false);
-      }
+  async function loadAccounts() {
+    try {
+      const { accounts: fetchedAccounts } = await listAccounts(true);
+      setAccounts(fetchedAccounts);
+    } catch {
+      showToast('Gagal memuat rekening', false);
+    } finally {
+      setIsLoading(false);
     }
-    fetchAccounts();
-  }, []);
+  }
+
+  useEffect(() => {
+    loadAccounts();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleAdd(input: CreateAccountInput) {
     setIsSubmitting(true);
@@ -103,10 +105,13 @@ export function useRekening() {
     }
   }
 
-  function handleTransfer() {
-    setShowTransferModal(false);
-    showToast('Transfer berhasil dicatat');
-  }
+  const { handleAdd: handleTransferSave, isSubmitting: isTransferSubmitting } = useAddTransaction({
+    onSuccess: async () => {
+      setShowTransferModal(false);
+      await loadAccounts();
+    },
+    showToast,
+  });
 
   const visibleAccounts = accounts.filter(account => !account.hidden);
   const totalBalance = visibleAccounts.reduce((sum, account) => sum + account.balance, 0);
@@ -130,7 +135,8 @@ export function useRekening() {
     setEditingAccount,
     handleAdd,
     handleSave,
-    handleTransfer,
+    handleTransferSave,
+    isTransferSubmitting,
     handleDelete,
     handleToggleHide,
   };

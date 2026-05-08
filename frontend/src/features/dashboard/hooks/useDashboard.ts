@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { Account, AccountType } from '@/features/rekening/types';
 import type { Transaction } from '@/features/transaksi/types';
-import { createTransaksi } from '@/features/transaksi/services/transaksiService';
+import { useAddTransaction } from '@/features/transaksi/hooks/useAddTransaction';
 import { getDashboard } from '../services/dashboardService';
 import type {
   DashboardApiResponse,
@@ -171,39 +171,21 @@ export function useDashboard() {
   const lastDayOfMonth = new Date(year, month, 0).getDate();
   const daysLeft = lastDayOfMonth - now.getDate();
 
-  async function handleAdd(drafts: Omit<Transaction, 'id'>[]) {
-    try {
-      for (const draft of drafts) {
-        await createTransaksi({
-          user: draft.user,
-          cat: draft.cat,
-          merch: draft.merch,
-          acct: draft.acct,
-          to_account_id: draft.to_account_id ?? undefined,
-          amount: Math.abs(draft.amount),
-          date: draft.date,
-          type: draft.type,
-          note: draft.note ?? undefined,
-        });
-      }
-      setShowAdd(false);
-      setToast({
-        msg: drafts.length > 1
-          ? 'Transfer + biaya admin berhasil dicatat'
-          : `Transaksi "${drafts[0]?.merch}" berhasil ditambahkan`,
-        ok: true,
-      });
-      await loadDashboard();
-    } catch (err) {
-      setToast({
-        msg: err instanceof Error ? err.message : 'Gagal menyimpan transaksi',
-        ok: false,
-      });
-    }
+  function showToast(message: string, isSuccess = true) {
+    setToast({ msg: message, ok: isSuccess });
   }
+
+  const { handleAdd, isSubmitting } = useAddTransaction({
+    onSuccess: async () => {
+      setShowAdd(false);
+      await loadDashboard();
+    },
+    showToast,
+  });
 
   return {
     isLoading,
+    isSubmitting,
     error,
     accounts,
     showAdd,

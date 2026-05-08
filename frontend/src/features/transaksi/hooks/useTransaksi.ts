@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect, useRef } from 'react';
 import { listAccounts } from '@/features/rekening/services/rekeningService';
-import { listTransaksi, createTransaksi, updateTransaksi, deleteTransaksi } from '../services/transaksiService';
+import { listTransaksi, updateTransaksi, deleteTransaksi } from '../services/transaksiService';
+import { useAddTransaction } from './useAddTransaction';
 import { txDateGroupKey, formatGroupLabel } from '@/lib/format';
 import { MONTHS_FULL } from '../constants';
 import type { Account } from '@/features/rekening/types';
@@ -13,7 +14,7 @@ export function useTransaksi() {
   const [transactionList,    setTransactionList]    = useState<Transaction[]>([]);
   const [accounts,           setAccounts]           = useState<Account[]>([]);
   const [isLoading,          setIsLoading]          = useState(true);
-  const [isSubmitting,       setIsSubmitting]       = useState(false);
+  const [isEditSubmitting,   setIsEditSubmitting]   = useState(false);
   const [showAdd,            setShowAdd]            = useState(false);
   const [editTx,             setEditTx]             = useState<Transaction | null>(null);
   const [expandedId,         setExpandedId]         = useState<number | null>(null);
@@ -86,43 +87,16 @@ export function useTransaksi() {
     setToast({ msg: message, ok: isSuccess });
   }
 
-  async function handleAdd(drafts: Omit<Transaction, 'id'>[]) {
-    setIsSubmitting(true);
-    try {
-      await Promise.all([
-        Promise.all(
-          drafts.map(draft =>
-            createTransaksi({
-              user:          draft.user,
-              cat:           draft.cat,
-              merch:         draft.merch,
-              acct:          draft.acct,
-              to_account_id: draft.to_account_id ?? undefined,
-              amount:        Math.abs(draft.amount),
-              date:          draft.date,
-              type:          draft.type,
-              note:          draft.note ?? undefined,
-            })
-          )
-        ),
-        new Promise<void>(resolve => setTimeout(resolve, 500)),
-      ]);
+  const { handleAdd, isSubmitting: isAddSubmitting } = useAddTransaction({
+    onSuccess: async () => {
       await loadTransactions();
       setShowAdd(false);
-      showToast(
-        drafts.length > 1
-          ? 'Transfer + biaya admin berhasil dicatat'
-          : `Transaksi "${drafts[0]?.merch}" berhasil ditambahkan`
-      );
-    } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Gagal menambah transaksi', false);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
+    },
+    showToast,
+  });
 
   async function handleEdit(updatedTransaction: Transaction) {
-    setIsSubmitting(true);
+    setIsEditSubmitting(true);
     try {
       await Promise.all([
         updateTransaksi(updatedTransaction.id, {
@@ -144,7 +118,7 @@ export function useTransaksi() {
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Gagal memperbarui transaksi', false);
     } finally {
-      setIsSubmitting(false);
+      setIsEditSubmitting(false);
     }
   }
 
@@ -243,6 +217,8 @@ export function useTransaksi() {
     income:   transactionList.filter(t => t.type === 'income').length,
     transfer: transactionList.filter(t => t.type === 'transfer').length,
   };
+
+  const isSubmitting = isAddSubmitting || isEditSubmitting;
 
   return {
     txList: transactionList,

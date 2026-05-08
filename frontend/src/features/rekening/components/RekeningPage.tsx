@@ -24,7 +24,8 @@ export function RekeningPage() {
     setEditingAccount,
     handleAdd,
     handleSave,
-    handleTransfer,
+    handleTransferSave,
+    isTransferSubmitting,
     handleDelete,
     handleToggleHide,
   } = useRekening();
@@ -65,13 +66,14 @@ export function RekeningPage() {
         showTransferModal={showTransferModal}
         editingAccount={editingAccount}
         isSubmitting={isSubmitting}
+        isTransferSubmitting={isTransferSubmitting}
         onCloseAddModal={() => setShowAddModal(false)}
         onCloseTransferModal={() => setShowTransferModal(false)}
         onCloseEditModal={() => setEditingAccount(null)}
         onAdd={handleAdd}
         onSave={handleSave}
         onDelete={handleDelete}
-        onTransfer={handleTransfer}
+        onTransferSave={handleTransferSave}
       />
     </div>
   );
