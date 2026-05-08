@@ -16,6 +16,7 @@ interface AddTransactionModalProps {
   onClose:       () => void;
   onSave:        (txs: Omit<Transaction, 'id'>[]) => void;
   initialType?:  TxTypeId;
+  isSubmitting?: boolean;
 }
 
 function Field({ label, children, hint }: {
@@ -47,7 +48,7 @@ function InputRow({ children, suffix, error }: {
   );
 }
 
-export function AddTransactionModal({ accounts, onClose, onSave, initialType }: AddTransactionModalProps) {
+export function AddTransactionModal({ accounts, onClose, onSave, initialType, isSubmitting = false }: AddTransactionModalProps) {
   useScrollLock();
   const [txType,       setTxType]       = useState<TxTypeId>(initialType ?? 'expense');
   const [amountRaw,    setAmountRaw]    = useState('');
@@ -135,12 +136,12 @@ export function AddTransactionModal({ accounts, onClose, onSave, initialType }: 
     <>
       {/* Backdrop */}
       <div
-        onClick={onClose}
+        onClick={!isSubmitting ? onClose : undefined}
         className="fixed inset-0 bg-[rgba(20,30,25,0.4)] backdrop-blur-[2px] z-40"
       />
 
       {/* Panel — full-screen on mobile, right drawer on sm+ */}
-      <div className="fixed inset-0 sm:inset-y-0 sm:left-auto sm:right-0 sm:w-[480px] bg-white flex flex-col overflow-hidden z-50 shadow-[-16px_0_40px_rgba(20,30,25,0.18),-1px_0_0_rgba(20,30,25,0.06)]">
+      <div className="fixed inset-0 sm:inset-y-0 sm:left-auto sm:right-0 sm:w-[480px] bg-white flex flex-col overflow-hidden z-50 shadow-[-16px_0_40px_rgba(20,30,25,0.18),-1px_0_0_rgba(20,30,25,0.06)]" style={{ isolation: 'isolate' }}>
 
         {/* Header */}
         <div className="px-5 sm:px-6 py-4 sm:py-5 border-b border-[#EEF2F0] flex items-start justify-between shrink-0">
@@ -414,18 +415,29 @@ export function AddTransactionModal({ accounts, onClose, onSave, initialType }: 
 
         {/* Footer */}
         <div className="px-5 sm:px-6 py-3.5 border-t border-[#EEF2F0] flex gap-2.5 bg-[#F6F9F7] shrink-0">
-          <Btn kind="ghost" onClick={onClose} style={{ flex: 1, justifyContent: 'center', padding: '10px' }}>
+          <Btn kind="ghost" onClick={onClose} disabled={isSubmitting} style={{ flex: 1, justifyContent: 'center', padding: '10px' }}>
             Batal
           </Btn>
           <Btn
             kind="primary"
             icon={Icon.check(14)}
             onClick={handleSave}
+            disabled={isSubmitting}
             style={{ flex: 2, justifyContent: 'center', padding: '10px' }}
           >
             Simpan {txType === 'income' ? 'Pemasukan' : txType === 'transfer' ? 'Transfer' : 'Pengeluaran'}
           </Btn>
         </div>
+
+        {/* Loading overlay */}
+        {isSubmitting && (
+          <div className="absolute inset-0 bg-white/75 backdrop-blur-[2px] z-10 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-10 h-10 rounded-full border-[3px] border-app-border border-t-brand animate-spin" />
+              <div className="text-[0.875rem] font-semibold text-app-text">Menyimpan...</div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

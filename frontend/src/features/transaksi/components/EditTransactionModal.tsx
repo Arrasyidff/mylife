@@ -11,11 +11,12 @@ import type { Account } from '@/features/rekening/types';
 import type { Transaction, TxTypeId } from '../types';
 
 interface EditTransactionModalProps {
-  tx:       Transaction;
-  accounts: Account[];
-  onClose:  () => void;
-  onSave: (tx: Transaction) => void;
-  onDelete: (id: number) => void;
+  tx:           Transaction;
+  accounts:     Account[];
+  onClose:      () => void;
+  onSave:       (tx: Transaction) => void;
+  onDelete:     (id: number) => void;
+  isSubmitting: boolean;
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
@@ -42,7 +43,7 @@ function InputRow({ children, style }: { children: React.ReactNode; style?: Reac
   );
 }
 
-export function EditTransactionModal({ tx, accounts, onClose, onSave, onDelete }: EditTransactionModalProps) {
+export function EditTransactionModal({ tx, accounts, onClose, onSave, onDelete, isSubmitting }: EditTransactionModalProps) {
   const initType = tx.type;
   const initAmt  = Math.abs(tx.amount);
 
@@ -95,7 +96,7 @@ export function EditTransactionModal({ tx, accounts, onClose, onSave, onDelete }
   return (
     <>
       <div
-        onClick={onClose}
+        onClick={!isSubmitting ? onClose : undefined}
         style={{
           position: 'fixed', inset: 0,
           background: 'rgba(20,30,25,0.4)',
@@ -113,6 +114,7 @@ export function EditTransactionModal({ tx, accounts, onClose, onSave, onDelete }
         overflow: 'hidden',
         zIndex: 50,
         fontFamily: T.fontSans,
+        isolation: 'isolate',
       }}>
         {/* Header */}
         <div style={{
@@ -373,23 +375,27 @@ export function EditTransactionModal({ tx, accounts, onClose, onSave, onDelete }
             <div style={{ display: 'flex', gap: 10 }}>
               <button
                 onClick={() => setConfirmDelete(true)}
+                disabled={isSubmitting}
                 style={{
                   padding: '10px 14px', borderRadius: 10,
                   border: `1px solid ${T.border}`, background: T.surface,
-                  cursor: 'pointer', fontSize: 13, fontWeight: 600, color: T.danger,
+                  cursor: isSubmitting ? 'not-allowed' : 'pointer',
+                  fontSize: 13, fontWeight: 600, color: T.danger,
                   fontFamily: T.fontSans,
                   display: 'flex', alignItems: 'center', gap: 6,
+                  opacity: isSubmitting ? 0.5 : 1,
                 }}
               >
                 {Icon.close(13)} Hapus
               </button>
-              <Btn kind="ghost" onClick={onClose} style={{ flex: 1, justifyContent: 'center', padding: '10px' }}>
+              <Btn kind="ghost" onClick={onClose} disabled={isSubmitting} style={{ flex: 1, justifyContent: 'center', padding: '10px' }}>
                 Batal
               </Btn>
               <Btn
                 kind="primary"
                 icon={Icon.check(14)}
                 onClick={handleSave}
+                disabled={isSubmitting}
                 style={{ flex: 2, justifyContent: 'center', padding: '10px' }}
               >
                 Simpan Perubahan
@@ -397,6 +403,31 @@ export function EditTransactionModal({ tx, accounts, onClose, onSave, onDelete }
             </div>
           )}
         </div>
+
+        {/* Loading overlay */}
+        {isSubmitting && (
+          <div style={{
+            position: 'absolute', inset: 0,
+            background: 'rgba(255,255,255,0.75)',
+            backdropFilter: 'blur(2px)',
+            zIndex: 10,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12 }}>
+              <div
+                className="animate-spin"
+                style={{
+                  width: 40, height: 40, borderRadius: '50%',
+                  border: '3px solid #E0EAE6',
+                  borderTopColor: '#1D9E75',
+                }}
+              />
+              <div style={{ fontSize: 14, fontWeight: 600, color: '#1A2420', fontFamily: T.fontSans }}>
+                Menyimpan...
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

@@ -13,6 +13,7 @@ export function useTransaksi() {
   const [transactionList,    setTransactionList]    = useState<Transaction[]>([]);
   const [accounts,           setAccounts]           = useState<Account[]>([]);
   const [isLoading,          setIsLoading]          = useState(true);
+  const [isSubmitting,       setIsSubmitting]       = useState(false);
   const [showAdd,            setShowAdd]            = useState(false);
   const [editTx,             setEditTx]             = useState<Transaction | null>(null);
   const [expandedId,         setExpandedId]         = useState<number | null>(null);
@@ -86,22 +87,26 @@ export function useTransaksi() {
   }
 
   async function handleAdd(drafts: Omit<Transaction, 'id'>[]) {
+    setIsSubmitting(true);
     try {
-      await Promise.all(
-        drafts.map(draft =>
-          createTransaksi({
-            user:          draft.user,
-            cat:           draft.cat,
-            merch:         draft.merch,
-            acct:          draft.acct,
-            to_account_id: draft.to_account_id ?? undefined,
-            amount:        Math.abs(draft.amount),
-            date:          draft.date,
-            type:          draft.type,
-            note:          draft.note ?? undefined,
-          })
-        )
-      );
+      await Promise.all([
+        Promise.all(
+          drafts.map(draft =>
+            createTransaksi({
+              user:          draft.user,
+              cat:           draft.cat,
+              merch:         draft.merch,
+              acct:          draft.acct,
+              to_account_id: draft.to_account_id ?? undefined,
+              amount:        Math.abs(draft.amount),
+              date:          draft.date,
+              type:          draft.type,
+              note:          draft.note ?? undefined,
+            })
+          )
+        ),
+        new Promise<void>(resolve => setTimeout(resolve, 500)),
+      ]);
       await loadTransactions();
       setShowAdd(false);
       showToast(
@@ -111,27 +116,35 @@ export function useTransaksi() {
       );
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Gagal menambah transaksi', false);
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
   async function handleEdit(updatedTransaction: Transaction) {
+    setIsSubmitting(true);
     try {
-      await updateTransaksi(updatedTransaction.id, {
-        user:          updatedTransaction.user,
-        cat:           updatedTransaction.cat,
-        merch:         updatedTransaction.merch,
-        acct:          updatedTransaction.acct,
-        to_account_id: updatedTransaction.to_account_id,
-        amount:        Math.abs(updatedTransaction.amount),
-        date:          updatedTransaction.date,
-        type:          updatedTransaction.type,
-        note:          updatedTransaction.note,
-      });
+      await Promise.all([
+        updateTransaksi(updatedTransaction.id, {
+          user:          updatedTransaction.user,
+          cat:           updatedTransaction.cat,
+          merch:         updatedTransaction.merch,
+          acct:          updatedTransaction.acct,
+          to_account_id: updatedTransaction.to_account_id,
+          amount:        Math.abs(updatedTransaction.amount),
+          date:          updatedTransaction.date,
+          type:          updatedTransaction.type,
+          note:          updatedTransaction.note,
+        }),
+        new Promise<void>(resolve => setTimeout(resolve, 500)),
+      ]);
       await loadTransactions();
       setEditTx(null);
       showToast(`Transaksi "${updatedTransaction.merch}" berhasil diperbarui`);
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Gagal memperbarui transaksi', false);
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -237,6 +250,7 @@ export function useTransaksi() {
     groups,
     accounts,
     isLoading,
+    isSubmitting,
     showAdd,         setShowAdd,
     editTx,          setEditTx,
     expandedId,      setExpandedId,

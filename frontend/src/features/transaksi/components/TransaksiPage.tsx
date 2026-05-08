@@ -14,6 +14,7 @@ export function TransaksiPage() {
     filtered,
     groups,
     accounts,
+    isSubmitting,
     showAdd,         setShowAdd,
     editTx,          setEditTx,
     expandedId,      setExpandedId,
@@ -85,6 +86,7 @@ export function TransaksiPage() {
           accounts={accounts}
           onClose={() => setShowAdd(false)}
           onSave={handleAdd}
+          isSubmitting={isSubmitting}
         />
       )}
       {editTx && (
@@ -94,6 +96,7 @@ export function TransaksiPage() {
           onClose={() => setEditTx(null)}
           onSave={handleEdit}
           onDelete={handleDelete}
+          isSubmitting={isSubmitting}
         />
       )}
     </div>
