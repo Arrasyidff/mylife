@@ -10,10 +10,10 @@ export function DashboardAccounts({ displayedAccounts }: DashboardAccountsProps)
   return (
     <>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="m-0 text-xs font-semibold text-[#7D9590] tracking-[0.5px] uppercase">
+        <h2 className="m-0 text-xs font-semibold text-app-text-muted tracking-[0.5px] uppercase">
           Rekening
         </h2>
-        <Link href="/rekening" className="text-[12.5px] text-[#15735A] font-semibold no-underline">
+        <Link href="/rekening" className="text-[12.5px] text-brand-dark font-semibold no-underline">
           Kelola →
         </Link>
       </div>

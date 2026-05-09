@@ -23,13 +23,13 @@ function relativeTime(isoDate: string): string {
 
 export function AccountCard({ acct, lastTx, lastUpdated }: AccountCardProps) {
   const isPositive = lastTx && lastTx.amount > 0;
-  const deltaColor = isPositive ? T.primary : T.danger;
+  const deltaColor = isPositive ? 'var(--color-brand)' : 'var(--color-app-danger)';
   const deltaSign  = isPositive ? '+' : '';
 
   return (
     <div style={{
-      background: T.surface,
-      border: `1px solid ${T.border}`,
+      background: 'var(--color-surface)',
+      border: '1px solid var(--color-app-border)',
       borderLeft: `3px solid ${acct.color}`,
       borderRadius: T.radius.lg,
       padding: '1rem 1.125rem',
@@ -57,10 +57,10 @@ export function AccountCard({ acct, lastTx, lastUpdated }: AccountCardProps) {
           {acct.glyph}
         </div>
         <div style={{ minWidth: 0, flex: 1 }}>
-          <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: T.text }}>{acct.name}</div>
+          <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--color-app-text)' }}>{acct.name}</div>
           <div style={{
             fontSize: '0.6875rem',
-            color: T.textSubtle,
+            color: 'var(--color-app-text-subtle)',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -70,11 +70,11 @@ export function AccountCard({ acct, lastTx, lastUpdated }: AccountCardProps) {
         </div>
       </div>
       <div>
-        <div style={{ fontSize: '0.6875rem', color: T.textSubtle, marginBottom: '0.125rem' }}>Saldo</div>
+        <div style={{ fontSize: '0.6875rem', color: 'var(--color-app-text-subtle)', marginBottom: '0.125rem' }}>Saldo</div>
         <div style={{
           fontSize: '1.1875rem',
           fontWeight: 700,
-          color: T.text,
+          color: 'var(--color-app-text)',
           letterSpacing: '-0.025rem',
           fontVariantNumeric: 'tabular-nums',
         }}>
@@ -86,11 +86,11 @@ export function AccountCard({ acct, lastTx, lastUpdated }: AccountCardProps) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          borderTop: `1px solid ${T.border}`,
+          borderTop: '1px solid var(--color-app-border)',
           paddingTop: '0.5rem',
           marginTop: '-0.125rem',
         }}>
-          <span style={{ fontSize: '0.6875rem', color: T.textSubtle }}>
+          <span style={{ fontSize: '0.6875rem', color: 'var(--color-app-text-subtle)' }}>
             {relativeTime(lastUpdated)}
           </span>
           <span style={{ fontSize: '0.6875rem', fontWeight: 600, color: deltaColor, fontVariantNumeric: 'tabular-nums' }}>

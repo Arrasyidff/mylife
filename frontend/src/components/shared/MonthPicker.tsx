@@ -37,7 +37,7 @@ export function MonthPicker({ viewMonth, viewYear, btnLabel, setViewMonth, setVi
       </Btn>
 
       {isOpen && (
-        <div className="absolute right-0 top-[calc(100%+6px)] z-200 bg-white border border-app-border rounded-[10px] shadow-[0_4px_20px_rgba(0,0,0,0.12)] p-3.5 w-55">
+        <div className="absolute right-0 top-[calc(100%+6px)] z-200 bg-surface border border-app-border rounded-[10px] shadow-[0_4px_20px_rgba(0,0,0,0.12)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)] p-3.5 w-55">
           <div className="flex items-center justify-between mb-3">
             <button
               onClick={() => setViewYear(year => year - 1)}

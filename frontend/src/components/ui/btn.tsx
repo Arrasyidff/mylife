@@ -13,10 +13,11 @@ interface BtnProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const kindStyles: Record<Kind, { bg: string; fg: string; bd: string }> = {
-  primary: { bg: T.primary,      fg: 'white',         bd: T.primary      },
-  ghost:   { bg: T.surface,      fg: T.text,           bd: T.borderStrong },
-  soft:    { bg: T.primaryLight, fg: T.primaryDark,    bd: 'transparent'  },
-  danger:  { bg: T.danger,       fg: 'white',          bd: T.danger       },
+  primary: { bg: T.primary,                        fg: 'white',                        bd: T.primary                        },
+
+  ghost:   { bg: 'var(--color-surface)',            fg: 'var(--color-app-text)',        bd: 'var(--color-app-border-strong)' },
+  soft:    { bg: 'var(--color-brand-light)',        fg: 'var(--color-brand-dark)',      bd: 'transparent'                   },
+  danger:  { bg: T.danger,                         fg: 'white',                        bd: T.danger                        },
 };
 
 const sizeStyles: Record<Size, { p: string; f: number }> = {

@@ -1,28 +1,26 @@
-import { T } from '@/lib/tokens';
-
 interface ProgressBarProps {
   pct: number;
   height?: number;
 }
 
 export function ProgressBar({ pct, height = 8 }: ProgressBarProps) {
-  const clamped  = Math.min(pct, 100);
-  const color    = pct >= 100 ? T.danger   : pct >= 75 ? T.warning   : T.primary;
-  const trackBg  = pct >= 100 ? '#FCE8E7'  : pct >= 75 ? '#FDF1DD'   : '#E8F0EC';
+  const clamped = Math.min(pct, 100);
+  const fillColor = pct >= 100 ? 'var(--color-app-danger)' : pct >= 75 ? 'var(--color-app-warning)' : 'var(--color-brand)';
+  const trackClass = pct >= 100
+    ? 'bg-red-100 dark:bg-red-950'
+    : pct >= 75
+    ? 'bg-amber-100 dark:bg-amber-950'
+    : 'bg-emerald-100 dark:bg-emerald-950';
 
   return (
-    <div style={{
-      width: '100%',
-      height,
-      background: trackBg,
-      borderRadius: 999,
-      overflow: 'hidden',
-      position: 'relative',
-    }}>
+    <div
+      className={trackClass}
+      style={{ width: '100%', height, borderRadius: 999, overflow: 'hidden', position: 'relative' }}
+    >
       <div style={{
         width: `${clamped}%`,
         height: '100%',
-        background: color,
+        background: fillColor,
         borderRadius: 999,
         transition: 'width 0.5s cubic-bezier(.2,.7,.3,1)',
       }} />

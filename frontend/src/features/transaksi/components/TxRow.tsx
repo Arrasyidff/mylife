@@ -20,13 +20,13 @@ export function TxRow({ t, showAcct = true }: TxRowProps) {
       alignItems: 'center',
       gap: 12,
       padding: '11px 0',
-      borderBottom: `1px solid ${T.divider}`,
+      borderBottom: '1px solid var(--color-app-divider)',
     }}>
       <CatBubble cat={t.cat} size={36} />
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, overflow: 'hidden' }}>
           <span style={{
-            fontSize: 13.5, fontWeight: 600, color: T.text,
+            fontSize: 13.5, fontWeight: 600, color: 'var(--color-app-text)',
             flex: 1, minWidth: 0,
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>{t.merch}</span>
@@ -34,7 +34,7 @@ export function TxRow({ t, showAcct = true }: TxRowProps) {
             <UserBadge user={t.user} size={18} />
           </span>
         </div>
-        <div style={{ fontSize: 11.5, color: T.textSubtle, marginTop: 2, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
+        <div style={{ fontSize: 11.5, color: 'var(--color-app-text-subtle)', marginTop: 2, display: 'flex', alignItems: 'center', overflow: 'hidden' }}>
           {showAcct && acct && (
             <>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
@@ -52,7 +52,7 @@ export function TxRow({ t, showAcct = true }: TxRowProps) {
       <div style={{
         fontSize: 14,
         fontWeight: 700,
-        color: isIncome ? T.primaryDark : isTransfer ? '#1846A8' : T.text,
+        color: isIncome ? 'var(--color-brand-dark)' : isTransfer ? 'var(--color-app-info)' : 'var(--color-app-text)',
         fontVariantNumeric: 'tabular-nums',
         whiteSpace: 'nowrap',
       }}>

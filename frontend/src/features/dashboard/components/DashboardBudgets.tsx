@@ -22,7 +22,7 @@ export function DashboardBudgets({
     <Surface pad={20}>
       <div className="flex flex-col justify-between mb-1">
         <div className='flex justify-between items-start'>
-          <h3 className="m-0 text-[15px] font-bold text-[#1A2420]">
+          <h3 className="m-0 text-[15px] font-bold text-app-text">
             Anggaran {currentMonth} {currentYear}
           </h3>
           {alertCount > 0 && (
@@ -31,14 +31,14 @@ export function DashboardBudgets({
             </Pill>
           )}
         </div>
-        <div className="text-xs text-[#A4B8B2] mt-0.75">
+        <div className="text-xs text-app-text-subtle mt-0.75">
           {formatRp(totalUsed)} dari {formatRp(totalBudget)} terpakai
         </div>
       </div>
       <div className="mt-3">
         {budgets.slice(0, 5).map(budget => <BudgetRow key={budget.id} budget={budget} />)}
       </div>
-      <Link href="/anggaran" className="block text-center mt-3 text-[12.5px] text-[#15735A] font-semibold no-underline">
+      <Link href="/anggaran" className="block text-center mt-3 text-[12.5px] text-brand-dark font-semibold no-underline">
         Lihat semua anggaran →
       </Link>
     </Surface>

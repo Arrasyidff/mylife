@@ -52,22 +52,22 @@ export function DashboardPage() {
   if (isLoading) {
     return (
       <div className="font-sans animate-pulse">
-        <div className="h-8 bg-gray-100 rounded-lg w-40 mb-2" />
-        <div className="h-4 bg-gray-100 rounded w-64 mb-6" />
+        <div className="h-8 bg-gray-100 dark:bg-gray-800 rounded-lg w-40 mb-2" />
+        <div className="h-4 bg-gray-100 dark:bg-gray-800 rounded w-64 mb-6" />
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
           {Array.from({ length: 4 }).map((_, index) => (
-            <div key={index} className="h-24 bg-gray-100 rounded-xl" />
+            <div key={index} className="h-24 bg-gray-100 dark:bg-gray-800 rounded-xl" />
           ))}
         </div>
-        <div className="h-6 bg-gray-100 rounded w-24 mb-3" />
+        <div className="h-6 bg-gray-100 dark:bg-gray-800 rounded w-24 mb-3" />
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 mb-6">
           {Array.from({ length: 3 }).map((_, index) => (
-            <div key={index} className="h-28 bg-gray-100 rounded-xl" />
+            <div key={index} className="h-28 bg-gray-100 dark:bg-gray-800 rounded-xl" />
           ))}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4.5">
-          <div className="h-72 bg-gray-100 rounded-xl" />
-          <div className="h-72 bg-gray-100 rounded-xl" />
+          <div className="h-72 bg-gray-100 dark:bg-gray-800 rounded-xl" />
+          <div className="h-72 bg-gray-100 dark:bg-gray-800 rounded-xl" />
         </div>
       </div>
     );

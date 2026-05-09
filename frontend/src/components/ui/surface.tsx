@@ -11,8 +11,8 @@ interface SurfaceProps {
 export function Surface({ children, pad = 20, accent, style }: SurfaceProps) {
   return (
     <div style={{
-      background: T.surface,
-      border: `1px solid ${T.border}`,
+      background: 'var(--color-surface)',
+      border: '1px solid var(--color-app-border)',
       borderRadius: T.radius.lg,
       padding: pad,
       borderLeft: accent ? `3px solid ${accent}` : undefined,
