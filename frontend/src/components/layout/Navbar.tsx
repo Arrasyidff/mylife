@@ -70,11 +70,11 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
   };
 
   return (
-    <header className="sticky top-0 h-16 px-4 md:px-8 flex justify-between items-center bg-white/80 backdrop-blur-xl border-b border-gray-200 z-20">
+    <header className="sticky top-0 h-16 px-4 md:px-8 flex justify-between items-center bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800 z-20">
       <div className="flex items-center gap-3">
         <button
           onClick={onMenuToggle}
-          className="xl:hidden text-gray-400 hover:text-gray-700 transition-colors p-1"
+          className="xl:hidden text-gray-400 hover:text-gray-700 dark:text-gray-500 dark:hover:text-gray-200 transition-colors p-1"
           aria-label="Buka menu"
         >
           <Menu size={20} />
@@ -82,7 +82,7 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
 
         {/* Mobile/tablet: page label */}
         {pageLabel && (
-          <span className="text-gray-900 text-xs font-bold uppercase tracking-tighter xl:hidden">
+          <span className="text-gray-900 dark:text-gray-100 text-xs font-bold uppercase tracking-tighter xl:hidden">
             {pageLabel}
           </span>
         )}
@@ -93,15 +93,15 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
             const isLast = i === breadcrumbs.length - 1;
             return (
               <span key={crumb.href} className="flex items-center gap-1">
-                {i > 0 && <ChevronRight size={12} className="text-gray-300" />}
+                {i > 0 && <ChevronRight size={12} className="text-gray-300 dark:text-gray-600" />}
                 {isLast ? (
-                  <span className="text-gray-900 text-[10px] font-bold uppercase tracking-tighter">
+                  <span className="text-gray-900 dark:text-gray-100 text-[10px] font-bold uppercase tracking-tighter">
                     {crumb.label}
                   </span>
                 ) : (
                   <Link
                     href={crumb.href}
-                    className="text-gray-400 hover:text-gray-700 text-[10px] font-bold uppercase tracking-tighter transition-colors"
+                    className="text-gray-400 hover:text-gray-700 dark:text-gray-500 dark:hover:text-gray-200 text-[10px] font-bold uppercase tracking-tighter transition-colors"
                   >
                     {crumb.label}
                   </Link>
@@ -112,21 +112,21 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
         </nav>
       </div>
       <div className="flex items-center gap-5">
-        <div className="text-gray-400 text-[10px] uppercase font-bold tracking-widest hidden xl:block">
+        <div className="text-gray-400 dark:text-gray-500 text-[10px] uppercase font-bold tracking-widest hidden xl:block">
           {getCurrentDate()}
         </div>
 
         <div className="flex items-center gap-3">
           <button
             onClick={toggle}
-            className="text-gray-400 hover:text-gray-700 transition-colors"
+            className="text-gray-400 hover:text-gray-700 dark:text-gray-500 dark:hover:text-gray-200 transition-colors"
             title={theme === "dark" ? "Mode terang" : "Mode gelap"}
           >
             {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
           </button>
 
           {user && (
-            <div className="pl-3 border-l border-gray-200">
+            <div className="pl-3 border-l border-gray-200 dark:border-gray-700">
               <Popover open={open} onOpenChange={setOpen}>
                 <PopoverTrigger
                   render={
@@ -134,28 +134,28 @@ export default function Navbar({ onMenuToggle }: NavbarProps) {
                   }
                 >
                   <div className="text-right hidden sm:block">
-                    <p className="text-gray-900 text-[10px] font-bold uppercase tracking-tighter">
+                    <p className="text-gray-900 dark:text-gray-100 text-[10px] font-bold uppercase tracking-tighter">
                       {user.nama}
                     </p>
-                    <p className="text-gray-400 text-[9px] uppercase font-bold">
+                    <p className="text-gray-400 dark:text-gray-500 text-[9px] uppercase font-bold">
                       {user.aksesLevel}
                     </p>
                   </div>
-                  <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-700 text-xs font-bold shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-200 text-xs font-bold shrink-0">
                     {initial}
                   </div>
                 </PopoverTrigger>
 
-                <PopoverContent align="end" className="w-48 p-1 bg-white border border-gray-200">
-                  <div className="px-3 py-2.5 border-b border-gray-100 mb-1">
-                    <p className="text-gray-900 text-xs font-bold uppercase tracking-tighter">{user.nama}</p>
+                <PopoverContent align="end" className="w-48 p-1 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700">
+                  <div className="px-3 py-2.5 border-b border-gray-100 dark:border-gray-800 mb-1">
+                    <p className="text-gray-900 dark:text-gray-100 text-xs font-bold uppercase tracking-tighter">{user.nama}</p>
                     {user.jabatan && (
-                      <p className="text-gray-400 text-[10px] uppercase font-bold mt-0.5">{user.jabatan}</p>
+                      <p className="text-gray-400 dark:text-gray-500 text-[10px] uppercase font-bold mt-0.5">{user.jabatan}</p>
                     )}
                   </div>
                   <button
                     onClick={handleLogout}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs uppercase font-bold text-red-500 hover:bg-red-50 rounded-md transition-colors"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs uppercase font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 rounded-md transition-colors"
                   >
                     <LogOut size={14} />
                     Keluar
