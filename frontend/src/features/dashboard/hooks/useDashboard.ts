@@ -195,5 +195,6 @@ export function useDashboard() {
     totalUsed,
     alertCount,
     handleAdd,
+    showToast,
   };
 }

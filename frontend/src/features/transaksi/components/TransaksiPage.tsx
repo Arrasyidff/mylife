@@ -34,7 +34,16 @@ export function TransaksiPage() {
     handleDelete,
     resetFilters,
     handleExport,
+    showToast,
   } = useTransaksi();
+
+  function handleAddClick() {
+    if (accounts.length === 0) {
+      showToast('Tambah rekening dulu sebelum mencatat transaksi', false);
+    } else {
+      setShowAdd(true);
+    }
+  }
 
   return (
     <div className="font-sans">
@@ -46,8 +55,7 @@ export function TransaksiPage() {
         monthLabel={monthLabel}
         onExport={handleExport}
         exportDisabled={filtered.length === 0}
-        onAdd={() => setShowAdd(true)}
-        addDisabled={accounts.length === 0}
+        onAdd={handleAddClick}
       />
 
       <TransaksiFilter

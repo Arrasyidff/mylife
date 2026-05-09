@@ -38,7 +38,16 @@ export function DashboardPage() {
     totalUsed,
     alertCount,
     handleAdd,
+    showToast,
   } = useDashboard();
+
+  function handleAddClick() {
+    if (accounts.length === 0) {
+      showToast('Tambah rekening dulu sebelum mencatat transaksi', false);
+    } else {
+      setShowAdd(true);
+    }
+  }
 
   if (isLoading) {
     return (
@@ -67,10 +76,10 @@ export function DashboardPage() {
   if (error) {
     return (
       <div className="font-sans flex flex-col items-center justify-center py-20 gap-3">
-        <p className="text-[14px] text-[#C0392B] font-semibold">{error}</p>
+        <p className="text-[14px] text-app-danger font-semibold">{error}</p>
         <button
           onClick={() => window.location.reload()}
-          className="text-[13px] text-[#1D9E75] font-semibold underline"
+          className="text-[13px] text-brand font-semibold underline"
         >
           Coba lagi
         </button>
@@ -91,7 +100,7 @@ export function DashboardPage() {
         viewYear={viewYear}
         setViewMonth={setViewMonth}
         setViewYear={setViewYear}
-        onAddClick={() => setShowAdd(true)}
+        onAddClick={handleAddClick}
       />
 
       <DashboardStats

@@ -29,8 +29,8 @@ export function DashboardHeader({
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-5">
       <div>
-        <h1 className="m-0 text-xl font-bold text-[#1A2420] tracking-[-0.3px]">Dashboard</h1>
-        <div className="text-[12.5px] text-[#A4B8B2] mt-0.75">
+        <h1 className="m-0 text-xl font-bold text-app-text tracking-[-0.3px]">Dashboard</h1>
+        <div className="text-[12.5px] text-app-text-subtle mt-0.75">
           {isCurrentMonth
             ? `${new Date().getDate()} ${currentMonth} ${currentYear} · ${daysLeft} hari tersisa bulan ini`
             : `Menampilkan data ${currentMonth} ${currentYear}`}
