@@ -72,23 +72,23 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
 
       <aside
         className={[
-          "fixed left-0 top-0 h-full w-full xl:w-54 border-r border-gray-200 bg-white flex flex-col gap-2 p-6 z-40 transition-transform duration-300",
+          "fixed left-0 top-0 h-full w-full xl:w-54 border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 flex flex-col gap-2 p-6 z-40 transition-transform duration-300",
           !isOpen ? "max-xl:-translate-x-full" : "",
         ].join(" ")}
       >
         {/* Brand */}
         <div className="mb-8 px-2 flex items-start justify-between">
           <div>
-            <h1 className="text-gray-900 font-black text-5xl xl:text-sm tracking-tighter uppercase">
+            <h1 className="text-gray-900 dark:text-gray-100 font-black text-5xl xl:text-sm tracking-tighter uppercase">
               The M-Line
             </h1>
-            <div className="mt-1 text-gray-400 text-base xl:text-[10px] uppercase font-bold tracking-widest">
+            <div className="mt-1 text-gray-400 dark:text-gray-500 text-base xl:text-[10px] uppercase font-bold tracking-widest">
               Miracle Generation
             </div>
           </div>
           <button
             onClick={onClose}
-            className="xl:hidden text-gray-400 hover:text-gray-700 transition-colors p-2 mt-1"
+            className="xl:hidden text-gray-400 hover:text-gray-700 dark:text-gray-500 dark:hover:text-gray-200 transition-colors p-2 mt-1"
           >
             <X size={28} />
           </button>
@@ -98,7 +98,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         <nav className="flex-1 space-y-8 overflow-y-auto">
           {navSections.map((section) => (
             <div key={section.label}>
-              <p className="px-4 mb-3 text-gray-400 text-base xl:text-xs font-bold uppercase tracking-widest">
+              <p className="px-4 mb-3 text-gray-400 dark:text-gray-500 text-base xl:text-xs font-bold uppercase tracking-widest">
                 {section.label}
               </p>
               <div className="space-y-1">
@@ -112,8 +112,8 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                       className={[
                         "px-4 py-2.5 flex items-center gap-3 text-lg xl:text-xs uppercase font-bold tracking-tighter rounded-lg transition-all duration-150",
                         active
-                          ? "bg-gray-100 text-gray-900 border border-gray-200"
-                          : "text-gray-400 hover:bg-gray-50 hover:text-gray-700",
+                          ? "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700"
+                          : "text-gray-400 dark:text-gray-500 hover:bg-gray-50 dark:hover:bg-gray-800/60 hover:text-gray-700 dark:hover:text-gray-200",
                       ].join(" ")}
                     >
                       <Icon size={16} />
@@ -127,21 +127,21 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
         </nav>
 
         {/* User footer */}
-        <div className="mt-auto border-t border-gray-200 pt-6 space-y-1">
+        <div className="mt-auto border-t border-gray-200 dark:border-gray-800 pt-6 space-y-1">
           <div className="flex items-center gap-3 px-4 py-2">
-            <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-700 text-xs font-bold shrink-0">
+            <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 flex items-center justify-center text-gray-700 dark:text-gray-200 text-xs font-bold shrink-0">
               {initial}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-gray-900 text-base xl:text-xs font-bold uppercase tracking-tighter truncate">
+              <p className="text-gray-900 dark:text-gray-100 text-base xl:text-xs font-bold uppercase tracking-tighter truncate">
                 {user.nama}
               </p>
-              <p className="text-gray-400 text-sm xl:text-xs uppercase font-bold">{roleLabel}</p>
+              <p className="text-gray-400 dark:text-gray-500 text-sm xl:text-xs uppercase font-bold">{roleLabel}</p>
             </div>
           </div>
           <button
             onClick={logout}
-            className="w-full text-gray-400 px-4 py-2.5 flex items-center gap-3 text-lg xl:text-xs uppercase font-bold tracking-tighter hover:bg-gray-50 hover:text-gray-700 transition-all duration-150 rounded-lg"
+            className="w-full text-gray-400 dark:text-gray-500 px-4 py-2.5 flex items-center gap-3 text-lg xl:text-xs uppercase font-bold tracking-tighter hover:bg-gray-50 dark:hover:bg-gray-800/60 hover:text-gray-700 dark:hover:text-gray-200 transition-all duration-150 rounded-lg"
           >
             <LogOut size={16} />
             Keluar
